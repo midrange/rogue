@@ -4,6 +4,8 @@ The initial goal is to develop similar functionality as https://github.com/andre
 
 ## Running Hello World
 
+If you are a developer, clone this repo into your `$GOPATH` in the `github.com/midrange/rogue` directory.
+
 From the `rogue` directory:
 
 ```
