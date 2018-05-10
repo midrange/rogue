@@ -59,5 +59,51 @@ func RandomCard() *Card {
 }
 
 func (c *Card) Print() {
-	fmt.Printf("%v %v ", c.Name, c.IsLand)
+	cardWidth := 10
+	printCardBorder(cardWidth)
+	printBlankCardLine(cardWidth)
+	if c.IsCreature {
+		printCardTextLine(cardWidth, fmt.Sprintf("%v", c.ManaCost))
+	} else {
+		printBlankCardLine(cardWidth)
+	}
+	printCardTextLine(cardWidth, fmt.Sprintf("%v", c.Name))
+	if c.IsCreature {
+		printCardTextLine(cardWidth, fmt.Sprintf("%v/%v", c.Power, c.Toughness))
+	} else {
+		printBlankCardLine(cardWidth)
+	}
+	printBlankCardLine(cardWidth)
+	printCardBorder(cardWidth)
+}
+
+func printCardBorder(cardWidth int) {
+	for i := 0; i < cardWidth; i++ {
+		fmt.Printf("-")
+	}
+	fmt.Printf("\n")
+}
+
+func printCardTextLine(cardWidth int, name string) {
+	nameLine := "| "
+	nameIndex := 0
+	for {
+		if nameIndex < len(name) {
+			nameLine += string(name[nameIndex])
+		} else {
+			nameLine += " "
+		}
+		nameIndex += 1
+		if len(nameLine) >= cardWidth - 2 { break; }
+	}
+	nameLine += " |"
+	fmt.Printf("%v\n", nameLine)
+}
+
+func printBlankCardLine(cardWidth int) {
+	fmt.Printf("|",)
+	for i := 0; i < cardWidth - 2; i++ {
+		fmt.Printf(" ")
+	}
+	fmt.Printf("|\n")
 }
