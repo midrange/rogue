@@ -20,8 +20,8 @@ type Phase int
 
 const (
 	Main1 Phase = iota
-	Attack
-	Damage
+	DeclareAttack
+	CombatDamage
 	Main2
 )
 

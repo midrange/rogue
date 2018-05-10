@@ -1,18 +1,55 @@
 package game
 
-import ()
-
-type Card interface {
-	Type() CardType
-}
-
-type CardType int
-
-const (
-	Land CardType = iota
-	Creature
+import (
+	"log"
+	"math/rand"
 )
 
+type Card struct {
+	Name       CardName
+	IsLand     bool
+	IsCreature bool
+	Power      int
+	Toughness  int
+	ManaCost   int
+}
+
+type CardName int
+
+const (
+	Forest CardName = iota
+	GrizzlyBears
+)
+
+func NewCard(name CardName) *Card {
+	card := newCardHelper(name)
+	card.Name = name
+	return card
+}
+
+func newCardHelper(name CardName) *Card {
+	switch name {
+	case Forest:
+		return &Card{
+			IsLand: true,
+		}
+	case GrizzlyBears:
+		return &Card{
+			IsCreature: true,
+			Power:      2,
+			Toughness:  2,
+		}
+	default:
+		log.Fatalf("unimplemented card name: %d", name)
+	}
+	panic("control should not reach here")
+}
+
 func RandomCard() *Card {
-	panic("TODO: implement")
+	names := []CardName{
+		Forest,
+		GrizzlyBears,
+	}
+	index := rand.Int() % len(names)
+	return NewCard(names[index])
 }
