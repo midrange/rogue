@@ -12,6 +12,8 @@ type Card struct {
 	Power      int
 	Toughness  int
 	ManaCost   int
+	Tapped     bool
+	Attacking  bool
 }
 
 type CardName int
