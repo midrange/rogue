@@ -2,8 +2,25 @@ package main
 
 import (
 	"fmt"
+	"github.com/midrange/rogue/game"
+	"math/rand"
 )
 
 func main() {
-	fmt.Println("Hello world!")
+	playOutGameRandomly()
+}
+
+
+func playOutGameRandomly() {
+	fmt.Println("Playing out a game between two bots that move randomly.")
+	game := game.NewGame()
+
+	for {
+		actions := game.Actions()
+		randomAction := actions[rand.Int() % len(actions)]
+		fmt.Println(randomAction.Type, randomAction.Card)
+		game.TakeAction(randomAction)
+		if game.IsOver() { break }
+	}
+	fmt.Println("Game over!")
 }
