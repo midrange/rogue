@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 )
@@ -16,6 +17,7 @@ type Card struct {
 	Attacking  bool
 }
 
+//go:generate stringer -type=CardName
 type CardName int
 
 const (
@@ -54,4 +56,8 @@ func RandomCard() *Card {
 	}
 	index := rand.Int() % len(names)
 	return NewCard(names[index])
+}
+
+func (c *Card) Print() {
+	fmt.Printf("%v %v ", c.Name, c.IsLand)
 }

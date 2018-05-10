@@ -1,6 +1,8 @@
 package game
 
-import ()
+import (
+	"fmt"
+)
 
 type Game struct {
 	// Players are sometimes referred to by index, 0 or 1.
@@ -118,4 +120,11 @@ func (g *Game) IsOver() bool {
 		}
 	}
 	return false
+}
+
+func (g *Game) Print() {
+	fmt.Println("\n~~~~~~")
+	g.Players[1].Print(1, false)
+	g.Players[0].Print(0, false)
+	fmt.Println("~~~~~~\n")	
 }

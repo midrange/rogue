@@ -1,6 +1,8 @@
 package game
 
-import ()
+import (
+	"fmt"
+)
 
 type Player struct {
 	Life               int
@@ -111,4 +113,29 @@ func (p *Player) Play(card *Card) {
 		p.SpendMana(card.ManaCost)
 	}
 	p.Board = append(p.Board, card)
+}
+
+func (p *Player) Print(position int, hideCards bool) {
+	if position == 0 {
+		for _, card := range p.Board {
+			card.Print()
+		}
+		fmt.Printf("\n")
+		for _, card := range p.Hand {
+			card.Print()
+		}
+		fmt.Printf("\n")
+		fmt.Println("Player ", position, " Life: ", p.Life)
+	} else {
+		fmt.Println("Player ", position, " Life: ", p.Life)
+		for _, card := range p.Hand {
+			card.Print()
+		}
+		fmt.Printf("\n")
+		for _, card := range p.Board {
+			card.Print()
+		}
+		fmt.Printf("\n")
+	}
+
 }

@@ -18,8 +18,8 @@ func playOutGameRandomly() {
 	for {
 		actions := game.Actions()
 		randomAction := actions[rand.Int() % len(actions)]
-		fmt.Println(randomAction.Type, randomAction.Card)
 		game.TakeAction(randomAction)
+		game.Print()
 		if game.IsOver() { break }
 	}
 	fmt.Println("Game over!")
