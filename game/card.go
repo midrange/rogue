@@ -98,19 +98,18 @@ func (c *Card) Print() {
 	}
 }
 
-
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 	const cardWidth = CARD_WIDTH
 	const cardHeight = CARD_HEIGHT
 	imageGrid := [cardHeight][cardWidth]string{}
 	for y := 0; y < cardHeight; y++ {
 		for x := 0; x < cardWidth; x++ {
-			if x == 0 || x == cardWidth - 1 {
+			if x == 0 || x == cardWidth-1 {
 				imageGrid[y][x] = string('|')
-			} else if y == 0 || y == cardHeight - 1 {
+			} else if y == 0 || y == cardHeight-1 {
 				imageGrid[y][x] = string('-')
 			} else {
-				imageGrid[y][x] = string(' ')				
+				imageGrid[y][x] = string(' ')
 			}
 		}
 	}
@@ -136,14 +135,14 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
 		for _, word := range words {
 			wordWidth := Min(3, len(word))
-			if len(words) == 1 {				
-				wordWidth = Min(len(word), cardWidth - 4)
+			if len(words) == 1 {
+				wordWidth = Min(len(word), cardWidth-4)
 			}
-			for x := initialIndex; x < wordWidth + initialIndex; x++ {
+			for x := initialIndex; x < wordWidth+initialIndex; x++ {
 				imageGrid[nameRow][x] = string(word[x-initialIndex])
 			}
 			initialIndex += wordWidth + 1
-			if initialIndex >= cardWidth - wordWidth - 1 {
+			if initialIndex >= cardWidth-wordWidth-1 {
 				break
 			}
 		}
@@ -152,13 +151,13 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 			initialIndex := 2
 			statsRow := 3
 			statsString := fmt.Sprintf("%v/%v", c.Power, c.Toughness)
-			for x := initialIndex; x < len(statsString) + initialIndex; x++ {
+			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
 
 			ccRow := 1
 			ccString := fmt.Sprintf("%v", c.ManaCost)
-			for x := initialIndex; x < len(ccString) + initialIndex; x++ {
+			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
 				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
 			}
 		}
@@ -167,7 +166,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 			tappedRow := 0
 			initialIndex := 0
 			tappedString := "TAPPED"
-			for x := initialIndex; x < len(tappedString) + initialIndex; x++ {
+			for x := initialIndex; x < len(tappedString)+initialIndex; x++ {
 				imageGrid[tappedRow][x] = string(tappedString[x-initialIndex])
 			}
 		}
@@ -176,12 +175,11 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 	return imageGrid
 }
 
-
 func Min(x, y int) int {
-    if x < y {
-        return x
-    }
-    return y
+	if x < y {
+		return x
+	}
+	return y
 }
 
 func (c *Card) Power() int {

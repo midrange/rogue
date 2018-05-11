@@ -8,10 +8,10 @@ import (
 )
 
 func main() {
-	var i int
+	i := 0
 	for start := time.Now(); time.Since(start) < time.Second; {
 		playOutGameRandomly()
-	    i++
+		i++
 	}
 	fmt.Printf("Played out %v games in 1 second\n", i)
 }
@@ -28,4 +28,3 @@ func playOutGameRandomly() {
 		}
 	}
 }
-

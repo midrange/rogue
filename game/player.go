@@ -218,23 +218,22 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	}
 }
 
-
 func (p *Player) PrintName(position int, gameWidth int) {
 	fmt.Println("")
 	playerString := fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
-	for x := 0; x < (gameWidth - len(playerString)) / 2; x++ {
+	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		fmt.Printf(" ")
 	}
-	fmt.Printf(playerString)	
+	fmt.Printf(playerString)
 }
 
 func PrintRow(cards []*Card, gameWidth int) {
 	asciiImages := [][CARD_HEIGHT][CARD_WIDTH]string{}
-	for _, card:= range cards {
+	for _, card := range cards {
 		asciiImages = append(asciiImages, card.AsciiImage(false))
 	}
 	for row := 0; row < CARD_HEIGHT; row++ {
-		for x := 0; x < (gameWidth - len(cards) * (CARD_WIDTH + 1))/2; x++ {
+		for x := 0; x < (gameWidth-len(cards)*(CARD_WIDTH+1))/2; x++ {
 			fmt.Printf(" ")
 		}
 		for _, bitmap := range asciiImages {

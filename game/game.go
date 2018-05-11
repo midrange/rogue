@@ -195,7 +195,6 @@ func (g *Game) Print() {
 	printBorder(gameWidth)
 }
 
-
 func printBorder(gameWidth int) {
 	fmt.Printf("%v", "\n")
 	for x := 0; x < gameWidth; x++ {
@@ -210,7 +209,7 @@ func printMiddleLine(gameWidth int) {
 	for x := 0; x < padding; x++ {
 		fmt.Printf(" ")
 	}
-	for x := 0; x < gameWidth - padding*2; x++ {
+	for x := 0; x < gameWidth-padding*2; x++ {
 		fmt.Printf("_")
 	}
 	fmt.Printf("%v", "\n\n\n")
