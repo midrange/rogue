@@ -12,3 +12,4 @@ From the `rogue` directory:
 go install ./... && play
 ```
 
+You should see it print out something like, "Played out 28903 games in 1 second"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-    "strings"
+	"strings"
 )
 
 type Card struct {
@@ -106,7 +106,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		}
 	} else {
 		nameRow := 2
-	    words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
+		words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
 		for _, word := range words {
 			wordWidth := Min(3, len(word))
 			if len(words) == 1 {				
