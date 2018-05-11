@@ -1,6 +1,10 @@
 package game
 
-import ()
+import (
+	"fmt"
+)
+
+const GAME_WIDTH = 100
 
 type Game struct {
 	// Players are sometimes referred to by index, 0 or 1.
@@ -182,6 +186,35 @@ func (g *Game) TakeAction(action *Action) {
 
 func (g *Game) IsOver() bool {
 	return g.Priority.Lost() || g.Priority.Opponent.Lost()
+}
+
+func (g *Game) Print() {
+	gameWidth := GAME_WIDTH
+	printBorder(gameWidth)
+	g.Players[1].Print(1, false, gameWidth)
+	printMiddleLine(gameWidth)
+	g.Players[0].Print(0, false, gameWidth)
+	printBorder(gameWidth)
+}
+
+func printBorder(gameWidth int) {
+	fmt.Printf("%v", "\n")
+	for x := 0; x < gameWidth; x++ {
+		fmt.Printf("~")
+	}
+	fmt.Printf("%v", "\n")
+}
+
+func printMiddleLine(gameWidth int) {
+	padding := 30
+	fmt.Printf("%v", "\n")
+	for x := 0; x < padding; x++ {
+		fmt.Printf(" ")
+	}
+	for x := 0; x < gameWidth-padding*2; x++ {
+		fmt.Printf("_")
+	}
+	fmt.Printf("%v", "\n\n\n")
 }
 
 // Pass makes the active player pass, whichever player has priority

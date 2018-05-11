@@ -9,8 +9,7 @@ If you are a developer, clone this repo into your `$GOPATH` in the `github.com/m
 From the `rogue` directory:
 
 ```
-go install ./...
-play
+go install ./... && play
 ```
 
-You should see it print "Hello world!"
+You should see it print out something like, "Played out 28903 games in 1 second"

@@ -1,6 +1,8 @@
 package game
 
-import ()
+import (
+	"fmt"
+)
 
 type Player struct {
 	Life               int
@@ -200,4 +202,46 @@ func (p *Player) Play(card *Card) {
 		p.SpendMana(card.ManaCost)
 	}
 	p.Board = append(p.Board, card)
+}
+
+func (p *Player) Print(position int, hideCards bool, gameWidth int) {
+	if position == 0 {
+		PrintRow(p.Board, gameWidth)
+		PrintRow(p.Hand, gameWidth)
+		p.PrintName(position, gameWidth)
+		fmt.Println("")
+	} else {
+		p.PrintName(position, gameWidth)
+		fmt.Println("\n")
+		PrintRow(p.Hand, gameWidth)
+		PrintRow(p.Board, gameWidth)
+	}
+}
+
+func (p *Player) PrintName(position int, gameWidth int) {
+	fmt.Println("")
+	playerString := fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
+		fmt.Printf(" ")
+	}
+	fmt.Printf(playerString)
+}
+
+func PrintRow(cards []*Card, gameWidth int) {
+	asciiImages := [][CARD_HEIGHT][CARD_WIDTH]string{}
+	for _, card := range cards {
+		asciiImages = append(asciiImages, card.AsciiImage(false))
+	}
+	for row := 0; row < CARD_HEIGHT; row++ {
+		for x := 0; x < (gameWidth-len(cards)*(CARD_WIDTH+1))/2; x++ {
+			fmt.Printf(" ")
+		}
+		for _, bitmap := range asciiImages {
+			for _, char := range bitmap[row] {
+				fmt.Printf(char)
+			}
+			fmt.Printf(" ")
+		}
+		fmt.Printf("%v", "\n")
+	}
 }
