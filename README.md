@@ -9,9 +9,6 @@ If you are a developer, clone this repo into your `$GOPATH` in the `github.com/m
 From the `rogue` directory:
 
 ```
-go generate ./... && go install ./... && play
+go install ./... && play
 ```
 
-You should see it play out a random game, printing the board state each move.
-
-The go generate part is to make strings for enum constants.

@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+const GAME_WIDTH = 100
+
 type Game struct {
 	// Players are sometimes referred to by index, 0 or 1.
 	// Player 0 is the player who plays first.
@@ -122,8 +124,32 @@ func (g *Game) IsOver() bool {
 }
 
 func (g *Game) Print() {
-	fmt.Println("\n~~~~~~")
-	g.Players[1].Print(1, false)
-	g.Players[0].Print(0, false)
-	fmt.Println("~~~~~~\n")	
+	gameWidth := GAME_WIDTH
+	printBorder(gameWidth)
+	g.Players[1].Print(1, false, gameWidth)
+	printMiddleLine(gameWidth)
+	g.Players[0].Print(0, false, gameWidth)
+	printBorder(gameWidth)
+}
+
+
+func printBorder(gameWidth int) {
+	fmt.Printf("%v", "\n")
+	for x := 0; x < gameWidth; x++ {
+		fmt.Printf("~")
+	}
+	fmt.Printf("%v", "\n")
+}
+
+
+func printMiddleLine(gameWidth int) {
+	padding := 30
+	fmt.Printf("%v", "\n")
+	for x := 0; x < padding; x++ {
+		fmt.Printf(" ")
+	}
+	for x := 0; x < gameWidth - padding*2; x++ {
+		fmt.Printf("_")
+	}
+	fmt.Printf("%v", "\n\n\n")
 }

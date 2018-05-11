@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+    "strings"
 )
 
 type Card struct {
@@ -24,6 +25,9 @@ const (
 	Forest CardName = iota
 	GrizzlyBears
 )
+
+const CARD_HEIGHT = 5
+const CARD_WIDTH = 11
 
 func NewCard(name CardName) *Card {
 	card := newCardHelper(name)
@@ -59,126 +63,96 @@ func RandomCard() *Card {
 }
 
 func (c *Card) Print() {
-	cardWidth := 10
-	printCardBorder(cardWidth)
-	printBlankCardLine(cardWidth)
-	if c.IsCreature {
-		printCardTextLine(cardWidth, fmt.Sprintf("%v", c.ManaCost))
-	} else {
-		printBlankCardLine(cardWidth)
+	for _, arrayLine := range c.AsciiImage(false) {
+		for _, char := range arrayLine {
+			fmt.Printf(char)
+		}
+		fmt.Printf("%v", "\n")
 	}
-	printCardTextLine(cardWidth, fmt.Sprintf("%v", c.Name))
-	if c.IsCreature {
-		printCardTextLine(cardWidth, fmt.Sprintf("%v/%v", c.Power, c.Toughness))
-	} else {
-		printBlankCardLine(cardWidth)
-	}
-	printBlankCardLine(cardWidth)
-	printCardBorder(cardWidth)
 }
 
 
-func (c *Card) AsciiImage() {
-	cardWidth := 11
-	cardHeight := 5
-	imageGrid := [cardHeight][cardWidth]int
+func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
+	const cardWidth = CARD_WIDTH
+	const cardHeight = CARD_HEIGHT
+	imageGrid := [cardHeight][cardWidth]string{}
 	for y := 0; y < cardHeight; y++ {
 		for x := 0; x < cardWidth; x++ {
-				if x == 0 or x == cardWidth - 1:
-					imageGrid[-1].append('|')
-				elif y == 0 or y == cardHeight - 1:
-					imageGrid[-1].append('-')
-				else:
-					imageGrid[-1].append(' ')
+			if x == 0 || x == cardWidth - 1 {
+				imageGrid[y][x] = string('|')
+			} else if y == 0 || y == cardHeight - 1 {
+				imageGrid[y][x] = string('-')
+			} else {
+				imageGrid[y][x] = string(' ')				
+			}
 		}
 	}
 
 	initialIndex := 2
 
-	if showBack:
+	if showBack {
 		middleX := cardWidth / 2
 		middleY := cardHeight / 2
 
-		noon := (middleX, middleY - 1, '*')
-		two := (middleX + 2, middleY, '*')
-		ten := (middleX - 2, middleY, '*')
-		seven := (middleX - 1, middleY + 1, '*')
-		four := (middleX + 1, middleY + 1, '*')
+		noon := []int{middleX, middleY - 1}
+		two := []int{middleX + 2, middleY}
+		ten := []int{middleX - 2, middleY}
+		seven := []int{middleX - 1, middleY + 1}
+		four := []int{middleX + 1, middleY + 1}
 
-		points := [noon, two, four, seven, ten]
+		points := [][]int{noon, two, four, seven, ten}
 		for _, p := range points {
-			imageGrid[p[1]][p[0]] = p[2]
+			imageGrid[p[1]][p[0]] = string('*')
 		}
-	
-	if !showBack {
-		ccRow = 1
-		ccString = fmt.Sprintf("%v", c.ManaCost)
-		for x in range(initialIndex, len(ccString) + initialIndex):
-			imageGrid[ccRow][x] = ccString[x-initialIndex]
-	}	
-
-	if !showBack:
-		nameRow = 2
-		words := fmt.Sprintf("%v", c.Name)
+	} else {
+		nameRow := 2
+	    words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
 		for _, word := range words {
-			wordWidth = min(3, len(word))
-			if len(words) == 1:
-				wordWidth = min(len(word), cardWidth - 4)
-			for x in range(initialIndex, wordWidth + initialIndex):
-				imageGrid[nameRow][x] = word[x-initialIndex]
+			wordWidth := Min(3, len(word))
+			if len(words) == 1 {				
+				wordWidth = Min(len(word), cardWidth - 4)
+			}
+			for x := initialIndex; x < wordWidth + initialIndex; x++ {
+				imageGrid[nameRow][x] = string(word[x-initialIndex])
+			}
 			initialIndex += wordWidth + 1
-			if initialIndex >= cols - wordWidth - 1:
+			if initialIndex >= cardWidth - wordWidth - 1 {
 				break
+			}
+		}
 
-	if not showBack:
 		if c.IsCreature {
-			initialIndex = 2
-			statsRow = 3
-			statsString = fmt.Sprintf("%v/%v", c.Power, c.Toughnesss)
-			for x in range(initialIndex, len(statsString) + initialIndex):
-				image_grid[statsRow][x] = statsString[x-initialIndex]
+			initialIndex := 2
+			statsRow := 3
+			statsString := fmt.Sprintf("%v/%v", c.Power, c.Toughness)
+			for x := initialIndex; x < len(statsString) + initialIndex; x++ {
+				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
+			}
+
+			ccRow := 1
+			ccString := fmt.Sprintf("%v", c.ManaCost)
+			for x := initialIndex; x < len(ccString) + initialIndex; x++ {
+				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
+			}
 		}
 
-	if not show_back:
-		if c.IsTapped {
-		if Card.tapped(card_state):
-			tapped_row = 0
-			initial_index = 0
-			tapped_string = "TAPPED"
-			for x in range(initial_index, len(tapped_string) + initial_index):
-				image_grid[tapped_row][x] = tapped_string[x-initial_index]
-
-	return image_grid
-}
-
-
-func printCardBorder(cardWidth int) {
-	for i := 0; i < cardWidth; i++ {
-		fmt.Printf("-")
-	}
-	fmt.Printf("\n")
-}
-
-func printCardTextLine(cardWidth int, name string) {
-	nameLine := "| "
-	nameIndex := 0
-	for {
-		if nameIndex < len(name) {
-			nameLine += string(name[nameIndex])
-		} else {
-			nameLine += " "
+		if c.Tapped {
+			tappedRow := 0
+			initialIndex := 0
+			tappedString := "TAPPED"
+			for x := initialIndex; x < len(tappedString) + initialIndex; x++ {
+				imageGrid[tappedRow][x] = string(tappedString[x-initialIndex])
+			}
 		}
-		nameIndex += 1
-		if len(nameLine) >= cardWidth - 2 { break; }
 	}
-	nameLine += " |"
-	fmt.Printf("%v\n", nameLine)
+
+	return imageGrid
 }
 
-func printBlankCardLine(cardWidth int) {
-	fmt.Printf("|",)
-	for i := 0; i < cardWidth - 2; i++ {
-		fmt.Printf(" ")
-	}
-	fmt.Printf("|\n")
+
+func Min(x, y int) int {
+    if x < y {
+        return x
+    }
+    return y
 }
