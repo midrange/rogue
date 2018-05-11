@@ -25,7 +25,10 @@ const (
 )
 
 func NewGame() *Game {
-	players := [2]*Player{NewPlayer(), NewPlayer()}
+	players := [2]*Player{
+		NewPlayer(Stompy()),
+		NewPlayer(Stompy()),
+	}
 	players[0].Opponent = players[1]
 	players[1].Opponent = players[0]
 	return &Game{
@@ -81,6 +84,7 @@ func (g *Game) NextPhase() {
 		g.Phase = Main1
 		g.Turn++
 		g.Priority = g.Priority.Opponent
+		g.Priority.Draw()
 	}
 }
 
@@ -112,10 +116,5 @@ func (g *Game) TakeAction(action *Action) {
 }
 
 func (g *Game) IsOver() bool {
-	for _, player := range g.Players {
-		if player.Life <= 0 {
-			return true
-		}
-	}
-	return false
+	return g.Priority.Lost() || g.Priority.Opponent.Lost()
 }

@@ -7,17 +7,19 @@ type Player struct {
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
+	Deck               *Deck
 	LandPlayedThisTurn int
 }
 
-func NewPlayer() *Player {
+func NewPlayer(deck *Deck) *Player {
 	hand := []*Card{}
 	for i := 0; i < 7; i++ {
-		hand = append(hand, RandomCard())
+		hand = append(hand, deck.Draw())
 	}
 	return &Player{
 		Life:  20,
 		Hand:  hand,
+		Deck:  deck,
 		Board: []*Card{},
 	}
 }
@@ -32,11 +34,22 @@ func (p *Player) AvailableMana() int {
 	return answer
 }
 
+func (p *Player) Draw() {
+	card := p.Deck.Draw()
+	if card != nil {
+		p.Hand = append(p.Hand, card)
+	}
+}
+
 func (p *Player) Untap() {
 	p.LandPlayedThisTurn = 0
 	for _, card := range p.Board {
 		card.Tapped = false
 	}
+}
+
+func (p *Player) Lost() bool {
+	return p.Life <= 0 || p.Deck.FailedToDraw
 }
 
 // Automatically spends the given amount of mana.
