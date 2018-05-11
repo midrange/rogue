@@ -18,9 +18,15 @@ type Game struct {
 
 type Phase int
 
+// Phase encompasses both "phases" and "steps" as per:
+// https://mtg.gamepedia.com/Turn_structure
+// For example, declaring attackers is a step within the combat phase in the official
+// rules. Here it is just treated as another Phase.
+
 const (
 	Main1 Phase = iota
-	DeclareAttack
+	DeclareAttackers
+	DeclareBlockers
 	Main2
 )
 
@@ -47,8 +53,11 @@ func (g *Game) Actions() []*Action {
 	case Main2:
 		return g.Priority.PlayActions(true)
 
-	case DeclareAttack:
+	case DeclareAttackers:
 		return g.Priority.AttackActions()
+
+	case DeclareBlockers:
+		return g.Priority.BlockActions()
 
 	default:
 		panic("unhandled phase")
@@ -74,11 +83,16 @@ func (g *Game) HandleCombatDamage() {
 func (g *Game) NextPhase() {
 	switch g.Phase {
 	case Main1:
-		g.Phase = DeclareAttack
-	case DeclareAttack:
+		g.Phase = DeclareAttackers
+	case DeclareAttackers:
+		g.Phase = DeclareBlockers
+		g.Priority = g.Defender()
+	case DeclareBlockers:
 		g.HandleCombatDamage()
 		g.Attacker().EndCombat()
+		g.Defender().EndCombat()
 		g.Phase = Main2
+		g.Priority = g.Attacker()
 	case Main2:
 		// End the turn
 		g.Phase = Main1
@@ -108,11 +122,17 @@ func (g *Game) TakeAction(action *Action) {
 		}
 		g.Priority.Play(action.Card)
 
-	case DeclareAttack:
+	case DeclareAttackers:
 		if action.Type != Attack {
 			panic("expected an attack or a pass during DeclareAttack")
 		}
 		action.Card.Attacking = true
+
+	case DeclareBlockers:
+		if action.Type != Block {
+			panic("expected a block or a pass during DeclareBlockers")
+		}
+		action.Card.Blocking = action.Target
 
 	default:
 		panic("unhandled phase")

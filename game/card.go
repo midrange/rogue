@@ -14,6 +14,7 @@ type Card struct {
 	ManaCost   int
 	Tapped     bool
 	Attacking  bool
+	Blocking   *Card
 }
 
 type CardName int

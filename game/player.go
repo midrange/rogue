@@ -72,6 +72,7 @@ func (p *Player) SpendMana(amount int) {
 func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
+		card.Blocking = nil
 	}
 }
 
@@ -107,6 +108,12 @@ func (p *Player) AttackActions() []*Action {
 			answer = append(answer, &Action{Type: Attack, Card: card})
 		}
 	}
+	return answer
+}
+
+func (p *Player) BlockActions() []*Action {
+	answer := []*Action{&Action{Type: Pass}}
+	// TODO: return actual block actions
 	return answer
 }
 
