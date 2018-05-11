@@ -75,7 +75,31 @@ func (g *Game) Defender() *Player {
 func (g *Game) HandleCombatDamage() {
 	for _, card := range g.Attacker().Board {
 		if card.Attacking {
-			g.Defender().Life -= card.Power
+			damage := card.Power
+			if damage < 0 {
+				damage = 0
+			}
+
+			if len(card.DamageOrder) > 0 {
+				// Deal damage to blockers
+				for _, blocker := range card.DamageOrder {
+					if damage == 0 {
+						break
+					}
+					remaining := blocker.Toughness - blocker.Damage
+					if remaining > damage {
+						blocker.Damage += damage
+						damage = 0
+					} else {
+						g.Defender().RemoveFromBoard(blocker)
+						damage -= remaining
+					}
+				}
+			} else {
+				// Deal damage to the defending player
+				g.Defender().Life -= damage
+			}
+
 		}
 	}
 }
@@ -133,6 +157,7 @@ func (g *Game) TakeAction(action *Action) {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
 		action.Card.Blocking = action.Target
+		action.Target.DamageOrder = append(action.Target.DamageOrder, action.Card)
 
 	default:
 		panic("unhandled phase")

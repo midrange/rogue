@@ -6,15 +6,17 @@ import (
 )
 
 type Card struct {
-	Name       CardName
-	IsLand     bool
-	IsCreature bool
-	Power      int
-	Toughness  int
-	ManaCost   int
-	Tapped     bool
-	Attacking  bool
-	Blocking   *Card
+	Name        CardName
+	IsLand      bool
+	IsCreature  bool
+	Power       int
+	Toughness   int
+	ManaCost    int
+	Tapped      bool
+	Attacking   bool
+	Blocking    *Card
+	DamageOrder []*Card
+	Damage      int
 }
 
 type CardName int

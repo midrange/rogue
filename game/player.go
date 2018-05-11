@@ -73,7 +73,24 @@ func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
 		card.Blocking = nil
+		card.DamageOrder = []*Card{}
 	}
+}
+
+func (p *Player) EndTurn() {
+	for _, card := range p.Board {
+		card.Damage = 0
+	}
+}
+
+func (p *Player) RemoveFromBoard(c *Card) {
+	newBoard := []*Card{}
+	for _, card := range p.Board {
+		if card != c {
+			newBoard = append(newBoard, card)
+		}
+	}
+	p.Board = newBoard
 }
 
 // Possible actions when we can play a card from hand, including passing.
@@ -113,7 +130,23 @@ func (p *Player) AttackActions() []*Action {
 
 func (p *Player) BlockActions() []*Action {
 	answer := []*Action{&Action{Type: Pass}}
-	// TODO: return actual block actions
+	attackers := []*Card{}
+	for _, card := range p.Opponent.Board {
+		if card.Attacking {
+			attackers = append(attackers, card)
+		}
+	}
+	for _, card := range p.Board {
+		if card.Blocking == nil && !card.Tapped {
+			for _, attacker := range attackers {
+				answer = append(answer, &Action{
+					Type:   Block,
+					Card:   card,
+					Target: attacker,
+				})
+			}
+		}
+	}
 	return answer
 }
 
