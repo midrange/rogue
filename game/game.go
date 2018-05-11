@@ -35,14 +35,20 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		NewPlayer(deckToPlay),
 		NewPlayer(deckToDraw),
 	}
-	players[0].Opponent = players[1]
-	players[1].Opponent = players[0]
-	return &Game{
+	g := &Game{
 		Players:  players,
 		Phase:    Main1,
 		Turn:     0,
 		Priority: players[0],
 	}
+
+	players[0].Opponent = players[1]
+	players[1].Opponent = players[0]
+
+	players[0].Game = g
+	players[1].Game = g
+
+	return g
 }
 
 func (g *Game) Actions() []*Action {
@@ -102,6 +108,14 @@ func (g *Game) HandleCombatDamage() {
 
 		}
 	}
+}
+
+func (g *Game) Creatures() []*Card {
+	answer := g.Priority.Creatures()
+	for _, card := range g.Priority.Opponent.Creatures() {
+		answer = append(answer, card)
+	}
+	return answer
 }
 
 func (g *Game) NextPhase() {

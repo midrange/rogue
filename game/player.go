@@ -7,16 +7,18 @@ type Player struct {
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
+	Game               *Game
 	Deck               *Deck
 	LandPlayedThisTurn int
 }
 
+// The caller should set Game and Opponent
 func NewPlayer(deck *Deck) *Player {
 	p := &Player{
 		Life:  20,
 		Hand:  []*Card{},
-		Deck:  deck,
 		Board: []*Card{},
+		Deck:  deck,
 	}
 	for i := 0; i < 7; i++ {
 		p.Draw()
@@ -88,6 +90,16 @@ func (p *Player) EndTurn() {
 	}
 }
 
+func (p *Player) Creatures() []*Card {
+	answer := []*Card{}
+	for _, card := range p.Board {
+		if card.IsCreature {
+			answer = append(answer, card)
+		}
+	}
+	return answer
+}
+
 func (p *Player) RemoveFromBoard(c *Card) {
 	newBoard := []*Card{}
 	for _, card := range p.Board {
@@ -126,6 +138,15 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 			}
 			if card.IsCreature && mana >= card.ManaCost {
 				answer = append(answer, &Action{Type: Play, Card: card})
+			}
+			if card.IsEnchantCreature && mana >= card.ManaCost {
+				for _, target := range p.Game.Creatures() {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: target,
+					})
+				}
 			}
 		}
 	}

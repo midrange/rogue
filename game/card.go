@@ -7,12 +7,12 @@ import (
 
 type Card struct {
 	// Things that are relevant wherever the card is
-	Name       CardName
-	IsLand     bool
-	IsCreature bool
-	IsAura     bool
-	ManaCost   int
-	Owner      *Player
+	Name              CardName
+	IsLand            bool
+	IsCreature        bool
+	IsEnchantCreature bool
+	ManaCost          int
+	Owner             *Player
 
 	// Properties that are relevant for any permanent
 	Tapped bool
@@ -58,12 +58,14 @@ func newCardHelper(name CardName) *Card {
 			IsCreature:    true,
 			BasePower:     2,
 			BaseToughness: 2,
+			ManaCost:      2,
 		}
 	case Rancor:
 		return &Card{
-			IsAura:        true,
-			BasePower:     2,
-			BaseToughness: 0,
+			IsEnchantCreature: true,
+			BasePower:         2,
+			BaseToughness:     0,
+			ManaCost:          1,
 		}
 
 	default:
