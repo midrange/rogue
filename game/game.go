@@ -24,10 +24,10 @@ const (
 	Main2
 )
 
-func NewGame() *Game {
+func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 	players := [2]*Player{
-		NewPlayer(Stompy()),
-		NewPlayer(Stompy()),
+		NewPlayer(deckToPlay),
+		NewPlayer(deckToDraw),
 	}
 	players[0].Opponent = players[1]
 	players[1].Opponent = players[0]
@@ -89,6 +89,10 @@ func (g *Game) NextPhase() {
 }
 
 func (g *Game) TakeAction(action *Action) {
+	if g.IsOver() {
+		panic("cannot take action when the game is over")
+	}
+
 	if action.Type == Pass {
 		g.NextPhase()
 		return
@@ -117,4 +121,25 @@ func (g *Game) TakeAction(action *Action) {
 
 func (g *Game) IsOver() bool {
 	return g.Priority.Lost() || g.Priority.Opponent.Lost()
+}
+
+// Pass makes the active player pass, whichever player has priority
+func (g *Game) Pass() {
+	g.TakeAction(&Action{Type: Pass})
+}
+
+// PassUntilPhase makes both players pass until the game is in the provided phase,
+// or until the game is over.
+func (g *Game) PassUntilPhase(p Phase) {
+	for g.Phase != p && !g.IsOver() {
+		g.Pass()
+	}
+}
+
+// PassTurn makes both players pass until it is the next turn, or until the game is over
+func (g *Game) PassTurn() {
+	turn := g.Turn
+	for g.Turn == turn && !g.IsOver() {
+		g.Pass()
+	}
 }
