@@ -204,7 +204,6 @@ func printBorder(gameWidth int) {
 	fmt.Printf("%v", "\n")
 }
 
-
 func printMiddleLine(gameWidth int) {
 	padding := 30
 	fmt.Printf("%v", "\n")
@@ -215,6 +214,7 @@ func printMiddleLine(gameWidth int) {
 		fmt.Printf("_")
 	}
 	fmt.Printf("%v", "\n\n\n")
+}
 
 // Pass makes the active player pass, whichever player has priority
 func (g *Game) Pass() {
