@@ -9,21 +9,35 @@ type Player struct {
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
+	Game               *Game
 	Deck               *Deck
 	LandPlayedThisTurn int
 }
 
+// The caller should set Game and Opponent
 func NewPlayer(deck *Deck) *Player {
-	hand := []*Card{}
-	for i := 0; i < 7; i++ {
-		hand = append(hand, deck.Draw())
-	}
-	return &Player{
+	p := &Player{
 		Life:  20,
-		Hand:  hand,
-		Deck:  deck,
+		Hand:  []*Card{},
 		Board: []*Card{},
+		Deck:  deck,
 	}
+	for i := 0; i < 7; i++ {
+		p.Draw()
+	}
+	return p
+}
+
+func (p *Player) Draw() {
+	p.AddToHand(p.Deck.Draw())
+}
+
+func (p *Player) AddToHand(c *Card) {
+	if c == nil {
+		return
+	}
+	c.Owner = p
+	p.Hand = append(p.Hand, c)
 }
 
 func (p *Player) AvailableMana() int {
@@ -34,13 +48,6 @@ func (p *Player) AvailableMana() int {
 		}
 	}
 	return answer
-}
-
-func (p *Player) Draw() {
-	card := p.Deck.Draw()
-	if card != nil {
-		p.Hand = append(p.Hand, card)
-	}
 }
 
 func (p *Player) Untap() {
@@ -74,6 +81,44 @@ func (p *Player) SpendMana(amount int) {
 func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
+		card.Blocking = nil
+		card.DamageOrder = []*Card{}
+	}
+}
+
+func (p *Player) EndTurn() {
+	for _, card := range p.Board {
+		card.Damage = 0
+	}
+}
+
+func (p *Player) Creatures() []*Card {
+	answer := []*Card{}
+	for _, card := range p.Board {
+		if card.IsCreature {
+			answer = append(answer, card)
+		}
+	}
+	return answer
+}
+
+func (p *Player) RemoveFromBoard(c *Card) {
+	newBoard := []*Card{}
+	for _, card := range p.Board {
+		if card != c {
+			newBoard = append(newBoard, card)
+		}
+	}
+	p.Board = newBoard
+
+	if c.Name == Rancor {
+		p.AddToHand(NewCard(Rancor))
+	} else {
+		// If we had a graveyard we would put the card in the graveyard here
+	}
+
+	for _, aura := range c.Auras {
+		p.RemoveFromBoard(aura)
 	}
 }
 
@@ -96,6 +141,15 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 			if card.IsCreature && mana >= card.ManaCost {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
+			if card.IsEnchantCreature && mana >= card.ManaCost {
+				for _, target := range p.Game.Creatures() {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: target,
+					})
+				}
+			}
 		}
 	}
 	return answer
@@ -107,6 +161,28 @@ func (p *Player) AttackActions() []*Action {
 	for _, card := range p.Board {
 		if card.IsCreature && !card.Attacking {
 			answer = append(answer, &Action{Type: Attack, Card: card})
+		}
+	}
+	return answer
+}
+
+func (p *Player) BlockActions() []*Action {
+	answer := []*Action{&Action{Type: Pass}}
+	attackers := []*Card{}
+	for _, card := range p.Opponent.Board {
+		if card.Attacking {
+			attackers = append(attackers, card)
+		}
+	}
+	for _, card := range p.Board {
+		if card.Blocking == nil && !card.Tapped {
+			for _, attacker := range attackers {
+				answer = append(answer, &Action{
+					Type:   Block,
+					Card:   card,
+					Target: attacker,
+				})
+			}
 		}
 	}
 	return answer

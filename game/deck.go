@@ -10,7 +10,25 @@ type Deck struct {
 }
 
 func NewEmptyDeck() *Deck {
-	return &Deck{Cards: []*Card{}}
+	return &Deck{
+		Cards: []*Card{},
+	}
+}
+
+func NewDeck(decklist map[CardName]int) *Deck {
+	deck := NewEmptyDeck()
+	for name, count := range decklist {
+		deck.Add(count, name)
+	}
+	deck.Shuffle()
+	return deck
+}
+
+func Stompy() *Deck {
+	return NewDeck(map[CardName]int{
+		Forest:       30,
+		GrizzlyBears: 30,
+	})
 }
 
 func (d *Deck) Draw() *Card {
@@ -36,12 +54,4 @@ func (d *Deck) Add(n int, name CardName) {
 	for i := 0; i < n; i++ {
 		d.Cards = append(d.Cards, NewCard(name))
 	}
-}
-
-func Stompy() *Deck {
-	d := NewEmptyDeck()
-	d.Add(30, Forest)
-	d.Add(30, GrizzlyBears)
-	d.Shuffle()
-	return d
 }

@@ -22,25 +22,37 @@ type Game struct {
 
 type Phase int
 
+// Phase encompasses both "phases" and "steps" as per:
+// https://mtg.gamepedia.com/Turn_structure
+// For example, declaring attackers is a step within the combat phase in the official
+// rules. Here it is just treated as another Phase.
+
 const (
 	Main1 Phase = iota
-	DeclareAttack
+	DeclareAttackers
+	DeclareBlockers
 	Main2
 )
 
-func NewGame() *Game {
+func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 	players := [2]*Player{
-		NewPlayer(Stompy()),
-		NewPlayer(Stompy()),
+		NewPlayer(deckToPlay),
+		NewPlayer(deckToDraw),
 	}
-	players[0].Opponent = players[1]
-	players[1].Opponent = players[0]
-	return &Game{
+	g := &Game{
 		Players:  players,
 		Phase:    Main1,
 		Turn:     0,
 		Priority: players[0],
 	}
+
+	players[0].Opponent = players[1]
+	players[1].Opponent = players[0]
+
+	players[0].Game = g
+	players[1].Game = g
+
+	return g
 }
 
 func (g *Game) Actions() []*Action {
@@ -51,8 +63,11 @@ func (g *Game) Actions() []*Action {
 	case Main2:
 		return g.Priority.PlayActions(true)
 
-	case DeclareAttack:
+	case DeclareAttackers:
 		return g.Priority.AttackActions()
+
+	case DeclareBlockers:
+		return g.Priority.BlockActions()
 
 	default:
 		panic("unhandled phase")
@@ -70,19 +85,56 @@ func (g *Game) Defender() *Player {
 func (g *Game) HandleCombatDamage() {
 	for _, card := range g.Attacker().Board {
 		if card.Attacking {
-			g.Defender().Life -= card.Power
+			damage := card.Power()
+			if damage < 0 {
+				damage = 0
+			}
+
+			if len(card.DamageOrder) > 0 {
+				// Deal damage to blockers
+				for _, blocker := range card.DamageOrder {
+					if damage == 0 {
+						break
+					}
+					remaining := blocker.Toughness() - blocker.Damage
+					if remaining > damage {
+						blocker.Damage += damage
+						damage = 0
+					} else {
+						g.Defender().RemoveFromBoard(blocker)
+						damage -= remaining
+					}
+				}
+			} else {
+				// Deal damage to the defending player
+				g.Defender().Life -= damage
+			}
+
 		}
 	}
+}
+
+func (g *Game) Creatures() []*Card {
+	answer := g.Priority.Creatures()
+	for _, card := range g.Priority.Opponent.Creatures() {
+		answer = append(answer, card)
+	}
+	return answer
 }
 
 func (g *Game) NextPhase() {
 	switch g.Phase {
 	case Main1:
-		g.Phase = DeclareAttack
-	case DeclareAttack:
+		g.Phase = DeclareAttackers
+	case DeclareAttackers:
+		g.Phase = DeclareBlockers
+		g.Priority = g.Defender()
+	case DeclareBlockers:
 		g.HandleCombatDamage()
 		g.Attacker().EndCombat()
+		g.Defender().EndCombat()
 		g.Phase = Main2
+		g.Priority = g.Attacker()
 	case Main2:
 		// End the turn
 		g.Phase = Main1
@@ -93,6 +145,10 @@ func (g *Game) NextPhase() {
 }
 
 func (g *Game) TakeAction(action *Action) {
+	if g.IsOver() {
+		panic("cannot take action when the game is over")
+	}
+
 	if action.Type == Pass {
 		g.NextPhase()
 		return
@@ -108,11 +164,18 @@ func (g *Game) TakeAction(action *Action) {
 		}
 		g.Priority.Play(action.Card)
 
-	case DeclareAttack:
+	case DeclareAttackers:
 		if action.Type != Attack {
 			panic("expected an attack or a pass during DeclareAttack")
 		}
 		action.Card.Attacking = true
+
+	case DeclareBlockers:
+		if action.Type != Block {
+			panic("expected a block or a pass during DeclareBlockers")
+		}
+		action.Card.Blocking = action.Target
+		action.Target.DamageOrder = append(action.Target.DamageOrder, action.Card)
 
 	default:
 		panic("unhandled phase")
@@ -152,4 +215,24 @@ func printMiddleLine(gameWidth int) {
 		fmt.Printf("_")
 	}
 	fmt.Printf("%v", "\n\n\n")
+
+// Pass makes the active player pass, whichever player has priority
+func (g *Game) Pass() {
+	g.TakeAction(&Action{Type: Pass})
+}
+
+// PassUntilPhase makes both players pass until the game is in the provided phase,
+// or until the game is over.
+func (g *Game) PassUntilPhase(p Phase) {
+	for g.Phase != p && !g.IsOver() {
+		g.Pass()
+	}
+}
+
+// PassTurn makes both players pass until it is the next turn, or until the game is over
+func (g *Game) PassTurn() {
+	turn := g.Turn
+	for g.Turn == turn && !g.IsOver() {
+		g.Pass()
+	}
 }

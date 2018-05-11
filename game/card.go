@@ -8,14 +8,31 @@ import (
 )
 
 type Card struct {
-	Name       CardName
-	IsLand     bool
-	IsCreature bool
-	Power      int
-	Toughness  int
-	ManaCost   int
-	Tapped     bool
-	Attacking  bool
+	// Things that are relevant wherever the card is
+	Name              CardName
+	IsLand            bool
+	IsCreature        bool
+	IsEnchantCreature bool
+	ManaCost          int
+	Owner             *Player
+
+	// Properties that are relevant for any permanent
+	Tapped bool
+	Auras  []*Card
+
+	// Creature-specific properties
+	Attacking   bool
+	Blocking    *Card
+	DamageOrder []*Card
+	Damage      int
+
+	// Auras, equipment, instants, and sorceries can have targets
+	Target *Card
+
+	// For creatures these are natural.
+	// For auras and equipment these indicate the boost the target gets.
+	BasePower     int
+	BaseToughness int
 }
 
 //go:generate stringer -type=CardName
@@ -24,6 +41,7 @@ type CardName int
 const (
 	Forest CardName = iota
 	GrizzlyBears
+	Rancor
 )
 
 const CARD_HEIGHT = 5
@@ -43,10 +61,19 @@ func newCardHelper(name CardName) *Card {
 		}
 	case GrizzlyBears:
 		return &Card{
-			IsCreature: true,
-			Power:      2,
-			Toughness:  2,
+			IsCreature:    true,
+			BasePower:     2,
+			BaseToughness: 2,
+			ManaCost:      2,
 		}
+	case Rancor:
+		return &Card{
+			IsEnchantCreature: true,
+			BasePower:         2,
+			BaseToughness:     0,
+			ManaCost:          1,
+		}
+
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
 	}
@@ -155,4 +182,20 @@ func Min(x, y int) int {
         return x
     }
     return y
+}
+
+func (c *Card) Power() int {
+	answer := c.BasePower
+	for _, aura := range c.Auras {
+		answer += aura.BasePower
+	}
+	return answer
+}
+
+func (c *Card) Toughness() int {
+	answer := c.BaseToughness
+	for _, aura := range c.Auras {
+		answer += aura.BaseToughness
+	}
+	return answer
 }
