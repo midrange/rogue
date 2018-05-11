@@ -70,7 +70,7 @@ func (p *Player) SpendMana(amount int) {
 }
 
 func (p *Player) EndCombat() {
-	for _, card := range p.Hand {
+	for _, card := range p.Board {
 		card.Attacking = false
 	}
 }
