@@ -4,23 +4,33 @@ import (
 	"fmt"
 	"github.com/midrange/rogue/game"
 	"math/rand"
+	"time"
 )
 
 func main() {
-	playOutGameRandomly()
+	var i int
+	for start := time.Now(); time.Since(start) < time.Second; {
+		fmt.Println("game started")
+		playOutGameRandomly()
+		fmt.Println("game ended")
+	    i++
+	}
+
+	fmt.Println("played ", i, " games")
+
 }
 
 
 func playOutGameRandomly() {
-	fmt.Println("Playing out a game between two bots that move randomly.")
 	game := game.NewGame()
-
+	fmt.Println("game created")
 	for {
+		// fmt.Printf("M")
 		actions := game.Actions()
 		randomAction := actions[rand.Int() % len(actions)]
 		game.TakeAction(randomAction)
-		game.Print()
 		if game.IsOver() { break }
 	}
-	fmt.Println("Game over!")
+
 }
+
