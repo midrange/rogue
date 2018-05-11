@@ -75,7 +75,7 @@ func (g *Game) Defender() *Player {
 func (g *Game) HandleCombatDamage() {
 	for _, card := range g.Attacker().Board {
 		if card.Attacking {
-			damage := card.Power
+			damage := card.Power()
 			if damage < 0 {
 				damage = 0
 			}
@@ -86,7 +86,7 @@ func (g *Game) HandleCombatDamage() {
 					if damage == 0 {
 						break
 					}
-					remaining := blocker.Toughness - blocker.Damage
+					remaining := blocker.Toughness() - blocker.Damage
 					if remaining > damage {
 						blocker.Damage += damage
 						damage = 0

@@ -6,17 +6,31 @@ import (
 )
 
 type Card struct {
-	Name        CardName
-	IsLand      bool
-	IsCreature  bool
-	Power       int
-	Toughness   int
-	ManaCost    int
-	Tapped      bool
+	// Things that are relevant wherever the card is
+	Name       CardName
+	IsLand     bool
+	IsCreature bool
+	IsAura     bool
+	ManaCost   int
+	Owner      *Player
+
+	// Properties that are relevant for any permanent
+	Tapped bool
+	Auras  []*Card
+
+	// Creature-specific properties
 	Attacking   bool
 	Blocking    *Card
 	DamageOrder []*Card
 	Damage      int
+
+	// Auras, equipment, instants, and sorceries can have targets
+	Target *Card
+
+	// For creatures these are natural.
+	// For auras and equipment these indicate the boost the target gets.
+	BasePower     int
+	BaseToughness int
 }
 
 type CardName int
@@ -24,6 +38,7 @@ type CardName int
 const (
 	Forest CardName = iota
 	GrizzlyBears
+	Rancor
 )
 
 func NewCard(name CardName) *Card {
@@ -40,10 +55,17 @@ func newCardHelper(name CardName) *Card {
 		}
 	case GrizzlyBears:
 		return &Card{
-			IsCreature: true,
-			Power:      2,
-			Toughness:  2,
+			IsCreature:    true,
+			BasePower:     2,
+			BaseToughness: 2,
 		}
+	case Rancor:
+		return &Card{
+			IsAura:        true,
+			BasePower:     2,
+			BaseToughness: 0,
+		}
+
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
 	}
@@ -57,4 +79,20 @@ func RandomCard() *Card {
 	}
 	index := rand.Int() % len(names)
 	return NewCard(names[index])
+}
+
+func (c *Card) Power() int {
+	answer := c.BasePower
+	for _, aura := range c.Auras {
+		answer += aura.BasePower
+	}
+	return answer
+}
+
+func (c *Card) Toughness() int {
+	answer := c.BaseToughness
+	for _, aura := range c.Auras {
+		answer += aura.BaseToughness
+	}
+	return answer
 }

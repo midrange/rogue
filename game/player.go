@@ -12,16 +12,28 @@ type Player struct {
 }
 
 func NewPlayer(deck *Deck) *Player {
-	hand := []*Card{}
-	for i := 0; i < 7; i++ {
-		hand = append(hand, deck.Draw())
-	}
-	return &Player{
+	p := &Player{
 		Life:  20,
-		Hand:  hand,
+		Hand:  []*Card{},
 		Deck:  deck,
 		Board: []*Card{},
 	}
+	for i := 0; i < 7; i++ {
+		p.Draw()
+	}
+	return p
+}
+
+func (p *Player) Draw() {
+	p.AddToHand(p.Deck.Draw())
+}
+
+func (p *Player) AddToHand(c *Card) {
+	if c == nil {
+		return
+	}
+	c.Owner = p
+	p.Hand = append(p.Hand, c)
 }
 
 func (p *Player) AvailableMana() int {
@@ -32,13 +44,6 @@ func (p *Player) AvailableMana() int {
 		}
 	}
 	return answer
-}
-
-func (p *Player) Draw() {
-	card := p.Deck.Draw()
-	if card != nil {
-		p.Hand = append(p.Hand, card)
-	}
 }
 
 func (p *Player) Untap() {
@@ -91,6 +96,16 @@ func (p *Player) RemoveFromBoard(c *Card) {
 		}
 	}
 	p.Board = newBoard
+
+	if c.Name == Rancor {
+		p.AddToHand(NewCard(Rancor))
+	} else {
+		// If we had a graveyard we would put the card in the graveyard here
+	}
+
+	for _, aura := range c.Auras {
+		p.RemoveFromBoard(aura)
+	}
 }
 
 // Possible actions when we can play a card from hand, including passing.
