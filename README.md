@@ -12,4 +12,13 @@ From the `rogue` directory:
 go install ./... && play
 ```
 
-You should see it print out something like, "Played out 28903 games in 1 second"
+You should see it print out something like:
+
+```
+ ~~~~~~ Welcome to Rogue ~~~~~~
+
+1) Human vs AI
+2) AI vs AI
+
+Enter a number:
+```
