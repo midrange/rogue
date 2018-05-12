@@ -33,6 +33,7 @@ type Card struct {
 	// For auras and equipment these indicate the boost the target gets.
 	BasePower     int
 	BaseToughness int
+	BaseTrample   bool
 }
 
 //go:generate stringer -type=CardName
@@ -198,4 +199,15 @@ func (c *Card) CanAttack() bool {
 		return false
 	}
 	return true
+
+func (c *Card) Trample() bool {
+	if c.BaseTrample {
+		return true
+	}
+	for _, aura := range c.Auras {
+		if aura.BaseTrample {
+			return true
+		}
+	}
+	return false
 }

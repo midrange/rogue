@@ -122,7 +122,9 @@ func (g *Game) HandleCombatDamage() {
 						damage -= remaining
 					}
 				}
-			} else {
+			}
+
+			if len(card.DamageOrder) == 0 || card.Trample() {
 				// Deal damage to the defending player
 				g.Defender().Life -= damage
 			}
