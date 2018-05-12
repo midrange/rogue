@@ -192,3 +192,10 @@ func (c *Card) Toughness() int {
 	}
 	return answer
 }
+
+func (c *Card) CanAttack() bool {
+	if c.Tapped || !c.IsCreature || c.Power() == 0 {
+		return false
+	}
+	return true
+}

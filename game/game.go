@@ -60,7 +60,11 @@ func (g *Game) Actions() []*Action {
 	switch g.Phase {
 
 	case Main1:
-		fallthrough
+		actions := g.Priority.PlayActions(true)
+		if g.canAttack() {
+			actions = append(actions, &Action{Type: DeclareAttack})
+		}
+		return actions
 	case Main2:
 		return g.Priority.PlayActions(true)
 
@@ -81,6 +85,18 @@ func (g *Game) Attacker() *Player {
 
 func (g *Game) Defender() *Player {
 	return g.Attacker().Opponent
+}
+
+func (g *Game) canAttack() bool {
+	if g.Phase != Main1 {
+		return false
+	}
+	for _, card := range g.Priority.Board {
+		if card.CanAttack() {
+			return true
+		}
+	}
+	return false
 }
 
 func (g *Game) HandleCombatDamage() {
@@ -152,21 +168,30 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
-
-	if action.Type == Pass {
+	if action.Type == PassPriority {
 		g.NextPhase()
+		return
+	}
+
+	if action.Type == PassTurn {
+		g.PassTurn()
 		return
 	}
 
 	switch g.Phase {
 
 	case Main1:
+		if action.Type == DeclareAttack {
+			g.NextPhase()
+			break
+		}
 		fallthrough
 	case Main2:
-		if action.Type != Play {
-			panic("expected a play or a pass during main phase")
+		if action.Type == Play {
+			g.Priority.Play(action.Card)
+		} else {
+			panic("expected a play, declare attack, or pass during main phase")
 		}
-		g.Priority.Play(action.Card)
 
 	case DeclareAttackers:
 		if action.Type != Attack {
@@ -220,15 +245,15 @@ func printMiddleLine(gameWidth int) {
 }
 
 // Pass makes the active player pass, whichever player has priority
-func (g *Game) Pass() {
-	g.TakeAction(&Action{Type: Pass})
+func (g *Game) PassPriority() {
+	g.TakeAction(&Action{Type: PassPriority})
 }
 
 // PassUntilPhase makes both players pass until the game is in the provided phase,
 // or until the game is over.
 func (g *Game) PassUntilPhase(p Phase) {
 	for g.Phase != p && !g.IsOver() {
-		g.Pass()
+		g.PassPriority()
 	}
 }
 
@@ -236,6 +261,6 @@ func (g *Game) PassUntilPhase(p Phase) {
 func (g *Game) PassTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
-		g.Pass()
+		g.PassPriority()
 	}
 }

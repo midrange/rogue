@@ -37,9 +37,13 @@ func playHumanVsComputer() {
 	for {
 		actions := newGame.Actions()
 		if newGame.Attacker() == newGame.Players[0] {
-			// get a human move
-			newGame.Print()
-			promptForAction(newGame, actions)
+			if len(actions) == 1 {
+				newGame.TakeAction(actions[0])
+			} else {
+				// get a human move
+				newGame.Print()
+				promptForAction(newGame, actions)
+			}
 		} else {
 			// get a computer move
 			randomAction := actions[rand.Int()%len(actions)]

@@ -34,7 +34,7 @@ func (p *Player) Draw() {
 }
 
 func (p *Player) AddToHand(c *Card) {
-	// TODO this seems like suspicious code, why would a card be nil here?
+	// a card would be nil here if you attempted to start a game with less than 7 cards in your deck
 	if c == nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (p *Player) AddToHand(c *Card) {
 func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
-		if card.IsLand && card.Tapped == false {
+		if card.IsLand && !card.Tapped {
 			answer += 1
 		}
 	}
@@ -131,7 +131,13 @@ func (p *Player) RemoveFromBoard(c *Card) {
 // Possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	cardNames := make(map[CardName]bool)
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{}
+	if allowSorcerySpeed {
+		answer = append(answer, &Action{Type: PassTurn})
+	} else {
+		answer = append(answer, &Action{Type: PassPriority})
+	}
+
 	mana := p.AvailableMana()
 	for _, card := range p.Hand {
 		// Don't re-check playing duplicate cards
@@ -163,7 +169,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 
 // Possible actions when we are announcing attacks, including passing.
 func (p *Player) AttackActions() []*Action {
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{&Action{Type: PassPriority}}
 	for _, card := range p.Board {
 		if card.IsCreature && !card.Attacking {
 			answer = append(answer, &Action{Type: Attack, Card: card})
@@ -173,7 +179,7 @@ func (p *Player) AttackActions() []*Action {
 }
 
 func (p *Player) BlockActions() []*Action {
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{&Action{Type: PassPriority}}
 	attackers := []*Card{}
 	for _, card := range p.Opponent.Board {
 		if card.Attacking {
