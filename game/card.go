@@ -44,6 +44,7 @@ const (
 	Forest CardName = iota
 	GrizzlyBears
 	Rancor
+	NettleSentinel
 )
 
 const CARD_HEIGHT = 5
@@ -67,6 +68,13 @@ func newCardHelper(name CardName) *Card {
 			BasePower:     2,
 			BaseToughness: 2,
 			ManaCost:      2,
+		}
+	case NettleSentinel:
+		return &Card{
+			IsCreature:    true,
+			BasePower:     2,
+			BaseToughness: 2,
+			ManaCost:      1,
 		}
 	case Rancor:
 		return &Card{
@@ -212,4 +220,16 @@ func (c *Card) Trample() bool {
 		}
 	}
 	return false
+}
+
+func (c *Card) RespondToUntapPhase() {
+	if c.Name != NettleSentinel {
+		c.Tapped = false
+	}
+}
+
+func (c *Card) RespondToSpell(spell *Card) {
+	if c.Name == NettleSentinel {
+		c.Tapped = false
+	}
 }

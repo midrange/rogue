@@ -161,6 +161,7 @@ func (g *Game) NextPhase() {
 		}
 		g.Phase = Main1
 		g.Turn++
+		g.Priority.Untap()
 		g.Priority = g.Priority.Opponent
 		g.Priority.Draw()
 	}

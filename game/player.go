@@ -55,7 +55,7 @@ func (p *Player) AvailableMana() int {
 func (p *Player) Untap() {
 	p.LandPlayedThisTurn = 0
 	for _, card := range p.Board {
-		card.Tapped = false
+		card.RespondToUntapPhase()
 	}
 }
 
@@ -91,9 +91,6 @@ func (p *Player) EndCombat() {
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
-		if card.IsLand && p.Game.Priority != p {
-			card.Tapped = false
-		}
 	}
 	p.LandPlayedThisTurn = 0
 }
@@ -214,6 +211,13 @@ func (p *Player) Play(card *Card) {
 	if card.IsCreature {
 		p.SpendMana(card.ManaCost)
 	}
+
+	for _, permanent := range p.Board {
+		if !card.IsLand {
+			permanent.RespondToSpell(card)
+		}
+	}
+
 	p.Board = append(p.Board, card)
 	p.Hand = newHand
 }
