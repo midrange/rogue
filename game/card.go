@@ -17,8 +17,9 @@ type Card struct {
 	Owner             *Player
 
 	// Properties that are relevant for any permanent
-	Tapped bool
-	Auras  []*Card
+	Auras      []*Card
+	Tapped     bool
+	TurnPlayed int
 
 	// Creature-specific properties
 	Attacking   bool
@@ -194,11 +195,12 @@ func (c *Card) Toughness() int {
 	return answer
 }
 
-func (c *Card) CanAttack() bool {
-	if c.Tapped || !c.IsCreature || c.Power() == 0 {
+func (c *Card) CanAttack(g *Game) bool {
+	if c.Tapped || !c.IsCreature || c.Power() == 0 || c.TurnPlayed == g.Turn {
 		return false
 	}
 	return true
+}
 
 func (c *Card) Trample() bool {
 	if c.BaseTrample {

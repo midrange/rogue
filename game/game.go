@@ -92,7 +92,7 @@ func (g *Game) canAttack() bool {
 		return false
 	}
 	for _, card := range g.Priority.Board {
-		if card.CanAttack() {
+		if card.CanAttack(g) {
 			return true
 		}
 	}

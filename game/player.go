@@ -207,6 +207,7 @@ func (p *Player) Play(card *Card) {
 			newHand = append(newHand, c)
 		}
 	}
+	card.TurnPlayed = p.Game.Turn
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
