@@ -207,9 +207,7 @@ func (p *Player) Play(card *Card) {
 	if card.IsCreature {
 		p.SpendMana(card.ManaCost)
 	}
-	// fmt.Println("Board was , ", p.Board, " on turn ", p.Game.Turn)
 	p.Board = append(p.Board, card)
-	// fmt.Println("Board now , ", p.Board)
 	p.Hand = newHand
 }
 
