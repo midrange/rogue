@@ -90,13 +90,8 @@ func RandomCard() *Card {
 	return NewCard(names[index])
 }
 
-func (c *Card) Print() {
-	for _, arrayLine := range c.AsciiImage(false) {
-		for _, char := range arrayLine {
-			fmt.Printf(char)
-		}
-		fmt.Printf("%v", "\n")
-	}
+func (c *Card) String() string {
+	return fmt.Sprintf("%v (%v) %v/%v", c.Name, c.ManaCost, c.Power(), c.Toughness())
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
@@ -105,10 +100,10 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 	imageGrid := [cardHeight][cardWidth]string{}
 	for y := 0; y < cardHeight; y++ {
 		for x := 0; x < cardWidth; x++ {
-			if x == 0 || x == cardWidth-1 {
-				imageGrid[y][x] = string('|')
-			} else if y == 0 || y == cardHeight-1 {
+			if y == 0 || y == cardHeight-1 {
 				imageGrid[y][x] = string('-')
+			} else if x == 0 || x == cardWidth-1 {
+				imageGrid[y][x] = string('|')
 			} else {
 				imageGrid[y][x] = string(' ')
 			}
@@ -151,7 +146,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if c.IsCreature {
 			initialIndex := 2
 			statsRow := 3
-			statsString := fmt.Sprintf("%v/%v", c.Power, c.Toughness)
+			statsString := fmt.Sprintf("%v/%v", c.Power(), c.Toughness())
 			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
@@ -198,6 +193,12 @@ func (c *Card) Toughness() int {
 	}
 	return answer
 }
+
+func (c *Card) CanAttack() bool {
+	if c.Tapped || !c.IsCreature || c.Power() == 0 {
+		return false
+	}
+	return true
 
 func (c *Card) Trample() bool {
 	if c.BaseTrample {

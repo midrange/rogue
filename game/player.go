@@ -29,10 +29,12 @@ func NewPlayer(deck *Deck) *Player {
 }
 
 func (p *Player) Draw() {
-	p.AddToHand(p.Deck.Draw())
+	card := p.Deck.Draw()
+	p.AddToHand(card)
 }
 
 func (p *Player) AddToHand(c *Card) {
+	// a card would be nil here if you attempted to start a game with less than 7 cards in your deck
 	if c == nil {
 		return
 	}
@@ -43,7 +45,7 @@ func (p *Player) AddToHand(c *Card) {
 func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
-		if card.IsLand {
+		if card.IsLand && !card.Tapped {
 			answer += 1
 		}
 	}
@@ -89,7 +91,11 @@ func (p *Player) EndCombat() {
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
+		if card.IsLand && p.Game.Priority != p {
+			card.Tapped = false
+		}
 	}
+	p.LandPlayedThisTurn = 0
 }
 
 func (p *Player) Creatures() []*Card {
@@ -125,7 +131,13 @@ func (p *Player) RemoveFromBoard(c *Card) {
 // Possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	cardNames := make(map[CardName]bool)
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{}
+	if allowSorcerySpeed {
+		answer = append(answer, &Action{Type: PassTurn})
+	} else {
+		answer = append(answer, &Action{Type: PassPriority})
+	}
+
 	mana := p.AvailableMana()
 	for _, card := range p.Hand {
 		// Don't re-check playing duplicate cards
@@ -157,7 +169,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 
 // Possible actions when we are announcing attacks, including passing.
 func (p *Player) AttackActions() []*Action {
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{&Action{Type: PassPriority}}
 	for _, card := range p.Board {
 		if card.IsCreature && !card.Attacking {
 			answer = append(answer, &Action{Type: Attack, Card: card})
@@ -167,7 +179,7 @@ func (p *Player) AttackActions() []*Action {
 }
 
 func (p *Player) BlockActions() []*Action {
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{&Action{Type: PassPriority}}
 	attackers := []*Card{}
 	for _, card := range p.Opponent.Board {
 		if card.Attacking {
@@ -175,7 +187,7 @@ func (p *Player) BlockActions() []*Action {
 		}
 	}
 	for _, card := range p.Board {
-		if card.Blocking == nil && !card.Tapped {
+		if card.Blocking == nil && !card.Tapped && card.IsCreature {
 			for _, attacker := range attackers {
 				answer = append(answer, &Action{
 					Type:   Block,
@@ -202,32 +214,31 @@ func (p *Player) Play(card *Card) {
 		p.SpendMana(card.ManaCost)
 	}
 	p.Board = append(p.Board, card)
+	p.Hand = newHand
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	if position == 0 {
-		PrintRow(p.Board, gameWidth)
-		PrintRow(p.Hand, gameWidth)
-		p.PrintName(position, gameWidth)
-		fmt.Println("")
+		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.Hand, gameWidth)
+		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
 	} else {
-		p.PrintName(position, gameWidth)
-		fmt.Println("\n")
-		PrintRow(p.Hand, gameWidth)
-		PrintRow(p.Board, gameWidth)
+		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
+		PrintRowOfCards(p.Hand, gameWidth)
+		PrintRowOfCards(p.Board, gameWidth)
 	}
 }
 
-func (p *Player) PrintName(position int, gameWidth int) {
-	fmt.Println("")
-	playerString := fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+func (p *Player) AvatarString(position int, gameWidth int) string {
+	playerString := ""
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
-		fmt.Printf(" ")
+		playerString += " "
 	}
-	fmt.Printf(playerString)
+	playerString += fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+	return playerString
 }
 
-func PrintRow(cards []*Card, gameWidth int) {
+func PrintRowOfCards(cards []*Card, gameWidth int) {
 	asciiImages := [][CARD_HEIGHT][CARD_WIDTH]string{}
 	for _, card := range cards {
 		asciiImages = append(asciiImages, card.AsciiImage(false))
