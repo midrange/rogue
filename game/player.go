@@ -29,10 +29,12 @@ func NewPlayer(deck *Deck) *Player {
 }
 
 func (p *Player) Draw() {
-	p.AddToHand(p.Deck.Draw())
+	card := p.Deck.Draw()
+	p.AddToHand(card)
 }
 
 func (p *Player) AddToHand(c *Card) {
+	// TODO this seems like suspicious code, why would a card be nil here?
 	if c == nil {
 		return
 	}
@@ -43,7 +45,7 @@ func (p *Player) AddToHand(c *Card) {
 func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
-		if card.IsLand {
+		if card.IsLand && card.Tapped == false {
 			answer += 1
 		}
 	}
@@ -89,7 +91,11 @@ func (p *Player) EndCombat() {
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
+		if card.IsLand && p.Game.Priority != p {
+			card.Tapped = false
+		}
 	}
+	p.LandPlayedThisTurn = 0
 }
 
 func (p *Player) Creatures() []*Card {
@@ -175,7 +181,7 @@ func (p *Player) BlockActions() []*Action {
 		}
 	}
 	for _, card := range p.Board {
-		if card.Blocking == nil && !card.Tapped {
+		if card.Blocking == nil && !card.Tapped && card.IsCreature {
 			for _, attacker := range attackers {
 				answer = append(answer, &Action{
 					Type:   Block,
@@ -201,33 +207,34 @@ func (p *Player) Play(card *Card) {
 	if card.IsCreature {
 		p.SpendMana(card.ManaCost)
 	}
+	// fmt.Println("Board was , ", p.Board, " on turn ", p.Game.Turn)
 	p.Board = append(p.Board, card)
+	// fmt.Println("Board now , ", p.Board)
+	p.Hand = newHand
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	if position == 0 {
-		PrintRow(p.Board, gameWidth)
-		PrintRow(p.Hand, gameWidth)
-		p.PrintName(position, gameWidth)
-		fmt.Println("")
+		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.Hand, gameWidth)
+		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
 	} else {
-		p.PrintName(position, gameWidth)
-		fmt.Println("\n")
-		PrintRow(p.Hand, gameWidth)
-		PrintRow(p.Board, gameWidth)
+		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
+		PrintRowOfCards(p.Hand, gameWidth)
+		PrintRowOfCards(p.Board, gameWidth)
 	}
 }
 
-func (p *Player) PrintName(position int, gameWidth int) {
-	fmt.Println("")
-	playerString := fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+func (p *Player) AvatarString(position int, gameWidth int) string {
+	playerString := ""
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
-		fmt.Printf(" ")
+		playerString += " "
 	}
-	fmt.Printf(playerString)
+	playerString += fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+	return playerString
 }
 
-func PrintRow(cards []*Card, gameWidth int) {
+func PrintRowOfCards(cards []*Card, gameWidth int) {
 	asciiImages := [][CARD_HEIGHT][CARD_WIDTH]string{}
 	for _, card := range cards {
 		asciiImages = append(asciiImages, card.AsciiImage(false))

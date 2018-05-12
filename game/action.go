@@ -25,11 +25,11 @@ func (a *Action) String() string {
 	case Pass:
 		return "pass"
 	case Play:
-		return fmt.Sprintf("play %s", a.Card)
+		return fmt.Sprintf("play %v", a.Card.String())
 	case Attack:
-		return fmt.Sprintf("attack with %s", a.Card)
+		return fmt.Sprintf("attack with %v", a.Card.String())
 	case Block:
-		return fmt.Sprintf("%s blocks %s", a.Card, a.Target)
+		return fmt.Sprintf("%v blocks %v", a.Card.String(), a.Target.String())
 	}
 	panic("control should not reach here")
 }

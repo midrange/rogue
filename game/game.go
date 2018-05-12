@@ -27,6 +27,7 @@ type Phase int
 // For example, declaring attackers is a step within the combat phase in the official
 // rules. Here it is just treated as another Phase.
 
+//go:generate stringer -type=Phase
 const (
 	Main1 Phase = iota
 	DeclareAttackers
@@ -137,6 +138,9 @@ func (g *Game) NextPhase() {
 		g.Priority = g.Attacker()
 	case Main2:
 		// End the turn
+		for _, p := range g.Players {
+			p.EndTurn()
+		}
 		g.Phase = Main1
 		g.Turn++
 		g.Priority = g.Priority.Opponent

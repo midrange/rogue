@@ -6,6 +6,7 @@ import (
 	"github.com/midrange/rogue/game"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -24,15 +25,48 @@ func main() {
 func showWelcomePrompt() string {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\n ~~~~~~ Welcome to Rogue ~~~~~~\n")
-	fmt.Println("1) Play")
-	fmt.Println("2) Watch Computers Play")
+	fmt.Println("1) Human vs AI")
+	fmt.Println("2) AI vs AI")
 	fmt.Print("\nEnter a number: ")
 	text, _ := reader.ReadString('\n')
 	return strings.TrimSpace(text)
 }
 
 func playHumanVsComputer() {
+	newGame := game.NewGame(game.Stompy(), game.Stompy())
+	for {
+		actions := newGame.Actions()
+		if newGame.Attacker() == newGame.Players[0] {
+			// get a human move
+			newGame.Print()
+			promptForAction(newGame, actions)
+		} else {
+			// get a computer move
+			randomAction := actions[rand.Int()%len(actions)]
+			fmt.Printf("## Phase %v\n", newGame.Phase)
+			fmt.Printf("Computer played %v\n", randomAction.String())
+			newGame.TakeAction(randomAction)
+		}
+		if newGame.IsOver() {
+			break
+		}
+	}
+}
 
+func promptForAction(newGame *game.Game, actions []*game.Action) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("## Phase %v\n", newGame.Phase)
+	for index, action := range actions {
+		fmt.Printf("%v) %v\n", index, action.String())
+	}
+	fmt.Print("\nEnter a number: ")
+	text, _ := reader.ReadString('\n')
+	int_choice, err := strconv.Atoi(strings.TrimSpace(text))
+	if err == nil && int_choice >= 0 && int_choice < len(actions) {
+		newGame.TakeAction(actions[int_choice])
+	} else {
+		promptForAction(newGame, actions)
+	}
 }
 
 func playComputerVsComputer() {
@@ -42,7 +76,6 @@ func playComputerVsComputer() {
 		i++
 	}
 	fmt.Printf("Played out %v games in 1 second\n", i)
-
 }
 
 func playOutGameRandomly() {
