@@ -68,12 +68,13 @@ func (g *Game) Actions() []*Action {
 		actions = g.Priority.PlayActions(true)
 		break
 	case DeclareAttackers:
-		actions = g.Priority.AttackActions()
-		break
+		attacks := g.Priority.AttackActions()
+		return append(attacks, g.Priority.PassAction())
 
 	case DeclareBlockers:
-		actions = g.Priority.BlockActions()
-		break
+		blocks := g.Priority.BlockActions()
+		return append(blocks, g.Priority.PassAction())
+
 	default:
 		panic("unhandled phase")
 	}
@@ -101,18 +102,19 @@ func (g *Game) canAttack() bool {
 }
 
 func (g *Game) HandleCombatDamage() {
-	for _, card := range g.Attacker().Board {
-		if card.Attacking {
-			damage := card.Power()
+	for _, attacker := range g.Attacker().Board {
+		if attacker.Attacking {
+			damage := attacker.Power()
 			if damage < 0 {
 				damage = 0
 			}
 
-			if len(card.DamageOrder) > 0 {
+			if len(attacker.DamageOrder) > 0 {
 				// Deal damage to blockers
-				for _, blocker := range card.DamageOrder {
+				for _, blocker := range attacker.DamageOrder {
+					attacker.Damage += blocker.Power()
 					if damage == 0 {
-						break
+						continue
 					}
 					remaining := blocker.Toughness() - blocker.Damage
 					if remaining > damage {
@@ -125,11 +127,14 @@ func (g *Game) HandleCombatDamage() {
 				}
 			}
 
-			if len(card.DamageOrder) == 0 || card.Trample() {
+			if len(attacker.DamageOrder) == 0 || attacker.Trample() {
 				// Deal damage to the defending player
 				g.Defender().Life -= damage
 			}
 
+			if attacker.Damage >= attacker.Toughness() {
+				g.Attacker().RemoveFromBoard(attacker)
+			}
 		}
 	}
 }
@@ -142,9 +147,7 @@ func (g *Game) Creatures() []*Card {
 	return answer
 }
 
-func (g *Game) NextPhase() {
-	g.Attacker().EndPhase()
-	g.Defender().EndPhase()
+func (g *Game) nextPhase() {
 	switch g.Phase {
 	case Main1:
 		g.Phase = DeclareAttackers
@@ -175,12 +178,12 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 	if action.Type == PassPriority {
-		g.NextPhase()
+		g.nextPhase()
 		return
 	}
 
 	if action.Type == PassTurn {
-		g.PassTurn()
+		g.passTurn()
 		return
 	}
 
@@ -193,7 +196,7 @@ func (g *Game) TakeAction(action *Action) {
 
 	case Main1:
 		if action.Type == DeclareAttack {
-			g.NextPhase()
+			g.nextPhase()
 			break
 		}
 		fallthrough
@@ -206,7 +209,7 @@ func (g *Game) TakeAction(action *Action) {
 
 	case DeclareAttackers:
 		if action.Type != Attack {
-			panic("expected an attack or a pass during DeclareAttack")
+			panic("expected an attack or a pass during DeclareAttackers")
 		}
 		action.Card.Attacking = true
 
@@ -256,22 +259,58 @@ func printMiddleLine(gameWidth int) {
 }
 
 // Pass makes the active player pass, whichever player has priority
-func (g *Game) PassPriority() {
+func (g *Game) passPriority() {
 	g.TakeAction(&Action{Type: PassPriority})
 }
 
-// PassUntilPhase makes both players pass until the game is in the provided phase,
+// passUntilPhase makes both players pass until the game is in the provided phase,
 // or until the game is over.
-func (g *Game) PassUntilPhase(p Phase) {
+func (g *Game) passUntilPhase(p Phase) {
 	for g.Phase != p && !g.IsOver() {
-		g.PassPriority()
+		g.passPriority()
 	}
 }
 
-// PassTurn makes both players pass until it is the next turn, or until the game is over
-func (g *Game) PassTurn() {
+// passTurn makes both players pass until it is the next turn, or until the game is over
+func (g *Game) passTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
-		g.PassPriority()
+		g.passPriority()
+	}
+}
+
+// playLand plays the first land it sees in the hand
+func (g *Game) playLand() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsLand {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playLand failed")
+}
+
+// playCreature plays the first creature it sees in the hand
+func (g *Game) playCreature() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsCreature {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playCreature failed")
+}
+
+// attackWithEveryone passes priority when it's done attacking
+func (g *Game) attackWithEveryone() {
+	for {
+		actions := g.Priority.AttackActions()
+		if len(actions) == 0 {
+			g.TakeAction(g.Priority.PassAction())
+			return
+		}
+		g.TakeAction(actions[0])
 	}
 }
