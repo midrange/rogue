@@ -102,18 +102,19 @@ func (g *Game) canAttack() bool {
 }
 
 func (g *Game) HandleCombatDamage() {
-	for _, card := range g.Attacker().Board {
-		if card.Attacking {
-			damage := card.Power()
+	for _, attacker := range g.Attacker().Board {
+		if attacker.Attacking {
+			damage := attacker.Power()
 			if damage < 0 {
 				damage = 0
 			}
 
-			if len(card.DamageOrder) > 0 {
+			if len(attacker.DamageOrder) > 0 {
 				// Deal damage to blockers
-				for _, blocker := range card.DamageOrder {
+				for _, blocker := range attacker.DamageOrder {
+					attacker.Damage += blocker.Power()
 					if damage == 0 {
-						break
+						continue
 					}
 					remaining := blocker.Toughness() - blocker.Damage
 					if remaining > damage {
@@ -126,11 +127,14 @@ func (g *Game) HandleCombatDamage() {
 				}
 			}
 
-			if len(card.DamageOrder) == 0 || card.Trample() {
+			if len(attacker.DamageOrder) == 0 || attacker.Trample() {
 				// Deal damage to the defending player
 				g.Defender().Life -= damage
 			}
 
+			if attacker.Damage >= attacker.Toughness() {
+				g.Attacker().RemoveFromBoard(attacker)
+			}
 		}
 	}
 }
@@ -200,7 +204,7 @@ func (g *Game) TakeAction(action *Action) {
 
 	case DeclareAttackers:
 		if action.Type != Attack {
-			panic("expected an attack or a pass during DeclareAttack")
+			panic("expected an attack or a pass during DeclareAttackers")
 		}
 		action.Card.Attacking = true
 

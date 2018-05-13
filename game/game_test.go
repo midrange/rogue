@@ -48,4 +48,28 @@ func TestTwoBearsFighting(t *testing.T) {
 	g.playCreature()
 	g.passTurn()
 
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	attackingBear := g.Attacker().GetCreature(GrizzlyBears)
+	if !attackingBear.Attacking {
+		t.Fatal("expected attacking bear to be attacking")
+	}
+	defendingBear := g.Defender().GetCreature(GrizzlyBears)
+	if defendingBear.Attacking {
+		t.Fatal("expected defending bear to not be attacking")
+	}
+	g.TakeAction(&Action{
+		Type:   Block,
+		Card:   defendingBear,
+		Target: attackingBear,
+	})
+	g.passUntilPhase(Main2)
+
+	if len(g.Attacker().Creatures()) != 0 {
+		t.Fatal("expected attacking bear to die")
+	}
+
+	if len(g.Defender().Creatures()) != 0 {
+		t.Fatal("expected defending bear to die")
+	}
 }
