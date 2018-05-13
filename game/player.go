@@ -7,6 +7,7 @@ import (
 
 type Player struct {
 	Life               int
+	ColorlessManaPool  int
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
@@ -90,7 +91,7 @@ func (p *Player) EndCombat() {
 }
 
 func (p *Player) EndPhase() {
-	p.colorlessManaPool = 0
+	p.ColorlessManaPool = 0
 }
 
 func (p *Player) EndTurn() {
@@ -98,6 +99,7 @@ func (p *Player) EndTurn() {
 		card.Damage = 0
 	}
 	p.LandPlayedThisTurn = 0
+	p.EndPhase()
 }
 
 func (p *Player) Creatures() []*Card {
@@ -171,10 +173,11 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 
 // Possible actions to generate mana.
 func (p *Player) ManaActions() []*Action {
-	actions = []*Action{}
+	actions := []*Action{}
 	for _, card := range p.Board {
 		actions = append(actions, card.ManaActions()...)
 	}
+	return actions
 }
 
 // Possible actions when we are announcing attacks, including passing.
@@ -189,7 +192,7 @@ func (p *Player) AttackActions() []*Action {
 	}
 	answer := []*Action{}
 	for _, card := range p.Board {
-		if card.IsCreature && !card.Attacking {
+		if card.IsCreature && !card.Attacking && !card.Tapped && card.TurnPlayed != p.Game.Turn {
 			answer = append(answer, &Action{Type: Attack, Card: card})
 		}
 	}
@@ -245,7 +248,7 @@ func (p *Player) Play(card *Card) {
 }
 
 func (p *Player) AddMana() {
-	p.colorlessManaPool += 1
+	p.ColorlessManaPool += 1
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
@@ -265,7 +268,7 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		playerString += " "
 	}
-	playerString += fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+	playerString += fmt.Sprintf("<Life: %v> Player %v <Mana: %v>", p.Life, position, p.ColorlessManaPool)
 	return playerString
 }
 
