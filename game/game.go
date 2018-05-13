@@ -57,26 +57,27 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 }
 
 func (g *Game) Actions() []*Action {
+	actions := []*Action{}
 	switch g.Phase {
-
 	case Main1:
 		actions := g.Priority.PlayActions(true)
 		if g.canAttack() {
 			actions = append(actions, &Action{Type: DeclareAttack})
 		}
-		return actions
 	case Main2:
-		return g.Priority.PlayActions(true)
-
+		actions = g.Priority.PlayActions(true)
+		break
 	case DeclareAttackers:
-		return g.Priority.AttackActions()
+		actions = g.Priority.AttackActions()
+		break
 
 	case DeclareBlockers:
-		return g.Priority.BlockActions()
-
+		actions = g.Priority.BlockActions()
+		break
 	default:
 		panic("unhandled phase")
 	}
+	return append(actions, g.Priority.ManaActions()...)
 }
 
 func (g *Game) Attacker() *Player {
@@ -142,6 +143,8 @@ func (g *Game) Creatures() []*Card {
 }
 
 func (g *Game) NextPhase() {
+	g.Attacker().EndPhase()
+	g.Defender().EndPhase()
 	switch g.Phase {
 	case Main1:
 		g.Phase = DeclareAttackers
@@ -178,6 +181,11 @@ func (g *Game) TakeAction(action *Action) {
 
 	if action.Type == PassTurn {
 		g.PassTurn()
+		return
+	}
+
+	if action.Type == UseForMana {
+		action.Card.UseForMana()
 		return
 	}
 

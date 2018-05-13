@@ -233,3 +233,10 @@ func (c *Card) RespondToSpell(spell *Card) {
 		c.Tapped = false
 	}
 }
+
+func (c *Card) ManaActions() []*Action {
+	if c.Name == Forest && !c.Tapped {
+		[]*Action{&Action{Type: UseForMana}}
+	}
+	return []*Action{}
+}

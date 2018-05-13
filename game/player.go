@@ -88,6 +88,10 @@ func (p *Player) EndCombat() {
 	}
 }
 
+func (p *Player) EndPhase() {
+	p.colorlessManaPool = 0
+}
+
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
@@ -164,6 +168,14 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	return answer
 }
 
+// Possible actions to generate mana.
+func (p *Player) ManaActions() []*Action {
+	actions = []*Action{}
+	for _, card := range p.Board {
+		actions = append(actions, card.ManaActions()...)
+	}
+}
+
 // Possible actions when we are announcing attacks, including passing.
 func (p *Player) AttackActions() []*Action {
 	answer := []*Action{&Action{Type: PassPriority}}
@@ -220,6 +232,10 @@ func (p *Player) Play(card *Card) {
 
 	p.Board = append(p.Board, card)
 	p.Hand = newHand
+}
+
+func (p *Player) AddMana() {
+	p.colorlessManaPool += 1
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
