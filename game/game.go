@@ -69,10 +69,12 @@ func (g *Game) Actions() []*Action {
 		return g.Priority.PlayActions(true)
 
 	case DeclareAttackers:
-		return g.Priority.AttackActions()
+		attacks := g.Priority.AttackActions()
+		return append(attacks, g.Priority.PassAction())
 
 	case DeclareBlockers:
-		return g.Priority.BlockActions()
+		blocks := g.Priority.BlockActions()
+		return append(blocks, g.Priority.PassAction())
 
 	default:
 		panic("unhandled phase")

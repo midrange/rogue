@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log"
 )
 
 type Player struct {
@@ -164,9 +165,16 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	return answer
 }
 
-// Possible actions when we are announcing attacks, including passing.
+func (p *Player) PassAction() *Action {
+	return &Action{Type: PassPriority}
+}
+
+// Returns the possible actions of type 'Attack'.
 func (p *Player) AttackActions() []*Action {
-	answer := []*Action{&Action{Type: PassPriority}}
+	if p.Game.Phase != DeclareAttackers {
+		log.Fatalf("do not call AttackActions in phase %s", p.Game.Phase)
+	}
+	answer := []*Action{}
 	for _, card := range p.Board {
 		if card.IsCreature && !card.Attacking {
 			answer = append(answer, &Action{Type: Attack, Card: card})
@@ -175,8 +183,9 @@ func (p *Player) AttackActions() []*Action {
 	return answer
 }
 
+// Returns the possible actions of type 'Block'.
 func (p *Player) BlockActions() []*Action {
-	answer := []*Action{&Action{Type: PassPriority}}
+	answer := []*Action{}
 	attackers := []*Card{}
 	for _, card := range p.Opponent.Board {
 		if card.Attacking {

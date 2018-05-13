@@ -30,3 +30,9 @@ func TestDecking(t *testing.T) {
 		t.Fatalf("the player on the draw should have lost by decking")
 	}
 }
+
+func TestFighting(t *testing.T) {
+	NewGame(topBear(), topBear())
+
+	// TODO: have two bears fight
+}
