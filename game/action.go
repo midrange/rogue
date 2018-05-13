@@ -16,6 +16,7 @@ const (
 	PassPriority ActionType = iota
 	PassTurn
 	Play
+	PlayWithKicker
 	DeclareAttack
 	Attack
 	Block
@@ -30,7 +31,15 @@ func (a *Action) String() string {
 	case PassTurn:
 		return "pass turn"
 	case Play:
-		return fmt.Sprintf("play %v", a.Card.String())
+		if a.Target == nil {
+			return fmt.Sprintf("play %v", a.Card.String())
+		}
+		return fmt.Sprintf("play %v on %v", a.Card.String(), a.Target.String())
+	case PlayWithKicker:
+		if a.Target == nil {
+			return fmt.Sprintf("play %v with kicker", a.Card.String())
+		}
+		return fmt.Sprintf("play %v on %v with kicker", a.Card.String(), a.Target.String())
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:
@@ -38,7 +47,7 @@ func (a *Action) String() string {
 	case Block:
 		return fmt.Sprintf("%v blocks %v", a.Card.String(), a.Target.String())
 	case UseForMana:
-		return fmt.Sprintf("Tap %v for mana", a.Card.String())
+		return fmt.Sprintf("tap %v for mana", a.Card.String())
 	}
 	panic("control should not reach here")
 }

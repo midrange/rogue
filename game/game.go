@@ -64,20 +64,17 @@ func (g *Game) Actions() []*Action {
 		if g.canAttack() {
 			actions = append(actions, &Action{Type: DeclareAttack})
 		}
-		break
+		return append(actions, g.Priority.ManaActions()...)
 	case Main2:
 		actions = g.Priority.PlayActions(true)
-		break
+		return append(actions, g.Priority.ManaActions()...)
 	case DeclareAttackers:
-		attacks := g.Priority.AttackActions()
-		return append(attacks, g.Priority.PassAction())
+		return append(g.Priority.AttackActions(), g.Priority.PassAction())
 	case DeclareBlockers:
-		blocks := g.Priority.BlockActions()
-		return append(blocks, g.Priority.PassAction())
+		return append(g.Priority.BlockActions(), g.Priority.PassAction())
 	default:
 		panic("unhandled phase")
 	}
-	return append(actions, g.Priority.ManaActions()...)
 }
 
 func (g *Game) Attacker() *Player {
@@ -201,7 +198,9 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Priority.Play(action.Card)
+			g.Priority.Play(action.Card, false)
+		} else if action.Type == PlayWithKicker {
+			g.Priority.Play(action.Card, true)
 		} else {
 			panic("expected a play, declare attack, or pass during main phase")
 		}

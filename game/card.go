@@ -13,11 +13,14 @@ type Card struct {
 	IsLand            bool
 	IsCreature        bool
 	IsEnchantCreature bool
+	IsInstant         bool
 	ManaCost          int
+	KickerCost        int
 	Owner             *Player
 
 	// Properties that are relevant for any permanent
 	Auras      []*Card
+	Effects    []*Effect
 	Tapped     bool
 	TurnPlayed int
 
@@ -31,7 +34,7 @@ type Card struct {
 	Target *Card
 
 	// For creatures these are natural.
-	// For auras and equipment these indicate the boost the target gets.
+	// For instants, auras, and equipment these indicate the boost the target gets.
 	BasePower     int
 	BaseToughness int
 	BaseTrample   bool
@@ -43,8 +46,9 @@ type CardName int
 const (
 	Forest CardName = iota
 	GrizzlyBears
-	Rancor
 	NettleSentinel
+	Rancor
+	VinesOfVastwood
 )
 
 const CARD_HEIGHT = 5
@@ -82,6 +86,12 @@ func newCardHelper(name CardName) *Card {
 			BasePower:         2,
 			BaseToughness:     0,
 			ManaCost:          1,
+		}
+	case VinesOfVastwood:
+		return &Card{
+			IsInstant:  true,
+			KickerCost: 2,
+			ManaCost:   1,
 		}
 
 	default:
@@ -165,6 +175,10 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
 
+		}
+
+		if !c.IsLand {
+			initialIndex := 2
 			ccRow := 1
 			ccString := fmt.Sprintf("%v", c.ManaCost)
 			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
@@ -197,6 +211,9 @@ func (c *Card) Power() int {
 	for _, aura := range c.Auras {
 		answer += aura.BasePower
 	}
+	for _, effect := range c.Effects {
+		answer += effect.BasePower
+	}
 	return answer
 }
 
@@ -204,6 +221,19 @@ func (c *Card) Toughness() int {
 	answer := c.BaseToughness
 	for _, aura := range c.Auras {
 		answer += aura.BaseToughness
+	}
+	for _, effect := range c.Effects {
+		answer += effect.BaseToughness
+	}
+	return answer
+}
+
+func (c *Card) Targetable() bool {
+	answer := true
+	for _, effect := range c.Effects {
+		if effect.Untargetable == true {
+			answer = false
+		}
 	}
 	return answer
 }
@@ -249,4 +279,14 @@ func (c *Card) ManaActions() []*Action {
 func (c *Card) UseForMana() {
 	c.Owner.AddMana()
 	c.Tapped = true
+}
+
+func (c *Card) DoEffect(kicker bool) {
+	if c.Name == VinesOfVastwood {
+		if kicker {
+			c.Target.Effects = append(c.Target.Effects, &Effect{Untargetable: true, BasePower: 4, BaseToughness: 4})
+		} else {
+			c.Target.Effects = append(c.Target.Effects, &Effect{Untargetable: true})
+		}
+	}
 }
