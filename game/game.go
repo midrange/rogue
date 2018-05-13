@@ -254,7 +254,7 @@ func (g *Game) passPriority() {
 	g.TakeAction(&Action{Type: PassPriority})
 }
 
-// PassUntilPhase makes both players pass until the game is in the provided phase,
+// passUntilPhase makes both players pass until the game is in the provided phase,
 // or until the game is over.
 func (g *Game) passUntilPhase(p Phase) {
 	for g.Phase != p && !g.IsOver() {
@@ -262,10 +262,46 @@ func (g *Game) passUntilPhase(p Phase) {
 	}
 }
 
-// PassTurn makes both players pass until it is the next turn, or until the game is over
+// passTurn makes both players pass until it is the next turn, or until the game is over
 func (g *Game) passTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
 		g.passPriority()
+	}
+}
+
+// playLand plays the first land it sees in the hand
+func (g *Game) playLand() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsLand {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playLand failed")
+}
+
+// playCreature plays the first creature it sees in the hand
+func (g *Game) playCreature() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsCreature {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playCreature failed")
+}
+
+// attackWithEveryone passes priority when it's done attacking
+func (g *Game) attackWithEveryone() {
+	for {
+		actions := g.Priority.AttackActions()
+		if len(actions) == 0 {
+			g.TakeAction(g.Priority.PassAction())
+			return
+		}
+		g.TakeAction(actions[0])
 	}
 }

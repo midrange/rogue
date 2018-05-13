@@ -270,3 +270,14 @@ func PrintRowOfCards(cards []*Card, gameWidth int) {
 		fmt.Printf("%v", "\n")
 	}
 }
+
+// GetCreature gets the first creature in play with the given name.
+// It returns nil if there is no such creature in play.
+func (p *Player) GetCreature(name CardName) *Card {
+	for _, card := range p.Board {
+		if card.Name == name {
+			return card
+		}
+	}
+	return nil
+}

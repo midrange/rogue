@@ -31,8 +31,21 @@ func TestDecking(t *testing.T) {
 	}
 }
 
-func TestFighting(t *testing.T) {
-	NewGame(topBear(), topBear())
+func TestTwoBearsFighting(t *testing.T) {
+	g := NewGame(topBear(), topBear())
 
-	// TODO: have two bears fight
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
 }
