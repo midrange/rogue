@@ -51,6 +51,7 @@ func (p *Player) AvailableMana() int {
 			answer += 1
 		}
 	}
+	answer += p.ColorlessManaPool
 	return answer
 }
 
@@ -68,6 +69,14 @@ func (p *Player) Lost() bool {
 // Automatically spends the given amount of mana.
 // Panics if we do not have that much.
 func (p *Player) SpendMana(amount int) {
+	if p.ColorlessManaPool >= amount {
+		p.ColorlessManaPool -= amount
+		return
+	} else {
+		amount -= p.ColorlessManaPool
+		p.ColorlessManaPool = 0
+
+	}
 	for _, card := range p.Board {
 		if amount == 0 {
 			return
