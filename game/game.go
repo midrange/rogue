@@ -143,7 +143,7 @@ func (g *Game) Creatures() []*Card {
 	return answer
 }
 
-func (g *Game) NextPhase() {
+func (g *Game) nextPhase() {
 	switch g.Phase {
 	case Main1:
 		g.Phase = DeclareAttackers
@@ -174,12 +174,12 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 	if action.Type == PassPriority {
-		g.NextPhase()
+		g.nextPhase()
 		return
 	}
 
 	if action.Type == PassTurn {
-		g.PassTurn()
+		g.passTurn()
 		return
 	}
 
@@ -187,7 +187,7 @@ func (g *Game) TakeAction(action *Action) {
 
 	case Main1:
 		if action.Type == DeclareAttack {
-			g.NextPhase()
+			g.nextPhase()
 			break
 		}
 		fallthrough
@@ -250,22 +250,22 @@ func printMiddleLine(gameWidth int) {
 }
 
 // Pass makes the active player pass, whichever player has priority
-func (g *Game) PassPriority() {
+func (g *Game) passPriority() {
 	g.TakeAction(&Action{Type: PassPriority})
 }
 
 // PassUntilPhase makes both players pass until the game is in the provided phase,
 // or until the game is over.
-func (g *Game) PassUntilPhase(p Phase) {
+func (g *Game) passUntilPhase(p Phase) {
 	for g.Phase != p && !g.IsOver() {
-		g.PassPriority()
+		g.passPriority()
 	}
 }
 
 // PassTurn makes both players pass until it is the next turn, or until the game is over
-func (g *Game) PassTurn() {
+func (g *Game) passTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
-		g.PassPriority()
+		g.passPriority()
 	}
 }

@@ -17,15 +17,15 @@ func TestDecking(t *testing.T) {
 
 	// When each player passes the turn 53 times, both decks should be out of cards
 	for i := 0; i < 53; i++ {
-		g.PassTurn()
-		g.PassTurn()
+		g.passTurn()
+		g.passTurn()
 	}
 
 	if g.IsOver() {
 		t.Fatalf("game was unexpectedly over")
 	}
 
-	g.PassTurn()
+	g.passTurn()
 	if !g.Players[1].Lost() {
 		t.Fatalf("the player on the draw should have lost by decking")
 	}
