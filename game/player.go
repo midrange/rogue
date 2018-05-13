@@ -141,7 +141,7 @@ func (p *Player) RemoveFromBoard(c *Card) {
 	}
 }
 
-// Possible actions when we can play a card from hand, including passing.
+// Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	cardNames := make(map[CardName]bool)
 	answer := []*Action{}
@@ -180,7 +180,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	return answer
 }
 
-// Possible actions to generate mana.
+// Returns possible actions to generate mana.
 func (p *Player) ManaActions() []*Action {
 	actions := []*Action{}
 	for _, card := range p.Board {
@@ -189,7 +189,7 @@ func (p *Player) ManaActions() []*Action {
 	return actions
 }
 
-// Possible actions when we are announcing attacks, including passing.
+// Returns just the pass action,
 func (p *Player) PassAction() *Action {
 	return &Action{Type: PassPriority}
 }
