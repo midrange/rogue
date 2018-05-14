@@ -302,6 +302,30 @@ func (g *Game) playCreature() {
 	panic("playCreature failed")
 }
 
+// playInstant plays the first instant it sees in the hand
+func (g *Game) playInstant() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsInstant && a.Type == Play {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playInstant failed")
+}
+
+// playKickedInstant kicks the first kickable instant it sees in the hand
+func (g *Game) playKickedInstant() {
+	for _, a := range g.Priority.PlayActions(true) {
+		if a.Card != nil && a.Card.IsInstant && a.Type == PlayWithKicker {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playKickedInstant failed")
+}
+
 // attackWithEveryone passes priority when it's done attacking
 func (g *Game) attackWithEveryone() {
 	for {

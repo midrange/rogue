@@ -12,6 +12,14 @@ func topBear() *Deck {
 	return deck
 }
 
+// A deck stacked with a NettleSentinel and two VinesOfVastwood on top and all the rest forests
+func topNettleVines() *Deck {
+	deck := NewEmptyDeck()
+	deck.Add(2, VinesOfVastwood)
+	deck.Add(1, NettleSentinel)
+	deck.Add(57, Forest)
+	return deck
+}
 func TestDecking(t *testing.T) {
 	g := NewGame(topBear(), topBear())
 
@@ -71,5 +79,49 @@ func TestTwoBearsFighting(t *testing.T) {
 
 	if len(g.Defender().Creatures()) != 0 {
 		t.Fatal("expected defending bear to die")
+	}
+}
+
+func TestVinesOfVastwoodBuff(t *testing.T) {
+	g := NewGame(topNettleVines(), topBear())
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playKickedInstant()
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(Main2)
+
+	if g.Defender().Life != 14 {
+		t.Fatal("expected defender life total to be 14")
+	}
+}
+
+func TestVinesOfVastwoodUntargetable(t *testing.T) {
+	g := NewGame(topNettleVines(), topBear())
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playInstant()
+
+	actions := g.Actions()
+
+	for _, action := range actions {
+		if action.Type == Play {
+			t.Fatal("expected no legal Plays for the 2nd Vines of Vastwood")
+		}
+
 	}
 }
