@@ -27,7 +27,6 @@ type Phase int
 // For example, declaring attackers is a step within the combat phase in the official
 // rules. Here it is just treated as another Phase.
 
-//go:generate stringer -type=Phase
 const (
 	Main1 Phase = iota
 	DeclareAttackers
@@ -255,6 +254,16 @@ func printMiddleLine(gameWidth int) {
 		fmt.Printf("_")
 	}
 	fmt.Printf("%v", "\n\n\n")
+}
+
+// 0 or 1 depending on who has priority
+func (g *Game) PriorityIndex() int {
+	for i, player := range g.Players {
+		if player == g.Priority {
+			return i
+		}
+	}
+	panic("game is corrupted")
 }
 
 // Pass makes the active player pass, whichever player has priority

@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/midrange/rogue/game"
 	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/midrange/rogue/game"
 )
 
 func main() {
@@ -33,43 +33,8 @@ func showWelcomePrompt() string {
 }
 
 func playHumanVsComputer() {
-	newGame := game.NewGame(game.Stompy(), game.Stompy())
-	for {
-		actions := newGame.Actions()
-		if newGame.Attacker() == newGame.Players[0] {
-			if len(actions) == 1 {
-				newGame.TakeAction(actions[0])
-			} else {
-				// get a human move
-				newGame.Print()
-				promptForAction(newGame, actions)
-			}
-		} else {
-			// get a computer move
-			randomAction := actions[rand.Int()%len(actions)]
-			fmt.Printf("Computer %v\n", randomAction.String())
-			newGame.TakeAction(randomAction)
-		}
-		if newGame.IsOver() {
-			break
-		}
-	}
-}
-
-func promptForAction(newGame *game.Game, actions []*game.Action) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("\n## Turn %v | %v\n", newGame.Turn, newGame.Phase)
-	for index, action := range actions {
-		fmt.Printf("%v) %v\n", index, action.String())
-	}
-	fmt.Print("\nEnter a number: ")
-	text, _ := reader.ReadString('\n')
-	int_choice, err := strconv.Atoi(strings.TrimSpace(text))
-	if err == nil && int_choice >= 0 && int_choice < len(actions) {
-		newGame.TakeAction(actions[int_choice])
-	} else {
-		promptForAction(newGame, actions)
-	}
+	g := game.NewGame(game.Stompy(), game.Stompy())
+	game.PlayGame(g, &game.Human{}, &game.RandomBot{})
 }
 
 func playComputerVsComputer() {
