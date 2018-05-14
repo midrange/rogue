@@ -10,7 +10,8 @@ import (
 type Card struct {
 	// Things that are relevant wherever the card is
 	AddsTemporaryEffect bool
-	HasMorbidEffect     bool
+	HasMorbid           bool
+	HasKicker           bool
 	IsLand              bool
 	IsCreature          bool
 	IsEnchantCreature   bool
@@ -140,6 +141,7 @@ func newCardHelper(name CardName) *Card {
 	case VinesOfVastwood:
 		return &Card{
 			AddsTemporaryEffect: true,
+			HasKicker:           true,
 			IsInstant:           true,
 			ManaCost:            1,
 			Modifier: &Modifier{
@@ -157,7 +159,7 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
-			HasMorbidEffect:   true,
+			HasMorbid:         true,
 			IsInstant:         true,
 			PowerCounters:     1,
 			ToughnessCounters: 1,
@@ -375,7 +377,7 @@ func (c *Card) DoEffect(action *Action) {
 	// note that Counters and Morbid Counters are additive
 	action.Target.PowerCounters += c.PowerCounters
 	action.Target.ToughnessCounters += c.ToughnessCounters
-	if c.HasMorbidEffect && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
+	if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
 		action.Target.PowerCounters += c.Morbid.PowerCounters
 		action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
 	}

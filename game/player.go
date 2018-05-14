@@ -213,7 +213,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && card.HasKicker && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
 					if target.Targetable(card) {
