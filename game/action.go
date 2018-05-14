@@ -13,8 +13,7 @@ type Action struct {
 type ActionType int
 
 const (
-	PassPriority ActionType = iota
-	PassTurn
+	Pass ActionType = iota
 	Play
 	DeclareAttack
 	Attack
@@ -25,10 +24,8 @@ const (
 // For debugging and logging. Don't use this in the critical path.
 func (a *Action) String() string {
 	switch a.Type {
-	case PassPriority:
-		return "pass priority"
-	case PassTurn:
-		return "pass turn"
+	case Pass:
+		return "pass"
 	case Play:
 		return fmt.Sprintf("play %v", a.Card.String())
 	case DeclareAttack:

@@ -175,13 +175,8 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
-	if action.Type == PassPriority {
+	if action.Type == Pass {
 		g.nextPhase()
-		return
-	}
-
-	if action.Type == PassTurn {
-		g.passTurn()
 		return
 	}
 
@@ -268,15 +263,15 @@ func (g *Game) PriorityIndex() int {
 }
 
 // Pass makes the active player pass, whichever player has priority
-func (g *Game) passPriority() {
-	g.TakeAction(&Action{Type: PassPriority})
+func (g *Game) pass() {
+	g.TakeAction(&Action{Type: Pass})
 }
 
 // passUntilPhase makes both players pass until the game is in the provided phase,
 // or until the game is over.
 func (g *Game) passUntilPhase(p Phase) {
 	for g.Phase != p && !g.IsOver() {
-		g.passPriority()
+		g.pass()
 	}
 }
 
@@ -284,7 +279,7 @@ func (g *Game) passUntilPhase(p Phase) {
 func (g *Game) passTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
-		g.passPriority()
+		g.pass()
 	}
 }
 

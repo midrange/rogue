@@ -36,7 +36,6 @@ func (p *Player) Draw() {
 }
 
 func (p *Player) AddToHand(c *Card) {
-	// a card would be nil here if you attempted to start a game with less than 7 cards in your deck
 	if c == nil {
 		return
 	}
@@ -144,12 +143,7 @@ func (p *Player) RemoveFromBoard(c *Card) {
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	cardNames := make(map[CardName]bool)
-	answer := []*Action{}
-	if allowSorcerySpeed {
-		answer = append(answer, &Action{Type: PassTurn})
-	} else {
-		answer = append(answer, &Action{Type: PassPriority})
-	}
+	answer := []*Action{&Action{Type: Pass}}
 
 	mana := p.AvailableMana()
 	for _, card := range p.Hand {
@@ -191,7 +185,7 @@ func (p *Player) ManaActions() []*Action {
 
 // Returns just the pass action,
 func (p *Player) PassAction() *Action {
-	return &Action{Type: PassPriority}
+	return &Action{Type: Pass}
 }
 
 // Returns the possible actions of type 'Attack'.
