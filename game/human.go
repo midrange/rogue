@@ -57,13 +57,16 @@ func promptForTargetAndMana(game *Game, action *Action) *Action {
 		})
 	}
 	mana := action.Card.Owner.AvailableMana()
-	if action.Card.KickerCost > 0 && action.Card.KickerCost <= mana {
-		for _, target := range game.Creatures() {
-			actions = append(actions, &Action{
-				Type:   PlayWithKicker,
-				Card:   action.Card,
-				Target: target,
-			})
+	if action.Card.IsInstant && action.Card.Kicker.Cost > 0 && mana >= action.Card.Kicker.Cost && action.Card.HasLegalTarget(action.Card.Owner.Game) {
+		for _, target := range action.Card.Owner.Game.Creatures() {
+			if target.Targetable(action.Card) {
+				actions = append(actions, &Action{
+					Type:       Play,
+					Card:       action.Card,
+					WithKicker: true,
+					Target:     target,
+				})
+			}
 		}
 	}
 

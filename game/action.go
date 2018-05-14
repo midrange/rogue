@@ -5,9 +5,10 @@ import (
 )
 
 type Action struct {
-	Type   ActionType
-	Card   *Card
-	Target *Card
+	Type       ActionType
+	Card       *Card
+	Target     *Card
+	WithKicker bool
 }
 
 type ActionType int
@@ -16,7 +17,6 @@ const (
 	PassPriority ActionType = iota
 	PassTurn
 	Play
-	PlayWithKicker
 	DeclareAttack
 	Attack
 	Block
@@ -41,6 +41,12 @@ func (a *Action) String() string {
 	case ChooseTargetAndMana:
 		fallthrough
 	case Play:
+		if a.WithKicker {
+			if a.Target == nil {
+				return fmt.Sprintf("%v: %v with kicker", a.Card.Kicker.Cost, a.Card.String())
+			}
+			return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.Kicker.Cost, a.Card.String(), a.pronoun(), a.Target.String())
+		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%v", a.Card.String())
 		}
@@ -48,11 +54,6 @@ func (a *Action) String() string {
 			return fmt.Sprintf("%v: %v", a.Card.ManaCost, a.Card.String())
 		}
 		return fmt.Sprintf("%v: %v on %v %v", a.Card.ManaCost, a.Card.String(), a.pronoun(), a.Target.String())
-	case PlayWithKicker:
-		if a.Target == nil {
-			return fmt.Sprintf("%v: %v with kicker", a.Card.KickerCost, a.Card.String())
-		}
-		return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.KickerCost, a.Card.String(), a.pronoun(), a.Target.String())
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:

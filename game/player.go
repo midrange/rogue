@@ -8,6 +8,7 @@ import (
 type Player struct {
 	Life               int
 	ColorlessManaPool  int
+	CreatureDied       bool
 	DamageThisTurn     int
 	Hand               []*Card
 	Board              []*Card
@@ -111,6 +112,7 @@ func (p *Player) EndTurn() {
 	}
 	p.LandPlayedThisTurn = 0
 	p.DamageThisTurn = 0
+	p.CreatureDied = false
 	p.EndPhase()
 }
 
@@ -136,6 +138,10 @@ func (p *Player) RemoveFromBoard(c *Card) {
 	if c.Name == Rancor {
 		p.AddToHand(NewCard(Rancor))
 	} else {
+		c.Damage = 0
+		c.PowerCounters = 0
+		c.ToughnessCounters = 0
+		p.CreatureDied = true
 		// If we had a graveyard we would put the card in the graveyard here
 	}
 
@@ -207,14 +213,15 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
 					if target.Targetable(card) {
 						answer = append(answer, &Action{
-							Type:   PlayWithKicker,
-							Card:   card,
-							Target: target,
+							Type:       Play,
+							Card:       card,
+							WithKicker: true,
+							Target:     target,
 						})
 					}
 				}
@@ -277,7 +284,7 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) Play(action *Action, kicker bool) {
+func (p *Player) Play(action *Action) {
 	card := action.Card
 	newHand := []*Card{}
 	for _, c := range p.Hand {
@@ -290,8 +297,8 @@ func (p *Player) Play(action *Action, kicker bool) {
 		p.LandPlayedThisTurn++
 	}
 	if card.IsCreature || card.IsInstant {
-		if kicker {
-			p.SpendMana(card.KickerCost)
+		if action.WithKicker {
+			p.SpendMana(card.Kicker.Cost)
 		} else {
 			p.SpendMana(card.ManaCost)
 		}
@@ -301,7 +308,7 @@ func (p *Player) Play(action *Action, kicker bool) {
 	}
 
 	if card.IsInstant {
-		card.DoEffect(action, kicker)
+		card.DoEffect(action)
 		// TODO put instants and sorceries in graveyard (or exile)
 	} else {
 		// TODO allow for kicked creatures

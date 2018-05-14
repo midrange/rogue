@@ -197,9 +197,7 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Priority.Play(action, false)
-		} else if action.Type == PlayWithKicker {
-			g.Priority.Play(action, true)
+			g.Priority.Play(action)
 		} else {
 			panic("expected a play, declare attack, or pass during main phase")
 		}
@@ -326,7 +324,7 @@ func (g *Game) playInstant() {
 // playKickedInstant kicks the first kickable instant it sees in the hand
 func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority.PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsInstant && a.Type == PlayWithKicker {
+		if a.Card != nil && a.Card.IsInstant && a.WithKicker {
 			g.TakeAction(a)
 			return
 		}

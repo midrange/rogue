@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _CardName_name = "ForestGrizzlyBearsNettleSentinelRancorSilhanaLedgewalkerSkarrganPitskulkVinesOfVastwood"
+const _CardName_name = "ForestGrizzlyBearsHungerOfTheHowlpackNettleSentinelRancorSilhanaLedgewalkerSkarrganPitskulkVinesOfVastwood"
 
-var _CardName_index = [...]uint8{0, 6, 18, 32, 38, 56, 72, 87}
+var _CardName_index = [...]uint8{0, 6, 18, 37, 51, 57, 75, 91, 106}
 
 func (i CardName) String() string {
 	if i < 0 || i >= CardName(len(_CardName_index)-1) {

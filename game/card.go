@@ -9,14 +9,18 @@ import (
 
 type Card struct {
 	// Things that are relevant wherever the card is
-	Name              CardName
-	IsLand            bool
-	IsCreature        bool
-	IsEnchantCreature bool
-	IsInstant         bool
-	ManaCost          int
-	KickerCost        int
-	Owner             *Player
+	AddsTemporaryEffect bool
+	HasMorbidEffect     bool
+	IsLand              bool
+	IsCreature          bool
+	IsEnchantCreature   bool
+	IsInstant           bool
+	Kicker              *Modifier
+	ManaCost            int
+	Modifier            *Modifier // temporary Effect Modifiers for Power, Toughness, Untargetable, Hexproof
+	Morbid              *Modifier
+	Name                CardName
+	Owner               *Player
 
 	// Properties that are relevant for any permanent
 	Auras      []*Card
@@ -53,6 +57,7 @@ type CardName int
 const (
 	Forest CardName = iota
 	GrizzlyBears
+	HungerOfTheHowlpack
 	NettleSentinel
 	Rancor
 	SilhanaLedgewalker
@@ -83,6 +88,10 @@ func newCardHelper(name CardName) *Card {
 			ManaCost:      2,
 		}
 	case NettleSentinel:
+		/*
+			Nettle Sentinel doesn't untap during your untap step.
+			Whenever you cast a green spell, you may untap Nettle Sentinel.
+		*/
 		return &Card{
 			IsCreature:    true,
 			BasePower:     2,
@@ -130,9 +139,33 @@ func newCardHelper(name CardName) *Card {
 		}
 	case VinesOfVastwood:
 		return &Card{
-			IsInstant:  true,
-			KickerCost: 2,
-			ManaCost:   1,
+			AddsTemporaryEffect: true,
+			IsInstant:           true,
+			ManaCost:            1,
+			Modifier: &Modifier{
+				Untargetable: true,
+			},
+			Kicker: &Modifier{
+				Cost:      2,
+				Power:     4,
+				Toughness: 4,
+			},
+		}
+	case HungerOfTheHowlpack:
+		/*
+			Put a +1/+1 counter on target creature.
+			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
+		*/
+		return &Card{
+			HasMorbidEffect:   true,
+			IsInstant:         true,
+			PowerCounters:     1,
+			ToughnessCounters: 1,
+			ManaCost:          1,
+			Morbid: &Modifier{
+				PowerCounters:     2,
+				ToughnessCounters: 2,
+			},
 		}
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
@@ -252,7 +285,7 @@ func (c *Card) Power() int {
 		answer += aura.BasePower
 	}
 	for _, effect := range c.Effects {
-		answer += effect.Power
+		answer += effect.Card.Modifier.Power
 	}
 	return answer
 }
@@ -263,7 +296,7 @@ func (c *Card) Toughness() int {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.Effects {
-		answer += effect.Toughness
+		answer += effect.Card.Modifier.Toughness
 	}
 	return answer
 }
@@ -274,10 +307,10 @@ func (c *Card) Targetable(targetingSpell *Card) bool {
 		return false
 	}
 	for _, effect := range c.Effects {
-		if effect.Untargetable == true {
+		if effect.Card.Modifier.Untargetable == true {
 			return false
 		}
-		if targetingSpell.Owner != c.Owner && effect.Hexproof {
+		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof == true {
 			return false
 		}
 	}
@@ -327,13 +360,18 @@ func (c *Card) UseForMana() {
 	c.Tapped = true
 }
 
-func (c *Card) DoEffect(action *Action, kicker bool) {
-	if c.Name == VinesOfVastwood {
-		if kicker {
-			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Power: 4, Toughness: 4, Card: c})
-		} else {
-			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Card: c})
-		}
+// TODO MAKE THIS NOT NAME THE CARDS, JUST USE THE KEYWORDS
+
+func (c *Card) DoEffect(action *Action) {
+	if c.AddsTemporaryEffect {
+		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
+	}
+	// note that Counters and Morbid Counters are additive
+	action.Target.PowerCounters += c.PowerCounters
+	action.Target.ToughnessCounters += c.ToughnessCounters
+	if c.HasMorbidEffect && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
+		action.Target.PowerCounters += c.Morbid.PowerCounters
+		action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
 	}
 }
 
