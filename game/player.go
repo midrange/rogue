@@ -8,6 +8,8 @@ import (
 type Player struct {
 	Life               int
 	ColorlessManaPool  int
+	CreatureDied       bool
+	DamageThisTurn     int
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
@@ -105,8 +107,11 @@ func (p *Player) EndPhase() {
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
+		card.Effects = []*Effect{}
 	}
 	p.LandPlayedThisTurn = 0
+	p.DamageThisTurn = 0
+	p.CreatureDied = false
 	p.EndPhase()
 }
 
@@ -132,16 +137,21 @@ func (p *Player) RemoveFromBoard(c *Card) {
 	if c.Name == Rancor {
 		p.AddToHand(NewCard(Rancor))
 	} else {
+		c.Damage = 0
+		c.PowerCounters = 0
+		c.ToughnessCounters = 0
+		p.CreatureDied = true
 		// If we had a graveyard we would put the card in the graveyard here
 	}
 
+	c.Effects = []*Effect{}
 	for _, aura := range c.Auras {
 		p.RemoveFromBoard(aura)
 	}
 }
 
 // Returns possible actions when we can play a card from hand, including passing.
-func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
+func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
 	answer := []*Action{&Action{Type: Pass}}
 
@@ -160,13 +170,54 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 			if card.IsCreature && mana >= card.ManaCost {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.ManaCost {
-				for _, target := range p.Game.Creatures() {
+			if card.IsEnchantCreature && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
+				if forHuman {
 					answer = append(answer, &Action{
-						Type:   Play,
-						Card:   card,
-						Target: target,
+						Type: ChooseTargetAndMana,
+						Card: card,
 					})
+				} else {
+					for _, target := range p.Game.Creatures() {
+						answer = append(answer, &Action{
+							Type:   Play,
+							Card:   card,
+							Target: target,
+						})
+					}
+				}
+			}
+		}
+		// TODO - add player targets - this assumes all instants target creatures for now
+		if card.IsInstant && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
+			if forHuman {
+				answer = append(answer, &Action{
+					Type: ChooseTargetAndMana,
+					Card: card,
+				})
+			} else {
+				for _, target := range p.Game.Creatures() {
+					if target.Targetable(card) {
+						answer = append(answer, &Action{
+							Type:   Play,
+							Card:   card,
+							Target: target,
+						})
+					}
+				}
+			}
+		}
+		// TODO - can a card have a 0 kicker, do we need a nullable value here?
+		if card.IsInstant && card.HasKicker && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && card.HasLegalTarget(p.Game) {
+			if !forHuman {
+				for _, target := range p.Game.Creatures() {
+					if target.Targetable(card) {
+						answer = append(answer, &Action{
+							Type:       Play,
+							Card:       card,
+							WithKicker: true,
+							Target:     target,
+						})
+					}
 				}
 			}
 		}
@@ -214,18 +265,21 @@ func (p *Player) BlockActions() []*Action {
 	for _, card := range p.Board {
 		if card.Blocking == nil && !card.Tapped && card.IsCreature {
 			for _, attacker := range attackers {
-				answer = append(answer, &Action{
-					Type:   Block,
-					Card:   card,
-					Target: attacker,
-				})
+				if card.CanBlock(attacker) {
+					answer = append(answer, &Action{
+						Type:   Block,
+						Card:   card,
+						Target: attacker,
+					})
+				}
 			}
 		}
 	}
 	return answer
 }
 
-func (p *Player) Play(card *Card) {
+func (p *Player) Play(action *Action) {
+	card := action.Card
 	newHand := []*Card{}
 	for _, c := range p.Hand {
 		if c != card {
@@ -236,17 +290,29 @@ func (p *Player) Play(card *Card) {
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
-	if card.IsCreature {
-		p.SpendMana(card.ManaCost)
-	}
-
-	for _, permanent := range p.Board {
-		if !card.IsLand {
+	if card.IsCreature || card.IsInstant {
+		if action.WithKicker {
+			p.SpendMana(card.Kicker.Cost)
+		} else {
+			p.SpendMana(card.ManaCost)
+		}
+		for _, permanent := range p.Board {
 			permanent.RespondToSpell(card)
 		}
 	}
 
-	p.Board = append(p.Board, card)
+	if card.IsInstant {
+		card.DoEffect(action)
+		// TODO put instants and sorceries in graveyard (or exile)
+	} else {
+		// TODO allow for kicked creatures
+		p.Board = append(p.Board, card)
+		card.DoComesIntoPlayEffects()
+		if card.IsEnchantCreature {
+			action.Target.Auras = append(action.Target.Auras, card)
+		}
+	}
+
 	p.Hand = newHand
 }
 
@@ -256,14 +322,36 @@ func (p *Player) AddMana() {
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	if position == 0 {
-		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
+		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
 		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
 	} else {
 		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
-		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.Lands(), gameWidth)
+		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
 	}
+}
+
+func (p *Player) Lands() []*Card {
+	lands := []*Card{}
+	for _, card := range p.Board {
+		if card.IsLand {
+			lands = append(lands, card)
+		}
+	}
+	return lands
+}
+
+func (p *Player) NonLandPermanents() []*Card {
+	other := []*Card{}
+	for _, card := range p.Board {
+		if !card.IsLand && !card.IsEnchantCreature {
+			other = append(other, card)
+		}
+	}
+	return other
 }
 
 func (p *Player) AvatarString(position int, gameWidth int) string {
@@ -303,4 +391,9 @@ func (p *Player) GetCreature(name CardName) *Card {
 		}
 	}
 	return nil
+}
+
+func (p *Player) DealDamage(damage int) {
+	p.Life -= damage
+	p.DamageThisTurn += damage
 }
