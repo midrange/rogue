@@ -57,6 +57,7 @@ const CARD_WIDTH = 11
 func NewCard(name CardName) *Card {
 	card := newCardHelper(name)
 	card.Name = name
+	card.Auras = []*Card{}
 	card.Effects = []*Effect{}
 	return card
 }
@@ -114,9 +115,9 @@ func (c *Card) String() string {
 	if c.IsLand {
 		return fmt.Sprintf("%v", c.Name)
 	} else if c.IsCreature {
-		return fmt.Sprintf("%v (%v) %v/%v", c.Name, c.ManaCost, c.Power(), c.Toughness())
+		return fmt.Sprintf("%v (%v/%v)", c.Name, c.Power(), c.Toughness())
 	}
-	return fmt.Sprintf("%v (%v)", c.Name, c.ManaCost)
+	return fmt.Sprintf("%v", c.Name)
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {

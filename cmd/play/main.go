@@ -47,8 +47,7 @@ func playHumanVsComputer() {
 		} else {
 			// get a computer move
 			randomAction := actions[rand.Int()%len(actions)]
-			fmt.Printf("## Phase %v\n", newGame.Phase)
-			fmt.Printf("Computer played %v\n", randomAction.String())
+			fmt.Printf("Computer %v\n", randomAction.String())
 			newGame.TakeAction(randomAction)
 		}
 		if newGame.IsOver() {
@@ -59,7 +58,7 @@ func playHumanVsComputer() {
 
 func promptForAction(newGame *game.Game, actions []*game.Action) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("## Phase %v\n", newGame.Phase)
+	fmt.Printf("\n## Turn %v | %v\n", newGame.Turn, newGame.Phase)
 	for index, action := range actions {
 		fmt.Printf("%v) %v\n", index, action.String())
 	}

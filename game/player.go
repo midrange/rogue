@@ -264,29 +264,28 @@ func (p *Player) Play(action *Action, kicker bool) {
 	card.TurnPlayed = p.Game.Turn
 	if card.IsLand {
 		p.LandPlayedThisTurn++
-	}
-	if card.IsCreature || card.IsInstant {
+	} else {
 		if kicker {
 			p.SpendMana(card.KickerCost)
 		} else {
 			p.SpendMana(card.ManaCost)
 		}
-	}
-
-	for _, permanent := range p.Board {
-		if !card.IsLand {
+		for _, permanent := range p.Board {
 			permanent.RespondToSpell(card)
 		}
 	}
 
 	if card.IsInstant {
-		fmt.Println(kicker, " ", card)
 		card.DoEffect(action, kicker)
 		// TODO put instants and sorceries in graveyard (or exile)
 	} else {
 		// TODO allow for kicked creatures
 		p.Board = append(p.Board, card)
+		if card.IsEnchantCreature {
+			action.Target.Auras = append(action.Target.Auras, card)
+		}
 	}
+
 	p.Hand = newHand
 }
 
@@ -296,14 +295,36 @@ func (p *Player) AddMana() {
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	if position == 0 {
-		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
+		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
 		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
 	} else {
 		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
-		PrintRowOfCards(p.Board, gameWidth)
+		PrintRowOfCards(p.Lands(), gameWidth)
+		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
 	}
+}
+
+func (p *Player) Lands() []*Card {
+	lands := []*Card{}
+	for _, card := range p.Board {
+		if card.IsLand {
+			lands = append(lands, card)
+		}
+	}
+	return lands
+}
+
+func (p *Player) NonLandPermanents() []*Card {
+	other := []*Card{}
+	for _, card := range p.Board {
+		if !card.IsLand {
+			other = append(other, card)
+		}
+	}
+	return other
 }
 
 func (p *Player) AvatarString(position int, gameWidth int) string {
