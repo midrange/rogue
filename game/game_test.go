@@ -4,12 +4,24 @@ import (
 	"testing"
 )
 
-// A deck stacked with a bear on top and all the rest forests
-func topBear() *Deck {
+// A deck stacked with a certain card c on top and all the rest forests
+func deckWithTopAndForests(name CardName) *Deck {
 	deck := NewEmptyDeck()
-	deck.Add(1, GrizzlyBears)
+	deck.Add(1, name)
 	deck.Add(59, Forest)
 	return deck
+}
+
+func topBear() *Deck {
+	return deckWithTopAndForests(GrizzlyBears)
+}
+
+func topSilhana() *Deck {
+	return deckWithTopAndForests(SilhanaLedgewalker)
+}
+
+func topVines() *Deck {
+	return deckWithTopAndForests(VinesOfVastwood)
 }
 
 // A deck stacked with a NettleSentinel and two VinesOfVastwood on top and all the rest forests
@@ -124,4 +136,52 @@ func TestVinesOfVastwoodUntargetable(t *testing.T) {
 		}
 
 	}
+}
+
+func TestSilhanasDontMeet(t *testing.T) {
+	g := NewGame(topSilhana(), topSilhana())
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(DeclareBlockers)
+	if len(g.Actions(false)) > 1 {
+		t.Fatal("expected no legal blocks")
+	}
+}
+
+func TestSilhanaCantBeTargetted(t *testing.T) {
+	g := NewGame(topSilhana(), topVines())
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	for _, action := range g.Actions(false) {
+		if action.Type == Play {
+			t.Fatal("expected no legal targets")
+		}
+
+	}
+
 }

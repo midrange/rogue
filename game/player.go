@@ -194,7 +194,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				})
 			} else {
 				for _, target := range p.Game.Creatures() {
-					if target.Targetable() {
+					if target.Targetable(card) {
 						answer = append(answer, &Action{
 							Type:   Play,
 							Card:   card,
@@ -208,7 +208,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
-					if target.Targetable() {
+					if target.Targetable(card) {
 						answer = append(answer, &Action{
 							Type:   PlayWithKicker,
 							Card:   card,
@@ -262,11 +262,13 @@ func (p *Player) BlockActions() []*Action {
 	for _, card := range p.Board {
 		if card.Blocking == nil && !card.Tapped && card.IsCreature {
 			for _, attacker := range attackers {
-				answer = append(answer, &Action{
-					Type:   Block,
-					Card:   card,
-					Target: attacker,
-				})
+				if card.CanBlock(attacker) {
+					answer = append(answer, &Action{
+						Type:   Block,
+						Card:   card,
+						Target: attacker,
+					})
+				}
 			}
 		}
 	}

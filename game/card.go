@@ -19,10 +19,13 @@ type Card struct {
 	Owner             *Player
 
 	// Properties that are relevant for any permanent
-	Auras      []*Card
-	Effects    []*Effect
-	Tapped     bool
-	TurnPlayed int
+	Auras        []*Card
+	Effects      []*Effect
+	Flying       bool
+	GroundEvader bool // a fake keyword for Silhana Ledgewalker that faux flies
+	Hexproof     bool
+	Tapped       bool
+	TurnPlayed   int
 
 	// Creature-specific properties
 	Attacking   bool
@@ -34,7 +37,7 @@ type Card struct {
 	Target *Card
 
 	// For creatures these are natural.
-	// For instants, auras, and equipment these indicate the boost the target gets.
+	// For auras and equipment, these indicate the boost the target gets.
 	BasePower     int
 	BaseToughness int
 	BaseTrample   bool
@@ -48,6 +51,7 @@ const (
 	GrizzlyBears
 	NettleSentinel
 	Rancor
+	SilhanaLedgewalker
 	VinesOfVastwood
 )
 
@@ -80,6 +84,15 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness: 2,
 			ManaCost:      1,
 		}
+	case SilhanaLedgewalker:
+		return &Card{
+			IsCreature:    true,
+			BasePower:     1,
+			BaseToughness: 1,
+			ManaCost:      2,
+			Hexproof:      true,
+			GroundEvader:  true,
+		}
 	case Rancor:
 		return &Card{
 			IsEnchantCreature: true,
@@ -93,7 +106,6 @@ func newCardHelper(name CardName) *Card {
 			KickerCost: 2,
 			ManaCost:   1,
 		}
-
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
 	}
@@ -228,11 +240,17 @@ func (c *Card) Toughness() int {
 	return answer
 }
 
-func (c *Card) Targetable() bool {
+func (c *Card) Targetable(targetingSpell *Card) bool {
 	answer := true
+	if targetingSpell.Owner != c.Owner && c.Hexproof {
+		return false
+	}
 	for _, effect := range c.Effects {
 		if effect.Untargetable == true {
-			answer = false
+			return false
+		}
+		if targetingSpell.Owner != c.Owner && effect.Hexproof {
+			return false
 		}
 	}
 	return answer
@@ -293,9 +311,19 @@ func (c *Card) DoEffect(action *Action, kicker bool) {
 
 func (c *Card) HasLegalTarget(g *Game) bool {
 	for _, creature := range g.Creatures() {
-		if creature.Targetable() {
+		if creature.Targetable(c) {
 			return true
 		}
 	}
 	return false
+}
+
+func (c *Card) CanBlock(attacker *Card) bool {
+	if attacker.GroundEvader && !c.Flying {
+		return false
+	}
+	if attacker.Flying && !c.Flying {
+		return false
+	}
+	return true
 }
