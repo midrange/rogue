@@ -286,6 +286,9 @@ func (c *Card) Power() int {
 	}
 	for _, effect := range c.Effects {
 		answer += effect.Card.Modifier.Power
+		if effect.Action.WithKicker {
+			answer += effect.Card.Kicker.Power
+		}
 	}
 	return answer
 }
@@ -297,6 +300,9 @@ func (c *Card) Toughness() int {
 	}
 	for _, effect := range c.Effects {
 		answer += effect.Card.Modifier.Toughness
+		if effect.Action.WithKicker {
+			answer += effect.Card.Kicker.Toughness
+		}
 	}
 	return answer
 }
