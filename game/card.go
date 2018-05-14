@@ -57,6 +57,7 @@ const CARD_WIDTH = 11
 func NewCard(name CardName) *Card {
 	card := newCardHelper(name)
 	card.Name = name
+	card.Effects = []*Effect{}
 	return card
 }
 
@@ -281,12 +282,14 @@ func (c *Card) UseForMana() {
 	c.Tapped = true
 }
 
-func (c *Card) DoEffect(kicker bool) {
+func (c *Card) DoEffect(action *Action, kicker bool) {
 	if c.Name == VinesOfVastwood {
 		if kicker {
-			c.Target.Effects = append(c.Target.Effects, &Effect{Untargetable: true, BasePower: 4, BaseToughness: 4})
+			fmt.Println("kicker")
+			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, BasePower: 4, BaseToughness: 4, Card: c})
+			fmt.Println("after kicker")
 		} else {
-			c.Target.Effects = append(c.Target.Effects, &Effect{Untargetable: true})
+			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Card: c})
 		}
 	}
 }

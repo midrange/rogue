@@ -198,9 +198,9 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Priority.Play(action.Card, false)
+			g.Priority.Play(action, false)
 		} else if action.Type == PlayWithKicker {
-			g.Priority.Play(action.Card, true)
+			g.Priority.Play(action, true)
 		} else {
 			panic("expected a play, declare attack, or pass during main phase")
 		}

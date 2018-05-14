@@ -177,26 +177,25 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 					})
 				}
 			}
-		} else {
-			// TODO - add player targets - this assumes all instants target creatures for now
-			if card.IsInstant && mana >= card.ManaCost {
-				for _, target := range p.Game.Creatures() {
-					answer = append(answer, &Action{
-						Type:   Play,
-						Card:   card,
-						Target: target,
-					})
-				}
+		}
+		// TODO - add player targets - this assumes all instants target creatures for now
+		if card.IsInstant && mana >= card.ManaCost {
+			for _, target := range p.Game.Creatures() {
+				answer = append(answer, &Action{
+					Type:   Play,
+					Card:   card,
+					Target: target,
+				})
 			}
-			// TODO - can a card have a 0 kicker, do we need a nullable value here?
-			if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost {
-				for _, target := range p.Game.Creatures() {
-					answer = append(answer, &Action{
-						Type:   PlayWithKicker,
-						Card:   card,
-						Target: target,
-					})
-				}
+		}
+		// TODO - can a card have a 0 kicker, do we need a nullable value here?
+		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost {
+			for _, target := range p.Game.Creatures() {
+				answer = append(answer, &Action{
+					Type:   PlayWithKicker,
+					Card:   card,
+					Target: target,
+				})
 			}
 		}
 	}
@@ -254,7 +253,8 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) Play(card *Card, kicker bool) {
+func (p *Player) Play(action *Action, kicker bool) {
+	card := action.Card
 	newHand := []*Card{}
 	for _, c := range p.Hand {
 		if c != card {
@@ -280,7 +280,8 @@ func (p *Player) Play(card *Card, kicker bool) {
 	}
 
 	if card.IsInstant {
-		card.DoEffect(kicker)
+		fmt.Println(kicker, " ", card)
+		card.DoEffect(action, kicker)
 		// TODO put instants and sorceries in graveyard (or exile)
 	} else {
 		// TODO allow for kicked creatures
