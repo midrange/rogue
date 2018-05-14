@@ -21,6 +21,7 @@ const (
 	Attack
 	Block
 	UseForMana
+	ChooseTargetAndMana
 )
 
 func (a *Action) pronoun() string {
@@ -37,6 +38,8 @@ func (a *Action) String() string {
 		return "pass priority"
 	case PassTurn:
 		return "pass turn"
+	case ChooseTargetAndMana:
+		fallthrough
 	case Play:
 		if a.Card.IsLand {
 			return fmt.Sprintf("%v", a.Card.String())

@@ -50,7 +50,7 @@ func playOutGameRandomly() {
 	game := game.NewGame(game.Stompy(), game.Stompy())
 
 	for {
-		actions := game.Actions()
+		actions := game.Actions(false)
 		randomAction := actions[rand.Int()%len(actions)]
 		game.TakeAction(randomAction)
 		if game.IsOver() {
