@@ -106,6 +106,7 @@ func (p *Player) EndPhase() {
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
+		card.Effects = []*Effect{}
 	}
 	p.LandPlayedThisTurn = 0
 	p.EndPhase()
@@ -136,6 +137,7 @@ func (p *Player) RemoveFromBoard(c *Card) {
 		// If we had a graveyard we would put the card in the graveyard here
 	}
 
+	c.Effects = []*Effect{}
 	for _, aura := range c.Auras {
 		p.RemoveFromBoard(aura)
 	}
@@ -168,8 +170,34 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 			}
 			if card.IsEnchantCreature && mana >= card.ManaCost {
 				for _, target := range p.Game.Creatures() {
+					if target.Targetable() {
+						answer = append(answer, &Action{
+							Type:   Play,
+							Card:   card,
+							Target: target,
+						})
+					}
+				}
+			}
+		}
+		// TODO - add player targets - this assumes all instants target creatures for now
+		if card.IsInstant && mana >= card.ManaCost {
+			for _, target := range p.Game.Creatures() {
+				if target.Targetable() {
 					answer = append(answer, &Action{
 						Type:   Play,
+						Card:   card,
+						Target: target,
+					})
+				}
+			}
+		}
+		// TODO - can a card have a 0 kicker, do we need a nullable value here?
+		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost {
+			for _, target := range p.Game.Creatures() {
+				if target.Targetable() {
+					answer = append(answer, &Action{
+						Type:   PlayWithKicker,
 						Card:   card,
 						Target: target,
 					})
@@ -231,7 +259,8 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) Play(card *Card) {
+func (p *Player) Play(action *Action, kicker bool) {
+	card := action.Card
 	newHand := []*Card{}
 	for _, c := range p.Hand {
 		if c != card {
@@ -242,8 +271,12 @@ func (p *Player) Play(card *Card) {
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
-	if card.IsCreature {
-		p.SpendMana(card.ManaCost)
+	if card.IsCreature || card.IsInstant {
+		if kicker {
+			p.SpendMana(card.KickerCost)
+		} else {
+			p.SpendMana(card.ManaCost)
+		}
 	}
 
 	for _, permanent := range p.Board {
@@ -252,7 +285,14 @@ func (p *Player) Play(card *Card) {
 		}
 	}
 
-	p.Board = append(p.Board, card)
+	if card.IsInstant {
+		fmt.Println(kicker, " ", card)
+		card.DoEffect(action, kicker)
+		// TODO put instants and sorceries in graveyard (or exile)
+	} else {
+		// TODO allow for kicked creatures
+		p.Board = append(p.Board, card)
+	}
 	p.Hand = newHand
 }
 
