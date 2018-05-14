@@ -7,6 +7,7 @@ import (
 
 type Player struct {
 	Life               int
+	ColorlessManaPool  int
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
@@ -50,6 +51,7 @@ func (p *Player) AvailableMana() int {
 			answer += 1
 		}
 	}
+	answer += p.ColorlessManaPool
 	return answer
 }
 
@@ -67,6 +69,14 @@ func (p *Player) Lost() bool {
 // Automatically spends the given amount of mana.
 // Panics if we do not have that much.
 func (p *Player) SpendMana(amount int) {
+	if p.ColorlessManaPool >= amount {
+		p.ColorlessManaPool -= amount
+		return
+	} else {
+		amount -= p.ColorlessManaPool
+		p.ColorlessManaPool = 0
+
+	}
 	for _, card := range p.Board {
 		if amount == 0 {
 			return
@@ -89,11 +99,16 @@ func (p *Player) EndCombat() {
 	}
 }
 
+func (p *Player) EndPhase() {
+	p.ColorlessManaPool = 0
+}
+
 func (p *Player) EndTurn() {
 	for _, card := range p.Board {
 		card.Damage = 0
 	}
 	p.LandPlayedThisTurn = 0
+	p.EndPhase()
 }
 
 func (p *Player) Creatures() []*Card {
@@ -126,7 +141,7 @@ func (p *Player) RemoveFromBoard(c *Card) {
 	}
 }
 
-// Possible actions when we can play a card from hand, including passing.
+// Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	cardNames := make(map[CardName]bool)
 	answer := []*Action{}
@@ -165,6 +180,16 @@ func (p *Player) PlayActions(allowSorcerySpeed bool) []*Action {
 	return answer
 }
 
+// Returns possible actions to generate mana.
+func (p *Player) ManaActions() []*Action {
+	actions := []*Action{}
+	for _, card := range p.Board {
+		actions = append(actions, card.ManaActions()...)
+	}
+	return actions
+}
+
+// Returns just the pass action,
 func (p *Player) PassAction() *Action {
 	return &Action{Type: PassPriority}
 }
@@ -176,7 +201,7 @@ func (p *Player) AttackActions() []*Action {
 	}
 	answer := []*Action{}
 	for _, card := range p.Board {
-		if card.IsCreature && !card.Attacking {
+		if card.IsCreature && !card.Attacking && !card.Tapped && card.TurnPlayed != p.Game.Turn {
 			answer = append(answer, &Action{Type: Attack, Card: card})
 		}
 	}
@@ -231,6 +256,10 @@ func (p *Player) Play(card *Card) {
 	p.Hand = newHand
 }
 
+func (p *Player) AddMana() {
+	p.ColorlessManaPool += 1
+}
+
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 	if position == 0 {
 		PrintRowOfCards(p.Board, gameWidth)
@@ -248,7 +277,7 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		playerString += " "
 	}
-	playerString += fmt.Sprintf("Player %v <Life: %v>", position, p.Life)
+	playerString += fmt.Sprintf("<Life: %v> Player %v <Mana: %v>", p.Life, position, p.ColorlessManaPool)
 	return playerString
 }
 

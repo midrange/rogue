@@ -57,28 +57,27 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 }
 
 func (g *Game) Actions() []*Action {
+	actions := []*Action{}
 	switch g.Phase {
-
 	case Main1:
-		actions := g.Priority.PlayActions(true)
+		actions = append(actions, g.Priority.PlayActions(true)...)
 		if g.canAttack() {
 			actions = append(actions, &Action{Type: DeclareAttack})
 		}
-		return actions
+		break
 	case Main2:
-		return g.Priority.PlayActions(true)
-
+		actions = g.Priority.PlayActions(true)
+		break
 	case DeclareAttackers:
 		attacks := g.Priority.AttackActions()
 		return append(attacks, g.Priority.PassAction())
-
 	case DeclareBlockers:
 		blocks := g.Priority.BlockActions()
 		return append(blocks, g.Priority.PassAction())
-
 	default:
 		panic("unhandled phase")
 	}
+	return append(actions, g.Priority.ManaActions()...)
 }
 
 func (g *Game) Attacker() *Player {
@@ -187,6 +186,11 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 
+	if action.Type == UseForMana {
+		action.Card.UseForMana()
+		return
+	}
+
 	switch g.Phase {
 
 	case Main1:
@@ -207,6 +211,7 @@ func (g *Game) TakeAction(action *Action) {
 			panic("expected an attack or a pass during DeclareAttackers")
 		}
 		action.Card.Attacking = true
+		action.Card.Tapped = true
 
 	case DeclareBlockers:
 		if action.Type != Block {

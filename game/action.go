@@ -19,6 +19,7 @@ const (
 	DeclareAttack
 	Attack
 	Block
+	UseForMana
 )
 
 // For debugging and logging. Don't use this in the critical path.
@@ -36,6 +37,8 @@ func (a *Action) String() string {
 		return fmt.Sprintf("attack with %v", a.Card.String())
 	case Block:
 		return fmt.Sprintf("%v blocks %v", a.Card.String(), a.Target.String())
+	case UseForMana:
+		return fmt.Sprintf("Tap %v for mana", a.Card.String())
 	}
 	panic("control should not reach here")
 }

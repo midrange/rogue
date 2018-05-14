@@ -100,7 +100,12 @@ func RandomCard() *Card {
 }
 
 func (c *Card) String() string {
-	return fmt.Sprintf("%v (%v) %v/%v", c.Name, c.ManaCost, c.Power(), c.Toughness())
+	if c.IsLand {
+		return fmt.Sprintf("%v", c.Name)
+	} else if c.IsCreature {
+		return fmt.Sprintf("%v (%v) %v/%v", c.Name, c.ManaCost, c.Power(), c.Toughness())
+	}
+	return fmt.Sprintf("%v (%v)", c.Name, c.ManaCost)
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
@@ -232,4 +237,16 @@ func (c *Card) RespondToSpell(spell *Card) {
 	if c.Name == NettleSentinel {
 		c.Tapped = false
 	}
+}
+
+func (c *Card) ManaActions() []*Action {
+	if c.Name == Forest && !c.Tapped {
+		return []*Action{&Action{Type: UseForMana, Card: c}}
+	}
+	return []*Action{}
+}
+
+func (c *Card) UseForMana() {
+	c.Owner.AddMana()
+	c.Tapped = true
 }
