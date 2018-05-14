@@ -22,7 +22,7 @@ func (b *RandomBot) String() string {
 }
 
 func (b *RandomBot) Action(g *Game) *Action {
-	actions := g.Actions()
+	actions := g.Actions(false)
 	return actions[rand.Int()%len(actions)]
 }
 

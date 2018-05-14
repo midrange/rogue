@@ -16,7 +16,7 @@ func (h *Human) String() string {
 }
 
 func (h *Human) Action(g *Game) *Action {
-	actions := g.Actions()
+	actions := g.Actions(true)
 	if len(actions) == 1 {
 		return actions[0]
 	}
@@ -30,6 +30,45 @@ func promptForAction(game *Game, actions []*Action) *Action {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Printf("## Phase: %s\n", game.Phase)
+		for index, action := range actions {
+			fmt.Printf("%d) %s\n", index+1, action)
+		}
+		fmt.Print("\nEnter a number: ")
+		text, _ := reader.ReadString('\n')
+		intChoice, err := strconv.Atoi(strings.TrimSpace(text))
+		intChoice--
+		if err == nil && intChoice >= 0 && intChoice < len(actions) {
+			action := actions[intChoice]
+			if action.Type == ChooseTargetAndMana {
+				return promptForTargetAndMana(game, action)
+			}
+			return actions[intChoice]
+		}
+	}
+}
+
+func promptForTargetAndMana(game *Game, action *Action) *Action {
+	actions := []*Action{}
+	for _, target := range game.Creatures() {
+		actions = append(actions, &Action{
+			Type:   Play,
+			Card:   action.Card,
+			Target: target,
+		})
+	}
+	mana := action.Card.Owner.AvailableMana()
+	if action.Card.KickerCost > 0 && action.Card.KickerCost <= mana {
+		for _, target := range game.Creatures() {
+			actions = append(actions, &Action{
+				Type:   PlayWithKicker,
+				Card:   action.Card,
+				Target: target,
+			})
+		}
+	}
+
+	for {
+		reader := bufio.NewReader(os.Stdin)
 		for index, action := range actions {
 			fmt.Printf("%d) %s\n", index, action)
 		}

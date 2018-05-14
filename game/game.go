@@ -55,17 +55,17 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 	return g
 }
 
-func (g *Game) Actions() []*Action {
+func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
 	switch g.Phase {
 	case Main1:
-		actions = append(actions, g.Priority.PlayActions(true)...)
+		actions = append(actions, g.Priority.PlayActions(true, forHuman)...)
 		if g.canAttack() {
 			actions = append(actions, &Action{Type: DeclareAttack})
 		}
 		return append(actions, g.Priority.ManaActions()...)
 	case Main2:
-		actions = g.Priority.PlayActions(true)
+		actions = g.Priority.PlayActions(true, forHuman)
 		return append(actions, g.Priority.ManaActions()...)
 	case DeclareAttackers:
 		return append(g.Priority.AttackActions(), g.Priority.PassAction())
@@ -289,7 +289,7 @@ func (g *Game) passTurn() {
 
 // playLand plays the first land it sees in the hand
 func (g *Game) playLand() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsLand {
 			g.TakeAction(a)
 			return
@@ -301,7 +301,7 @@ func (g *Game) playLand() {
 
 // playCreature plays the first creature it sees in the hand
 func (g *Game) playCreature() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature {
 			g.TakeAction(a)
 			return
@@ -313,7 +313,7 @@ func (g *Game) playCreature() {
 
 // playInstant plays the first instant it sees in the hand
 func (g *Game) playInstant() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant && a.Type == Play {
 			g.TakeAction(a)
 			return
@@ -325,8 +325,9 @@ func (g *Game) playInstant() {
 
 // playKickedInstant kicks the first kickable instant it sees in the hand
 func (g *Game) playKickedInstant() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant && a.Type == PlayWithKicker {
+			fmt.Println("playing kicker vines")
 			g.TakeAction(a)
 			return
 		}

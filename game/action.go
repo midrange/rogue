@@ -21,7 +21,15 @@ const (
 	Attack
 	Block
 	UseForMana
+	ChooseTargetAndMana
 )
+
+func (a *Action) pronoun() string {
+	if a.Target.Owner == a.Card.Owner {
+		return "your"
+	}
+	return "their"
+}
 
 // For debugging and logging. Don't use this in the critical path.
 func (a *Action) String() string {
@@ -30,16 +38,21 @@ func (a *Action) String() string {
 		return "pass priority"
 	case PassTurn:
 		return "pass turn"
+	case ChooseTargetAndMana:
+		fallthrough
 	case Play:
-		if a.Target == nil {
-			return fmt.Sprintf("play %v", a.Card.String())
+		if a.Card.IsLand {
+			return fmt.Sprintf("%v", a.Card.String())
 		}
-		return fmt.Sprintf("play %v on %v", a.Card.String(), a.Target.String())
+		if a.Target == nil {
+			return fmt.Sprintf("%v: %v", a.Card.ManaCost, a.Card.String())
+		}
+		return fmt.Sprintf("%v: %v on %v %v", a.Card.ManaCost, a.Card.String(), a.pronoun(), a.Target.String())
 	case PlayWithKicker:
 		if a.Target == nil {
-			return fmt.Sprintf("play %v with kicker", a.Card.String())
+			return fmt.Sprintf("%v: %v with kicker", a.Card.KickerCost, a.Card.String())
 		}
-		return fmt.Sprintf("play %v on %v with kicker", a.Card.String(), a.Target.String())
+		return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.KickerCost, a.Card.String(), a.pronoun(), a.Target.String())
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:

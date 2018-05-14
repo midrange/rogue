@@ -57,7 +57,6 @@ const CARD_WIDTH = 11
 func NewCard(name CardName) *Card {
 	card := newCardHelper(name)
 	card.Name = name
-	card.Effects = []*Effect{}
 	return card
 }
 
@@ -114,9 +113,9 @@ func (c *Card) String() string {
 	if c.IsLand {
 		return fmt.Sprintf("%v", c.Name)
 	} else if c.IsCreature {
-		return fmt.Sprintf("%v (%v) %v/%v", c.Name, c.ManaCost, c.Power(), c.Toughness())
+		return fmt.Sprintf("%v (%v/%v)", c.Name, c.Power(), c.Toughness())
 	}
-	return fmt.Sprintf("%v (%v)", c.Name, c.ManaCost)
+	return fmt.Sprintf("%v", c.Name)
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
@@ -290,4 +289,13 @@ func (c *Card) DoEffect(action *Action, kicker bool) {
 			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Card: c})
 		}
 	}
+}
+
+func (c *Card) HasLegalTarget(g *Game) bool {
+	for _, creature := range g.Creatures() {
+		if creature.Targetable() {
+			return true
+		}
+	}
+	return false
 }
