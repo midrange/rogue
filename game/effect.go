@@ -3,8 +3,8 @@ package game
 import ()
 
 type Effect struct {
-	BasePower     int
-	BaseToughness int
-	Card          *Card
-	Untargetable  bool
+	Card         *Card
+	Power        int
+	Toughness    int
+	Untargetable bool
 }
