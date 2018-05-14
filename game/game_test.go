@@ -12,28 +12,8 @@ func deckWithTopAndForests(name CardName) *Deck {
 	return deck
 }
 
-func topBear() *Deck {
-	return deckWithTopAndForests(GrizzlyBears)
-}
-
-func topSilhana() *Deck {
-	return deckWithTopAndForests(SilhanaLedgewalker)
-}
-
-func topVines() *Deck {
-	return deckWithTopAndForests(VinesOfVastwood)
-}
-
-// A deck stacked with a NettleSentinel and two VinesOfVastwood on top and all the rest forests
-func topNettleVines() *Deck {
-	deck := NewEmptyDeck()
-	deck.Add(2, VinesOfVastwood)
-	deck.Add(1, NettleSentinel)
-	deck.Add(57, Forest)
-	return deck
-}
 func TestDecking(t *testing.T) {
-	g := NewGame(topBear(), topBear())
+	g := NewGame(deckWithTopAndForests(GrizzlyBears), deckWithTopAndForests(GrizzlyBears))
 
 	// When each player passes the turn 53 times, both decks should be out of cards
 	for i := 0; i < 53; i++ {
@@ -52,7 +32,7 @@ func TestDecking(t *testing.T) {
 }
 
 func TestTwoBearsFighting(t *testing.T) {
-	g := NewGame(topBear(), topBear())
+	g := NewGame(deckWithTopAndForests(GrizzlyBears), deckWithTopAndForests(GrizzlyBears))
 
 	g.playLand()
 	g.passTurn()
@@ -95,7 +75,7 @@ func TestTwoBearsFighting(t *testing.T) {
 }
 
 func TestVinesOfVastwoodBuff(t *testing.T) {
-	g := NewGame(topNettleVines(), topBear())
+	g := NewGame(topNettleVines(), deckWithTopAndForests(GrizzlyBears))
 
 	g.playLand()
 	g.playCreature()
@@ -116,7 +96,7 @@ func TestVinesOfVastwoodBuff(t *testing.T) {
 }
 
 func TestVinesOfVastwoodUntargetable(t *testing.T) {
-	g := NewGame(topNettleVines(), topBear())
+	g := NewGame(topNettleVines(), deckWithTopAndForests(GrizzlyBears))
 
 	g.playLand()
 	g.playCreature()
@@ -138,8 +118,17 @@ func TestVinesOfVastwoodUntargetable(t *testing.T) {
 	}
 }
 
+// A deck stacked with a NettleSentinel and two VinesOfVastwood on top and all the rest forests
+func topNettleVines() *Deck {
+	deck := NewEmptyDeck()
+	deck.Add(2, VinesOfVastwood)
+	deck.Add(1, NettleSentinel)
+	deck.Add(57, Forest)
+	return deck
+}
+
 func TestSilhanasDontMeet(t *testing.T) {
-	g := NewGame(topSilhana(), topSilhana())
+	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(SilhanaLedgewalker))
 
 	g.playLand()
 	g.passTurn()
@@ -164,7 +153,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 }
 
 func TestSilhanaCantBeTargetted(t *testing.T) {
-	g := NewGame(topSilhana(), topVines())
+	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(VinesOfVastwood))
 
 	g.playLand()
 	g.passTurn()
@@ -182,6 +171,61 @@ func TestSilhanaCantBeTargetted(t *testing.T) {
 			t.Fatal("expected no legal targets")
 		}
 
+	}
+}
+
+func TestSkarrganPitskulkBloodthirst(t *testing.T) {
+	twoSkulksDeck := NewEmptyDeck()
+	twoSkulksDeck.Add(2, SkarrganPitskulk)
+	twoSkulksDeck.Add(58, Forest)
+	g := NewGame(twoSkulksDeck, deckWithTopAndForests(SkarrganPitskulk))
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(Main2)
+
+	g.playCreature()
+
+	if g.Priority.Board[2].Power() != 2 {
+		t.Fatal("expected a bloodthirsted skulk")
+	}
+
+}
+
+func TestSkarrganPitskulksDontMeet(t *testing.T) {
+	twoSkulksDeck := NewEmptyDeck()
+	twoSkulksDeck.Add(2, SkarrganPitskulk)
+	twoSkulksDeck.Add(58, Forest)
+	g := NewGame(twoSkulksDeck, deckWithTopAndForests(SkarrganPitskulk))
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(Main2)
+
+	g.playCreature()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	if len(g.Actions(false)) > 2 {
+		t.Fatal("expected the small skulk couldnt block the big skulk")
 	}
 
 }

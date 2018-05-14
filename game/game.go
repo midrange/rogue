@@ -124,7 +124,7 @@ func (g *Game) HandleCombatDamage() {
 
 			if len(attacker.DamageOrder) == 0 || attacker.Trample() {
 				// Deal damage to the defending player
-				g.Defender().Life -= damage
+				g.Defender().DealDamage(damage)
 			}
 
 			if attacker.Damage >= attacker.Toughness() {
@@ -327,7 +327,6 @@ func (g *Game) playInstant() {
 func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant && a.Type == PlayWithKicker {
-			fmt.Println("playing kicker vines")
 			g.TakeAction(a)
 			return
 		}

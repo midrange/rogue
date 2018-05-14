@@ -19,19 +19,23 @@ type Card struct {
 	Owner             *Player
 
 	// Properties that are relevant for any permanent
-	Auras        []*Card
-	Effects      []*Effect
-	Flying       bool
-	GroundEvader bool // a fake keyword for Silhana Ledgewalker that faux flies
-	Hexproof     bool
-	Tapped       bool
-	TurnPlayed   int
+	Auras      []*Card
+	Effects    []*Effect
+	Tapped     bool
+	TurnPlayed int
 
 	// Creature-specific properties
-	Attacking   bool
-	Blocking    *Card
-	DamageOrder []*Card
-	Damage      int
+	Attacking         bool
+	Blocking          *Card
+	Bloodthirst       int
+	DamageOrder       []*Card
+	Damage            int
+	Flying            bool
+	GroundEvader      bool // a fake keyword for Silhana Ledgewalker that faux flies
+	Hexproof          bool
+	PowerCounters     int
+	Powermenace       bool // a fake keyword for Skarrgan Pitskulk, who can only be blocked by >= Power
+	ToughnessCounters int
 
 	// Auras, equipment, instants, and sorceries can have targets
 	Target *Card
@@ -52,6 +56,7 @@ const (
 	NettleSentinel
 	Rancor
 	SilhanaLedgewalker
+	SkarrganPitskulk
 	VinesOfVastwood
 )
 
@@ -85,6 +90,10 @@ func newCardHelper(name CardName) *Card {
 			ManaCost:      1,
 		}
 	case SilhanaLedgewalker:
+		/*
+			Hexproof (This creature can't be the target of spells or abilities your opponents control.)
+			Silhana Ledgewalker can't be blocked except by creatures with flying.
+		*/
 		return &Card{
 			IsCreature:    true,
 			BasePower:     1,
@@ -93,7 +102,26 @@ func newCardHelper(name CardName) *Card {
 			Hexproof:      true,
 			GroundEvader:  true,
 		}
+	case SkarrganPitskulk:
+		/*
+			Bloodthirst 1 (If an opponent was dealt damage this turn, this creature enters the
+			battlefield with a +1/+1 counter on it.)
+			Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
+		*/
+		return &Card{
+			IsCreature:    true,
+			BasePower:     1,
+			BaseToughness: 1,
+			ManaCost:      1,
+			Bloodthirst:   1,
+			Powermenace:   true,
+		}
 	case Rancor:
+		/*
+			Enchanted creature gets +2/+0 and has trample.
+			When Rancor is put into a graveyard from the battlefield,
+			return Rancor to its owner's hand.
+		*/
 		return &Card{
 			IsEnchantCreature: true,
 			BasePower:         2,
@@ -219,7 +247,7 @@ func Min(x, y int) int {
 }
 
 func (c *Card) Power() int {
-	answer := c.BasePower
+	answer := c.BasePower + c.PowerCounters
 	for _, aura := range c.Auras {
 		answer += aura.BasePower
 	}
@@ -230,7 +258,7 @@ func (c *Card) Power() int {
 }
 
 func (c *Card) Toughness() int {
-	answer := c.BaseToughness
+	answer := c.BaseToughness + c.ToughnessCounters
 	for _, aura := range c.Auras {
 		answer += aura.BaseToughness
 	}
@@ -325,5 +353,15 @@ func (c *Card) CanBlock(attacker *Card) bool {
 	if attacker.Flying && !c.Flying {
 		return false
 	}
+	if attacker.Powermenace && attacker.Power() > c.Power() {
+		return false
+	}
 	return true
+}
+
+func (c *Card) DoComesIntoPlayEffects() {
+	if c.Bloodthirst > 0 && c.Owner.Opponent.DamageThisTurn > 0 {
+		c.PowerCounters += c.Bloodthirst
+		c.ToughnessCounters += c.Bloodthirst
+	}
 }

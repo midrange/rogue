@@ -8,6 +8,7 @@ import (
 type Player struct {
 	Life               int
 	ColorlessManaPool  int
+	DamageThisTurn     int
 	Hand               []*Card
 	Board              []*Card
 	Opponent           *Player
@@ -109,6 +110,7 @@ func (p *Player) EndTurn() {
 		card.Effects = []*Effect{}
 	}
 	p.LandPlayedThisTurn = 0
+	p.DamageThisTurn = 0
 	p.EndPhase()
 }
 
@@ -304,6 +306,7 @@ func (p *Player) Play(action *Action, kicker bool) {
 	} else {
 		// TODO allow for kicked creatures
 		p.Board = append(p.Board, card)
+		card.DoComesIntoPlayEffects()
 		if card.IsEnchantCreature {
 			action.Target.Auras = append(action.Target.Auras, card)
 		}
@@ -387,4 +390,9 @@ func (p *Player) GetCreature(name CardName) *Card {
 		}
 	}
 	return nil
+}
+
+func (p *Player) DealDamage(damage int) {
+	p.Life -= damage
+	p.DamageThisTurn += damage
 }
