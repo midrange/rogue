@@ -168,7 +168,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			if card.IsCreature && mana >= card.ManaCost {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.ManaCost {
+			if card.IsEnchantCreature && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
 				if forHuman {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
@@ -186,7 +186,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant && mana >= card.ManaCost {
+		if card.IsInstant && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
 			if forHuman {
 				answer = append(answer, &Action{
 					Type: ChooseTargetAndMana,
@@ -203,7 +203,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost {
+		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
 					answer = append(answer, &Action{

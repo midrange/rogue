@@ -292,3 +292,12 @@ func (c *Card) DoEffect(action *Action, kicker bool) {
 		}
 	}
 }
+
+func (c *Card) HasLegalTarget(g *Game) bool {
+	for _, creature := range g.Creatures() {
+		if creature.Targetable() {
+			return true
+		}
+	}
+	return false
+}

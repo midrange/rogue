@@ -31,11 +31,12 @@ func promptForAction(game *Game, actions []*Action) *Action {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Printf("## Phase: %s\n", game.Phase)
 		for index, action := range actions {
-			fmt.Printf("%d) %s\n", index, action)
+			fmt.Printf("%d) %s\n", index+1, action)
 		}
 		fmt.Print("\nEnter a number: ")
 		text, _ := reader.ReadString('\n')
 		intChoice, err := strconv.Atoi(strings.TrimSpace(text))
+		intChoice--
 		if err == nil && intChoice >= 0 && intChoice < len(actions) {
 			action := actions[intChoice]
 			if action.Type == ChooseTargetAndMana {
