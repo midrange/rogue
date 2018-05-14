@@ -57,8 +57,6 @@ const CARD_WIDTH = 11
 func NewCard(name CardName) *Card {
 	card := newCardHelper(name)
 	card.Name = name
-	card.Auras = []*Card{}
-	card.Effects = []*Effect{}
 	return card
 }
 
@@ -214,7 +212,7 @@ func (c *Card) Power() int {
 		answer += aura.BasePower
 	}
 	for _, effect := range c.Effects {
-		answer += effect.BasePower
+		answer += effect.Power
 	}
 	return answer
 }
@@ -225,7 +223,7 @@ func (c *Card) Toughness() int {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.Effects {
-		answer += effect.BaseToughness
+		answer += effect.Toughness
 	}
 	return answer
 }
@@ -286,7 +284,7 @@ func (c *Card) UseForMana() {
 func (c *Card) DoEffect(action *Action, kicker bool) {
 	if c.Name == VinesOfVastwood {
 		if kicker {
-			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, BasePower: 4, BaseToughness: 4, Card: c})
+			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Power: 4, Toughness: 4, Card: c})
 		} else {
 			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Card: c})
 		}

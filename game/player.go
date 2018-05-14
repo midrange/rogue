@@ -194,6 +194,20 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				})
 			} else {
 				for _, target := range p.Game.Creatures() {
+					if target.Targetable() {
+						answer = append(answer, &Action{
+							Type:   Play,
+							Card:   card,
+							Target: target,
+						})
+					}
+				}
+			}
+		}
+		// TODO - add player targets - this assumes all instants target creatures for now
+		if card.IsInstant && mana >= card.ManaCost {
+			for _, target := range p.Game.Creatures() {
+				if target.Targetable() {
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
@@ -206,12 +220,14 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		if card.IsInstant && card.KickerCost > 0 && mana >= card.KickerCost && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
-					answer = append(answer, &Action{
-						Type:   PlayWithKicker,
-						Card:   card,
-						Target: target,
-					})
-				}
+          if target.Targetable() {
+            answer = append(answer, &Action{
+              Type:   PlayWithKicker,
+              Card:   card,
+              Target: target,
+            })
+          }
+        }
 			}
 		}
 	}
@@ -280,7 +296,8 @@ func (p *Player) Play(action *Action, kicker bool) {
 	card.TurnPlayed = p.Game.Turn
 	if card.IsLand {
 		p.LandPlayedThisTurn++
-	} else {
+	}
+	if card.IsCreature || card.IsInstant {
 		if kicker {
 			p.SpendMana(card.KickerCost)
 		} else {
@@ -302,6 +319,14 @@ func (p *Player) Play(action *Action, kicker bool) {
 		}
 	}
 
+	if card.IsInstant {
+		fmt.Println(kicker, " ", card)
+		card.DoEffect(action, kicker)
+		// TODO put instants and sorceries in graveyard (or exile)
+	} else {
+		// TODO allow for kicked creatures
+		p.Board = append(p.Board, card)
+	}
 	p.Hand = newHand
 }
 
