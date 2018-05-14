@@ -285,9 +285,7 @@ func (c *Card) UseForMana() {
 func (c *Card) DoEffect(action *Action, kicker bool) {
 	if c.Name == VinesOfVastwood {
 		if kicker {
-			fmt.Println("kicker")
 			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, BasePower: 4, BaseToughness: 4, Card: c})
-			fmt.Println("after kicker")
 		} else {
 			action.Target.Effects = append(action.Target.Effects, &Effect{Untargetable: true, Card: c})
 		}
