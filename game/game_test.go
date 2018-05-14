@@ -99,7 +99,7 @@ func TestVinesOfVastwoodBuff(t *testing.T) {
 	g.passUntilPhase(Main2)
 
 	if g.Defender().Life != 14 {
-		t.Fatal("expected defender life total to be 14")
+		t.Fatal("expected defender life total to be 14, instead was ", g.Defender().Life)
 	}
 }
 
@@ -116,7 +116,7 @@ func TestVinesOfVastwoodUntargetable(t *testing.T) {
 	g.playLand()
 	g.playInstant()
 
-	actions := g.Actions()
+	actions := g.Actions(false)
 
 	for _, action := range actions {
 		if action.Type == Play {

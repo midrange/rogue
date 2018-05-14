@@ -313,7 +313,7 @@ func (g *Game) playCreature() {
 
 // playInstant plays the first instant it sees in the hand
 func (g *Game) playInstant() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant && a.Type == Play {
 			g.TakeAction(a)
 			return
@@ -325,8 +325,9 @@ func (g *Game) playInstant() {
 
 // playKickedInstant kicks the first kickable instant it sees in the hand
 func (g *Game) playKickedInstant() {
-	for _, a := range g.Priority.PlayActions(true) {
+	for _, a := range g.Priority.PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant && a.Type == PlayWithKicker {
+			fmt.Println("playing kicker vines")
 			g.TakeAction(a)
 			return
 		}
