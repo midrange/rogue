@@ -377,7 +377,7 @@ func (c *Card) DoEffect(action *Action) {
 	// note that Counters and Morbid Counters are additive
 	action.Target.PowerCounters += c.PowerCounters
 	action.Target.ToughnessCounters += c.ToughnessCounters
-	if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
+	if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent().CreatureDied) {
 		action.Target.PowerCounters += c.Morbid.PowerCounters
 		action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
 	}
@@ -406,7 +406,7 @@ func (c *Card) CanBlock(attacker *Card) bool {
 }
 
 func (c *Card) DoComesIntoPlayEffects() {
-	if c.Bloodthirst > 0 && c.Owner.Opponent.DamageThisTurn > 0 {
+	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.PowerCounters += c.Bloodthirst
 		c.ToughnessCounters += c.Bloodthirst
 	}

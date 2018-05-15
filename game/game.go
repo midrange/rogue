@@ -55,8 +55,8 @@ const (
 
 func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 	players := [2]*Player{
-		NewPlayer(deckToPlay),
-		NewPlayer(deckToDraw),
+		NewPlayer(deckToPlay, OnThePlay),
+		NewPlayer(deckToDraw, OnTheDraw),
 	}
 	g := &Game{
 		Players:    players,
@@ -65,11 +65,8 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId: OnThePlay,
 	}
 
-	players[0].Opponent = players[1]
-	players[1].Opponent = players[0]
-
-	players[0].Game = g
-	players[1].Game = g
+	players[0].game = g
+	players[1].game = g
 
 	return g
 }
