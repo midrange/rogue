@@ -11,18 +11,21 @@ type Player struct {
 	CreatureDied       bool
 	DamageThisTurn     int
 	Deck               *Deck
-	Game               *Game
 	Hand               []*Card
+	Id                 PlayerId
 	LandPlayedThisTurn int
 	Life               int
-	Opponent           *Player
+
+	// game should not be included when the player is serialized.
+	game *Game
 }
 
-// The caller should set Game and Opponent
-func NewPlayer(deck *Deck) *Player {
+// The caller should set game after construction.
+func NewPlayer(deck *Deck, id PlayerId) *Player {
 	p := &Player{
 		Life:  20,
 		Hand:  []*Card{},
+		Id:    id,
 		Board: []*Card{},
 		Deck:  deck,
 	}
@@ -61,6 +64,10 @@ func (p *Player) Untap() {
 	for _, card := range p.Board {
 		card.RespondToUntapPhase()
 	}
+}
+
+func (p *Player) Opponent() *Player {
+	return p.game.Player(p.Id.OpponentId())
 }
 
 func (p *Player) Lost() bool {
@@ -170,14 +177,14 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			if card.IsCreature && mana >= card.CastingCost.Colorless {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
+			if card.IsEnchantCreature && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.game) {
 				if forHuman {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
 						Card: card,
 					})
 				} else {
-					for _, target := range p.Game.Creatures() {
+					for _, target := range p.game.Creatures() {
 						answer = append(answer, &Action{
 							Type:   Play,
 							Card:   card,
@@ -188,20 +195,19 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 			if card.IsCreature || card.IsEnchantCreature {
 				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && card.Owner.Life >= card.PhyrexianCastingCost.Life {
-					fmt.Println("can phyrexian")
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
 			}
 		}
 		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.game) {
 			if forHuman {
 				answer = append(answer, &Action{
 					Type: ChooseTargetAndMana,
 					Card: card,
 				})
 			} else {
-				for _, target := range p.Game.Creatures() {
+				for _, target := range p.game.Creatures() {
 					if target.Targetable(card) {
 						answer = append(answer, &Action{
 							Type:   Play,
@@ -213,9 +219,9 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.HasKicker && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && card.HasKicker && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && card.HasLegalTarget(p.game) {
 			if !forHuman {
-				for _, target := range p.Game.Creatures() {
+				for _, target := range p.game.Creatures() {
 					if target.Targetable(card) {
 						answer = append(answer, &Action{
 							Type:       Play,
@@ -252,12 +258,12 @@ func (p *Player) PassAction() *Action {
 
 // Returns the possible actions of type 'Attack'.
 func (p *Player) AttackActions() []*Action {
-	if p.Game.Phase != DeclareAttackers {
-		log.Fatalf("do not call AttackActions in phase %s", p.Game.Phase)
+	if p.game.Phase != DeclareAttackers {
+		log.Fatalf("do not call AttackActions in phase %s", p.game.Phase)
 	}
 	answer := []*Action{}
 	for _, card := range p.Board {
-		if card.IsCreature && !card.Attacking && !card.Tapped && card.TurnPlayed != p.Game.Turn {
+		if card.IsCreature && !card.Attacking && !card.Tapped && card.TurnPlayed != p.game.Turn {
 			answer = append(answer, &Action{Type: Attack, Card: card})
 		}
 	}
@@ -268,7 +274,7 @@ func (p *Player) AttackActions() []*Action {
 func (p *Player) BlockActions() []*Action {
 	answer := []*Action{}
 	attackers := []*Card{}
-	for _, card := range p.Opponent.Board {
+	for _, card := range p.Opponent().Board {
 		if card.Attacking {
 			attackers = append(attackers, card)
 		}
@@ -297,7 +303,7 @@ func (p *Player) Play(action *Action) {
 			newHand = append(newHand, c)
 		}
 	}
-	card.TurnPlayed = p.Game.Turn
+	card.TurnPlayed = p.game.Turn
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
@@ -316,7 +322,7 @@ func (p *Player) Play(action *Action) {
 	}
 
 	if card.IsInstant {
-		card.DoEffect(action)
+		card.CastInstant(action)
 		// TODO put instants and sorceries in graveyard (or exile)
 	} else {
 		// TODO allow for kicked creatures
@@ -342,9 +348,9 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
 		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
-		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d", p.AvatarString(position, gameWidth))
 	} else {
-		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
 		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
@@ -376,7 +382,7 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		playerString += " "
 	}
-	playerString += fmt.Sprintf("<Life: %v> Player %v <Mana: %v>", p.Life, position, p.ColorlessManaPool)
+	playerString += fmt.Sprintf("<Life: %d> Player %d <Mana: %d>", p.Life, position, p.ColorlessManaPool)
 	return playerString
 }
 
@@ -395,7 +401,7 @@ func PrintRowOfCards(cards []*Card, gameWidth int) {
 			}
 			fmt.Printf(" ")
 		}
-		fmt.Printf("%v", "\n")
+		fmt.Printf("%s", "\n")
 	}
 }
 
