@@ -60,7 +60,7 @@ func TestTwoBearsFighting(t *testing.T) {
 	}
 	g.TakeAction(&Action{
 		Type:   Block,
-		Card:   defendingBear,
+		With:   defendingBear,
 		Target: attackingBear,
 	})
 	g.passUntilPhase(Main2)

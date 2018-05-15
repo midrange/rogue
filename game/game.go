@@ -154,8 +154,9 @@ func (g *Game) HandleCombatDamage() {
 	}
 }
 
-func (g *Game) Creatures() []*Card {
-	answer := []*Card{}
+// Creatures() returns the creatures in play.
+func (g *Game) Creatures() []*Permanent {
+	answer := []*Permanent{}
 	for _, player := range g.Players {
 		answer = append(answer, player.Creatures()...)
 	}
@@ -198,7 +199,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.Card.UseForMana()
+		action.With.UseForMana()
 		return
 	}
 
@@ -221,15 +222,15 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Attack {
 			panic("expected an attack or a pass during DeclareAttackers")
 		}
-		action.Card.Attacking = true
-		action.Card.Tapped = true
+		action.With.Attacking = true
+		action.With.Tapped = true
 
 	case DeclareBlockers:
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.Card.Blocking = action.Target
-		action.Target.DamageOrder = append(action.Target.DamageOrder, action.Card)
+		action.With.Blocking = action.Target
+		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
 
 	default:
 		panic("unhandled phase")

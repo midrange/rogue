@@ -7,7 +7,8 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
-	Target        *Card
+	With          *Permanent
+	Target        *Permanent
 	WithKicker    bool
 	WithPhyrexian bool
 }
@@ -24,15 +25,15 @@ const (
 	ChooseTargetAndMana
 )
 
-func (a *Action) pronoun() string {
-	if a.Target.Owner == a.Card.Owner {
+func (a *Action) targetPronoun(p *Player) string {
+	if a.Target.Owner == p {
 		return "your"
 	}
 	return "their"
 }
 
 // For debugging and logging. Don't use this in the critical path.
-func (a *Action) String() string {
+func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case Pass:
 		return "pass"
@@ -43,15 +44,17 @@ func (a *Action) String() string {
 			if a.Target == nil {
 				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card)
 			}
-			return fmt.Sprintf("%d: %s on %s %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card, a.pronoun(), a.Target)
+			return fmt.Sprintf("%d: %s on %s %s with kicker",
+				a.Card.Kicker.CastingCost.Colorless, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
-			return fmt.Sprintf("%d: %s", a.Card.CastingCost.Colorless, a.Card)
+			return fmt.Sprintf("%d: %s", a.Card.ManaCost, a.Card)
 		}
-		return fmt.Sprintf("%d: %s on %s %s", a.Card.CastingCost.Colorless, a.Card, a.pronoun(), a.Target)
+		return fmt.Sprintf("%d: %s on %s %s",
+			a.Card.ManaCost, a.Card, a.targetPronoun(p), a.Target)
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:

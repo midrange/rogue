@@ -1,54 +1,36 @@
 package game
 
 import (
-	"fmt"
 	"log"
-	"strings"
 )
 
+// Card should be treated as immutable.
+// The properties on Card are the properties like "base toughness" that do not change
+// over time for a particular card.
 type Card struct {
-	// Things that are relevant wherever the card is
 	AddsTemporaryEffect  bool
+	Bloodthirst          int
 	CastingCost          *CastingCost
-	HasKicker            bool
+	Flying               bool
+	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof             bool
 	HasMorbid            bool
 	HasPhyrexian         bool
+	HasKicker            bool
 	IsLand               bool
 	IsCreature           bool
 	IsEnchantCreature    bool
 	IsInstant            bool
 	Kicker               *Modifier
-	Modifier             *Modifier // temporary Effect Modifiers for Power, Toughness, Untargetable, Hexproof
+	Lifelink             bool
+	ManaCost             int
+	Modifier             *Modifier
 	Morbid               *Modifier
 	Name                 CardName
-	Owner                *Player
 	PhyrexianCastingCost *CastingCost
+	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
 
-	// Properties that are relevant for any permanent
-	Auras      []*Card
-	Effects    []*Effect
-	Tapped     bool
-	TurnPlayed int
-
-	// Creature-specific properties
-	Attacking         bool
-	Blocking          *Card
-	Bloodthirst       int
-	DamageOrder       []*Card
-	Damage            int
-	Flying            bool
-	GroundEvader      bool // a fake keyword for Silhana Ledgewalker that faux flies
-	Hexproof          bool
-	Lifelink          bool
-	PowerCounters     int
-	Powermenace       bool // a fake keyword for Skarrgan Pitskulk, who can only be blocked by >= Power
-	ToughnessCounters int
-
-	// Auras, equipment, instants, and sorceries can have targets
-	Target *Card
-
-	// For creatures these are natural.
-	// For auras and equipment, these indicate the boost the target gets.
+	// The base properties of creatures.
 	BasePower     int
 	BaseToughness int
 	BaseTrample   bool
@@ -179,15 +161,15 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
+			Modifier: &Modifier{
+				Plus1Plus1Counters: 1,
+			},
 			CastingCost: &CastingCost{Colorless: 1},
 			HasMorbid:   true,
 			IsInstant:   true,
 			Morbid: &Modifier{
-				PowerCounters:     2,
-				ToughnessCounters: 2,
+				Plus1Plus1Counters: 2,
 			},
-			PowerCounters:     1,
-			ToughnessCounters: 1,
 		}
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
@@ -196,239 +178,6 @@ func newCardHelper(name CardName) *Card {
 }
 
 func (c *Card) String() string {
-	if c.IsLand {
-		return fmt.Sprintf("%s", c.Name)
-	} else if c.IsCreature {
-		return fmt.Sprintf("%s (%d/%d)", c.Name, c.Power(), c.Toughness())
-	}
-	return fmt.Sprintf("%s", c.Name)
-}
-
-func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
-	const cardWidth = CARD_WIDTH
-	const cardHeight = CARD_HEIGHT
-	imageGrid := [cardHeight][cardWidth]string{}
-	for y := 0; y < cardHeight; y++ {
-		for x := 0; x < cardWidth; x++ {
-			if y == 0 || y == cardHeight-1 {
-				imageGrid[y][x] = string('-')
-			} else if x == 0 || x == cardWidth-1 {
-				imageGrid[y][x] = string('|')
-			} else {
-				imageGrid[y][x] = string(' ')
-			}
-		}
-	}
-
-	initialIndex := 2
-
-	if showBack {
-		middleX := cardWidth / 2
-		middleY := cardHeight / 2
-
-		noon := []int{middleX, middleY - 1}
-		two := []int{middleX + 2, middleY}
-		ten := []int{middleX - 2, middleY}
-		seven := []int{middleX - 1, middleY + 1}
-		four := []int{middleX + 1, middleY + 1}
-
-		points := [][]int{noon, two, four, seven, ten}
-		for _, p := range points {
-			imageGrid[p[1]][p[0]] = string('*')
-		}
-	} else {
-		nameRow := 2
-		words := strings.Split(fmt.Sprintf("%s", c.Name), " ")
-		for _, word := range words {
-			wordWidth := Min(3, len(word))
-			if len(words) == 1 {
-				wordWidth = Min(len(word), cardWidth-4)
-			}
-			for x := initialIndex; x < wordWidth+initialIndex; x++ {
-				imageGrid[nameRow][x] = string(word[x-initialIndex])
-			}
-			initialIndex += wordWidth + 1
-			if initialIndex >= cardWidth-wordWidth-1 {
-				break
-			}
-		}
-
-		if c.IsCreature {
-			initialIndex := 2
-			statsRow := 3
-			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
-			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
-				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
-			}
-
-		}
-
-		if !c.IsLand {
-			initialIndex := 2
-			ccRow := 1
-			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
-			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
-				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
-			}
-		}
-
-		if c.Tapped {
-			tappedRow := 0
-			initialIndex := 0
-			tappedString := "TAPPED"
-			for x := initialIndex; x < len(tappedString)+initialIndex; x++ {
-				imageGrid[tappedRow][x] = string(tappedString[x-initialIndex])
-			}
-		}
-	}
-
-	return imageGrid
-}
-
-func Min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func (c *Card) Power() int {
-	answer := c.BasePower + c.PowerCounters
-	for _, aura := range c.Auras {
-		answer += aura.BasePower
-	}
-	for _, effect := range c.Effects {
-		answer += effect.Card.Modifier.Power
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Power
-		}
-	}
-	return answer
-}
-
-func (c *Card) Toughness() int {
-	answer := c.BaseToughness + c.ToughnessCounters
-	for _, aura := range c.Auras {
-		answer += aura.BaseToughness
-	}
-	for _, effect := range c.Effects {
-		answer += effect.Card.Modifier.Toughness
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Toughness
-		}
-	}
-	return answer
-}
-
-func (c *Card) Targetable(targetingSpell *Card) bool {
-	answer := true
-	if targetingSpell.Owner != c.Owner && c.Hexproof {
-		return false
-	}
-	for _, effect := range c.Effects {
-		if effect.Card.Modifier.Untargetable {
-			return false
-		}
-		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof {
-			return false
-		}
-	}
-	return answer
-}
-
-func (c *Card) CanAttack(g *Game) bool {
-	if c.Tapped || !c.IsCreature || c.Power() == 0 || c.TurnPlayed == g.Turn {
-		return false
-	}
-	return true
-}
-
-func (c *Card) Trample() bool {
-	if c.BaseTrample {
-		return true
-	}
-	for _, aura := range c.Auras {
-		if aura.BaseTrample {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Card) RespondToUntapPhase() {
-	if c.Name != NettleSentinel {
-		c.Tapped = false
-	}
-}
-
-func (c *Card) RespondToSpell(spell *Card) {
-	if c.Name == NettleSentinel {
-		c.Tapped = false
-	}
-}
-
-func (c *Card) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped {
-		return []*Action{&Action{Type: UseForMana, Card: c}}
-	}
-	return []*Action{}
-}
-
-func (c *Card) UseForMana() {
-	c.Owner.AddMana()
-	c.Tapped = true
-}
-
-// TODO MAKE THIS NOT NAME THE CARDS, JUST USE THE KEYWORDS
-
-func (c *Card) CastInstant(action *Action) {
-	if c.AddsTemporaryEffect {
-		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
-	}
-	// note that Counters and Morbid Counters are additive
-	action.Target.PowerCounters += c.PowerCounters
-	action.Target.ToughnessCounters += c.ToughnessCounters
-	if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent().CreatureDied) {
-		action.Target.PowerCounters += c.Morbid.PowerCounters
-		action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
-	}
-}
-
-func (c *Card) HasLegalTarget(g *Game) bool {
-	for _, creature := range g.Creatures() {
-		if creature.Targetable(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Card) CanBlock(attacker *Card) bool {
-	if attacker.GroundEvader && !c.Flying {
-		return false
-	}
-	if attacker.Flying && !c.Flying {
-		return false
-	}
-	if attacker.Powermenace && attacker.Power() > c.Power() {
-		return false
-	}
-	return true
-}
-
-func (c *Card) DoComesIntoPlayEffects() {
-	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
-		c.PowerCounters += c.Bloodthirst
-		c.ToughnessCounters += c.Bloodthirst
-	}
-}
-
-/*
-	Most creatures don't do anything special when they deal damage.
-	Currently just ones with Lifelink do something extra.
-*/
-func (c *Card) DidDealDamage(damage int) {
-	if c.Lifelink && damage > 0 {
-		c.Owner.Life += damage
-	}
+	p := &Permanent{Card: c}
+	return p.String()
 }
