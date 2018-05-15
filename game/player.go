@@ -6,16 +6,16 @@ import (
 )
 
 type Player struct {
-	Life               int
+	Board              []*Card
 	ColorlessManaPool  int
 	CreatureDied       bool
 	DamageThisTurn     int
-	Hand               []*Card
-	Board              []*Card
-	Opponent           *Player
-	Game               *Game
 	Deck               *Deck
+	Game               *Game
+	Hand               []*Card
 	LandPlayedThisTurn int
+	Life               int
+	Opponent           *Player
 }
 
 // The caller should set Game and Opponent
