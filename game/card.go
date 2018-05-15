@@ -11,13 +11,17 @@ type Card struct {
 	// Things that are relevant wherever the card is
 	AddsTemporaryEffect  bool
 	CastingCost          *CastingCost
+	EntersPlayAction     *Action
+	HasEntersPlayAction  bool
 	HasKicker            bool
+	HasManaAbility       bool
 	HasMorbid            bool
 	HasPhyrexian         bool
 	IsLand               bool
 	IsCreature           bool
 	IsEnchantCreature    bool
 	IsInstant            bool
+	IsToken              bool
 	Kicker               *Modifier
 	Modifier             *Modifier // temporary Effect Modifiers for Power, Toughness, Untargetable, Hexproof
 	Morbid               *Modifier
@@ -30,6 +34,10 @@ type Card struct {
 	Effects    []*Effect
 	Tapped     bool
 	TurnPlayed int
+
+	// Properties that are relevant for Lands and other mana producers
+	Colorless         int
+	SacrificesForMana bool
 
 	// Creature-specific properties
 	Attacking         bool
@@ -59,9 +67,12 @@ type Card struct {
 type CardName int
 
 const (
-	Forest CardName = iota
+	BurningTreeEmissary CardName = iota
+	EldraziSpawnToken
+	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
+	NestInvader
 	NettleSentinel
 	Rancor
 	SilhanaLedgewalker
@@ -81,9 +92,22 @@ func NewCard(name CardName) *Card {
 
 func newCardHelper(name CardName) *Card {
 	switch name {
+	case BurningTreeEmissary:
+		manaCard := &Card{
+			Colorless: 2,
+		}
+		return &Card{
+			BasePower:           2,
+			BaseToughness:       2,
+			CastingCost:         &CastingCost{Colorless: 2},
+			EntersPlayAction:    &Action{Type: UseForMana, Card: manaCard},
+			HasEntersPlayAction: true,
+			IsCreature:          true,
+		}
 	case Forest:
 		return &Card{
-			IsLand: true,
+			Colorless: 1,
+			IsLand:    true,
 		}
 	case GrizzlyBears:
 		return &Card{
@@ -91,6 +115,26 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness: 2,
 			CastingCost:   &CastingCost{Colorless: 2},
 			IsCreature:    true,
+		}
+	case NestInvader:
+		tokenCard := &Card{
+			BasePower:         0,
+			BaseToughness:     1,
+			CastingCost:       &CastingCost{Colorless: 0},
+			Colorless:         1,
+			HasManaAbility:    true,
+			IsCreature:        true,
+			IsToken:           true,
+			Name:              EldraziSpawnToken,
+			SacrificesForMana: true,
+		}
+		return &Card{
+			BasePower:           2,
+			BaseToughness:       2,
+			CastingCost:         &CastingCost{Colorless: 2},
+			EntersPlayAction:    &Action{Type: Play, Card: tokenCard},
+			HasEntersPlayAction: true,
+			IsCreature:          true,
 		}
 	case NettleSentinel:
 		/*
@@ -102,6 +146,18 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness: 2,
 			CastingCost:   &CastingCost{Colorless: 1},
 			IsCreature:    true,
+		}
+	case Rancor:
+		/*
+			Enchanted creature gets +2/+0 and has trample.
+			When Rancor is put into a graveyard from the battlefield,
+			return Rancor to its owner's hand.
+		*/
+		return &Card{
+			BasePower:         2,
+			BaseToughness:     0,
+			CastingCost:       &CastingCost{Colorless: 1},
+			IsEnchantCreature: true,
 		}
 	case SilhanaLedgewalker:
 		/*
@@ -146,18 +202,6 @@ func newCardHelper(name CardName) *Card {
 			IsCreature:           true,
 			Lifelink:             true,
 			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
-		}
-	case Rancor:
-		/*
-			Enchanted creature gets +2/+0 and has trample.
-			When Rancor is put into a graveyard from the battlefield,
-			return Rancor to its owner's hand.
-		*/
-		return &Card{
-			BasePower:         2,
-			BaseToughness:     0,
-			CastingCost:       &CastingCost{Colorless: 1},
-			IsEnchantCreature: true,
 		}
 	case VinesOfVastwood:
 		return &Card{
@@ -378,29 +422,33 @@ func (c *Card) RespondToSpell(spell *Card) {
 }
 
 func (c *Card) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped {
+	// TODO handle lands you can also sac for mana
+	if (c.IsLand && !c.Tapped) || c.HasManaAbility {
 		return []*Action{&Action{Type: UseForMana, Card: c}}
 	}
 	return []*Action{}
 }
 
 func (c *Card) UseForMana() {
-	c.Owner.AddMana()
+	c.Owner.AddMana(c.Colorless)
 	c.Tapped = true
+	if c.SacrificesForMana {
+		c.Owner.RemoveFromBoard(c)
+	}
 }
-
-// TODO MAKE THIS NOT NAME THE CARDS, JUST USE THE KEYWORDS
 
 func (c *Card) DoEffect(action *Action) {
 	if c.AddsTemporaryEffect {
 		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
 	}
-	// note that Counters and Morbid Counters are additive
-	action.Target.PowerCounters += c.PowerCounters
-	action.Target.ToughnessCounters += c.ToughnessCounters
-	if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
-		action.Target.PowerCounters += c.Morbid.PowerCounters
-		action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
+	if action.Target != nil {
+		// note that Counters and Morbid Counters are additive
+		action.Target.PowerCounters += c.PowerCounters
+		action.Target.ToughnessCounters += c.ToughnessCounters
+		if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
+			action.Target.PowerCounters += c.Morbid.PowerCounters
+			action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
+		}
 	}
 }
 
@@ -430,6 +478,9 @@ func (c *Card) DoComesIntoPlayEffects() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent.DamageThisTurn > 0 {
 		c.PowerCounters += c.Bloodthirst
 		c.ToughnessCounters += c.Bloodthirst
+	}
+	if c.HasEntersPlayAction {
+		c.Owner.Game.TakeAction(c.EntersPlayAction)
 	}
 }
 

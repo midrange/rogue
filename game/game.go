@@ -301,6 +301,7 @@ func (g *Game) playCreature() {
 			return
 		}
 	}
+	g.Print()
 	panic("playCreature failed")
 }
 
@@ -351,4 +352,14 @@ func (g *Game) attackWithEveryone() {
 		}
 		g.TakeAction(actions[0])
 	}
+}
+
+// playNonPassAction plays the first mana ability action
+func (g *Game) playManaAbilityAction() {
+	for _, a := range g.Priority.ManaActions() {
+		g.TakeAction(a)
+		return
+	}
+	g.Print()
+	panic("playInstant failed")
 }

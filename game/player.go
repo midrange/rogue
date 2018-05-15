@@ -49,7 +49,7 @@ func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
 		if card.IsLand && !card.Tapped {
-			answer += 1
+			answer += card.Colorless
 		}
 	}
 	answer += p.ColorlessManaPool
@@ -321,6 +321,9 @@ func (p *Player) Play(action *Action) {
 	} else {
 		// TODO allow for kicked creatures
 		p.Board = append(p.Board, card)
+		if card.IsToken {
+			card.Owner = p
+		}
 		card.DoComesIntoPlayEffects()
 		if card.IsEnchantCreature {
 			action.Target.Auras = append(action.Target.Auras, card)
@@ -330,8 +333,8 @@ func (p *Player) Play(action *Action) {
 	p.Hand = newHand
 }
 
-func (p *Player) AddMana() {
-	p.ColorlessManaPool += 1
+func (p *Player) AddMana(colorless int) {
+	p.ColorlessManaPool += colorless
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {

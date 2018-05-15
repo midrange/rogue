@@ -26,13 +26,15 @@ func NewDeck(decklist map[CardName]int) *Deck {
 
 func Stompy() *Deck {
 	return NewDeck(map[CardName]int{
-		Forest:              20,
-		HungerOfTheHowlpack: 5,
-		NettleSentinel:      15,
-		Rancor:              5,
-		SkarrganPitskulk:    5,
-		SilhanaLedgewalker:  10,
-		VinesOfVastwood:     5,
+		BurningTreeEmissary: 0,
+		Forest:              17,
+		HungerOfTheHowlpack: 4,
+		NestInvader:         15,
+		NettleSentinel:      4,
+		Rancor:              4,
+		SkarrganPitskulk:    4,
+		SilhanaLedgewalker:  4,
+		VinesOfVastwood:     4,
 	})
 }
 
