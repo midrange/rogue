@@ -186,6 +186,11 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 					}
 				}
 			}
+			if card.IsCreature || card.IsEnchantCreature {
+				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && card.Owner.Life >= card.PhyrexianCastingCost.Life {
+					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+				}
+			}
 		}
 		// TODO - add player targets - this assumes all instants target creatures for now
 		if card.IsInstant && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
@@ -219,6 +224,11 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 						})
 					}
 				}
+			}
+		}
+		if card.IsInstant {
+			if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && card.Owner.Life >= card.PhyrexianCastingCost.Life {
+				answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 			}
 		}
 	}
@@ -290,9 +300,12 @@ func (p *Player) Play(action *Action) {
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
-	if card.IsCreature || card.IsInstant {
+	if card.IsCreature || card.IsInstant || card.IsEnchantCreature {
 		if action.WithKicker {
 			p.SpendMana(card.Kicker.CastingCost.Colorless)
+		} else if action.WithPhyrexian {
+			p.SpendMana(card.PhyrexianCastingCost.Colorless)
+			p.Life -= card.PhyrexianCastingCost.Life
 		} else {
 			p.SpendMana(card.CastingCost.Colorless)
 		}

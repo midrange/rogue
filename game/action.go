@@ -5,10 +5,11 @@ import (
 )
 
 type Action struct {
-	Type       ActionType
-	Card       *Card
-	Target     *Card
-	WithKicker bool
+	Type          ActionType
+	Card          *Card
+	Target        *Card
+	WithKicker    bool
+	WithPhyrexian bool
 }
 
 type ActionType int
