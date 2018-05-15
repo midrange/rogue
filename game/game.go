@@ -339,7 +339,7 @@ func (g *Game) playCreature() {
 
 // playCreature plays the first creature action with Phyrexian
 func (g *Game) playCreaturePhyrexian() {
-	for _, a := range g.Priority.PlayActions(true, false) {
+	for _, a := range g.Priority().PlayActions(true, false) {
 		fmt.Println(a)
 		if a.Card != nil && a.Card.IsCreature && a.WithPhyrexian {
 			g.TakeAction(a)

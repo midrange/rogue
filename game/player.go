@@ -195,7 +195,6 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 			if card.IsCreature || card.IsEnchantCreature {
 				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && card.Owner.Life >= card.PhyrexianCastingCost.Life {
-					fmt.Println("can phyrexian")
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
 			}
@@ -380,7 +379,7 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		playerString += " "
 	}
-	playerString += fmt.Sprintf("<Life: %v> Player %v <Mana: %v>", p.Life, position, p.ColorlessManaPool)
+	playerString += fmt.Sprintf("<Life: %d> Player %d <Mana: %d>", p.Life, position, p.ColorlessManaPool)
 	return playerString
 }
 
@@ -399,7 +398,7 @@ func PrintRowOfCards(cards []*Card, gameWidth int) {
 			}
 			fmt.Printf(" ")
 		}
-		fmt.Printf("%v", "\n")
+		fmt.Printf("%s", "\n")
 	}
 }
 
