@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
 )
 
@@ -194,15 +193,6 @@ func newCardHelper(name CardName) *Card {
 		log.Fatalf("unimplemented card name: %d", name)
 	}
 	panic("control should not reach here")
-}
-
-func RandomCard() *Card {
-	names := []CardName{
-		Forest,
-		GrizzlyBears,
-	}
-	index := rand.Int() % len(names)
-	return NewCard(names[index])
 }
 
 func (c *Card) String() string {
