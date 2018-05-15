@@ -193,7 +193,7 @@ func TestSkarrganPitskulkBloodthirst(t *testing.T) {
 
 	g.playCreature()
 
-	if g.Priority.Board[2].Power() != 2 {
+	if g.Priority().Board[2].Power() != 2 {
 		t.Fatal("expected a bloodthirsted skulk")
 	}
 }
