@@ -206,4 +206,246 @@ func newCardHelper(name CardName) *Card {
 func (c *Card) String() string {
 	p := &Permanent{Card: c}
 	return p.String()
+	if c.IsLand {
+		return fmt.Sprintf("%s", c.Name)
+	} else if c.IsCreature {
+		return fmt.Sprintf("%s (%d/%d)", c.Name, c.Power(), c.Toughness())
+	}
+	return fmt.Sprintf("%s", c.Name)
+}
+
+func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
+	const cardWidth = CARD_WIDTH
+	const cardHeight = CARD_HEIGHT
+	imageGrid := [cardHeight][cardWidth]string{}
+	for y := 0; y < cardHeight; y++ {
+		for x := 0; x < cardWidth; x++ {
+			if y == 0 || y == cardHeight-1 {
+				imageGrid[y][x] = string('-')
+			} else if x == 0 || x == cardWidth-1 {
+				imageGrid[y][x] = string('|')
+			} else {
+				imageGrid[y][x] = string(' ')
+			}
+		}
+	}
+
+	initialIndex := 2
+
+	if showBack {
+		middleX := cardWidth / 2
+		middleY := cardHeight / 2
+
+		noon := []int{middleX, middleY - 1}
+		two := []int{middleX + 2, middleY}
+		ten := []int{middleX - 2, middleY}
+		seven := []int{middleX - 1, middleY + 1}
+		four := []int{middleX + 1, middleY + 1}
+
+		points := [][]int{noon, two, four, seven, ten}
+		for _, p := range points {
+			imageGrid[p[1]][p[0]] = string('*')
+		}
+	} else {
+		nameRow := 2
+		words := strings.Split(fmt.Sprintf("%s", c.Name), " ")
+		for _, word := range words {
+			wordWidth := Min(3, len(word))
+			if len(words) == 1 {
+				wordWidth = Min(len(word), cardWidth-4)
+			}
+			for x := initialIndex; x < wordWidth+initialIndex; x++ {
+				imageGrid[nameRow][x] = string(word[x-initialIndex])
+			}
+			initialIndex += wordWidth + 1
+			if initialIndex >= cardWidth-wordWidth-1 {
+				break
+			}
+		}
+
+		if c.IsCreature {
+			initialIndex := 2
+			statsRow := 3
+			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
+			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
+				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
+			}
+
+		}
+
+		if !c.IsLand {
+			initialIndex := 2
+			ccRow := 1
+			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
+			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
+				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
+			}
+		}
+
+		if c.Tapped {
+			tappedRow := 0
+			initialIndex := 0
+			tappedString := "TAPPED"
+			for x := initialIndex; x < len(tappedString)+initialIndex; x++ {
+				imageGrid[tappedRow][x] = string(tappedString[x-initialIndex])
+			}
+		}
+	}
+
+	return imageGrid
+}
+
+func Min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func (c *Card) Power() int {
+	answer := c.BasePower + c.PowerCounters
+	for _, aura := range c.Auras {
+		answer += aura.BasePower
+	}
+	for _, effect := range c.Effects {
+		answer += effect.Card.Modifier.Power
+		if effect.Action.WithKicker {
+			answer += effect.Card.Kicker.Power
+		}
+	}
+	return answer
+}
+
+func (c *Card) Toughness() int {
+	answer := c.BaseToughness + c.ToughnessCounters
+	for _, aura := range c.Auras {
+		answer += aura.BaseToughness
+	}
+	for _, effect := range c.Effects {
+		answer += effect.Card.Modifier.Toughness
+		if effect.Action.WithKicker {
+			answer += effect.Card.Kicker.Toughness
+		}
+	}
+	return answer
+}
+
+func (c *Card) Targetable(targetingSpell *Card) bool {
+	answer := true
+	if targetingSpell.Owner != c.Owner && c.Hexproof {
+		return false
+	}
+	for _, effect := range c.Effects {
+		if effect.Card.Modifier.Untargetable {
+			return false
+		}
+		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof {
+			return false
+		}
+	}
+	return answer
+}
+
+func (c *Card) CanAttack(g *Game) bool {
+	if c.Tapped || !c.IsCreature || c.Power() == 0 || c.TurnPlayed == g.Turn {
+		return false
+	}
+	return true
+}
+
+func (c *Card) Trample() bool {
+	if c.BaseTrample {
+		return true
+	}
+	for _, aura := range c.Auras {
+		if aura.BaseTrample {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Card) RespondToUntapPhase() {
+	if c.Name != NettleSentinel {
+		c.Tapped = false
+	}
+}
+
+func (c *Card) RespondToSpell(spell *Card) {
+	if c.Name == NettleSentinel {
+		c.Tapped = false
+	}
+}
+
+func (c *Card) ManaActions() []*Action {
+	// TODO handle lands you can also sac for mana
+	if (c.IsLand && !c.Tapped) || c.HasManaAbility {
+		return []*Action{&Action{Type: UseForMana, Card: c}}
+	}
+	return []*Action{}
+}
+
+func (c *Card) UseForMana() {
+	c.Owner.AddMana(c.Colorless)
+	c.Tapped = true
+	if c.SacrificesForMana {
+		c.Owner.RemoveFromBoard(c)
+	}
+}
+
+func (c *Card) DoEffect(action *Action) {
+	if c.AddsTemporaryEffect {
+		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
+	}
+	if action.Target != nil {
+		// note that Counters and Morbid Counters are additive
+		action.Target.PowerCounters += c.PowerCounters
+		action.Target.ToughnessCounters += c.ToughnessCounters
+    if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent().CreatureDied) {
+			action.Target.PowerCounters += c.Morbid.PowerCounters
+			action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
+		}
+	}
+}
+
+func (c *Card) HasLegalTarget(g *Game) bool {
+	for _, creature := range g.Creatures() {
+		if creature.Targetable(c) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Card) CanBlock(attacker *Card) bool {
+	if attacker.GroundEvader && !c.Flying {
+		return false
+	}
+	if attacker.Flying && !c.Flying {
+		return false
+	}
+	if attacker.Powermenace && attacker.Power() > c.Power() {
+		return false
+	}
+	return true
+}
+
+func (c *Card) DoComesIntoPlayEffects() {
+	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
+		c.PowerCounters += c.Bloodthirst
+		c.ToughnessCounters += c.Bloodthirst
+	}
+	if c.HasEntersPlayAction {
+		c.Owner.Game.TakeAction(c.EntersPlayAction)
+	}
+}
+
+/*
+	Most creatures don't do anything special when they deal damage.
+	Currently just ones with Lifelink do something extra.
+*/
+func (c *Card) DidDealDamage(damage int) {
+	if c.Lifelink && damage > 0 {
+		c.Owner.Life += damage
+	}
 }
