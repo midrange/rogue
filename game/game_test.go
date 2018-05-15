@@ -60,7 +60,7 @@ func TestTwoBearsFighting(t *testing.T) {
 	}
 	g.TakeAction(&Action{
 		Type:   Block,
-		Card:   defendingBear,
+		With:   defendingBear,
 		Target: attackingBear,
 	})
 	g.passUntilPhase(Main2)
@@ -193,7 +193,7 @@ func TestSkarrganPitskulkBloodthirst(t *testing.T) {
 
 	g.playCreature()
 
-	if g.Priority.Board[2].Power() != 2 {
+	if g.Priority().Board[2].Power() != 2 {
 		t.Fatal("expected a bloodthirsted skulk")
 	}
 }
@@ -232,7 +232,7 @@ func TestVaultSkirgeLoseAndGain(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(VaultSkirge), deckWithTopAndForests(VaultSkirge))
 	g.playLand()
 	g.playCreaturePhyrexian()
-	if g.Priority.Life != 18 {
+	if g.Priority().Life != 18 {
 		g.Print()
 		t.Fatal("expected the player to lose 2 life from Vault Skirge casting")
 	}
@@ -244,7 +244,7 @@ func TestVaultSkirgeLoseAndGain(t *testing.T) {
 	g.TakeAction(&Action{Type: DeclareAttack})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
-	if g.Priority.Life != 19 {
+	if g.Priority().Life != 19 {
 		t.Fatal("expected the player to gain 1 life from Vault Skirge attack")
 	}
 }

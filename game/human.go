@@ -27,11 +27,12 @@ func (h *Human) Action(g *Game) *Action {
 }
 
 func promptForAction(game *Game, actions []*Action) *Action {
+	player := game.Priority()
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Printf("## Turn %v | %s\n", game.Turn, game.Phase)
+		fmt.Printf("## Turn %d | %s\n", game.Turn, game.Phase)
 		for index, action := range actions {
-			fmt.Printf("%d) %s\n", index+1, action)
+			fmt.Printf("%d) %s\n", index+1, action.ShowTo(player))
 		}
 		fmt.Print("\nEnter a number: ")
 		text, _ := reader.ReadString('\n')
@@ -48,21 +49,23 @@ func promptForAction(game *Game, actions []*Action) *Action {
 }
 
 func promptForTargetAndMana(game *Game, action *Action) *Action {
+	player := game.Priority()
+	c := action.Card
 	actions := []*Action{}
 	for _, target := range game.Creatures() {
 		actions = append(actions, &Action{
 			Type:   Play,
-			Card:   action.Card,
+			Card:   c,
 			Target: target,
 		})
 	}
-	mana := action.Card.Owner.AvailableMana()
-	if action.Card.IsInstant && action.Card.HasKicker && action.Card.Kicker.CastingCost.Colorless > 0 && mana >= action.Card.Kicker.CastingCost.Colorless && action.Card.HasLegalTarget(action.Card.Owner.Game) {
-		for _, target := range action.Card.Owner.Game.Creatures() {
-			if target.Targetable(action.Card) {
+	mana := game.Priority().AvailableMana()
+	if c.IsInstant && c.HasKicker && c.Kicker.CastingCost.Colorless > 0 && mana >= c.Kicker.CastingCost.Colorless {
+		for _, target := range game.Creatures() {
+			if player.IsLegalTarget(c, target) {
 				actions = append(actions, &Action{
 					Type:       Play,
-					Card:       action.Card,
+					Card:       c,
 					WithKicker: true,
 					Target:     target,
 				})
