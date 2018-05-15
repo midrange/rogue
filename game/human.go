@@ -29,7 +29,7 @@ func (h *Human) Action(g *Game) *Action {
 func promptForAction(game *Game, actions []*Action) *Action {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Printf("## Turn %v | %s\n", game.Turn, game.Phase)
+		fmt.Printf("## Turn %d | %s\n", game.Turn, game.Phase)
 		for index, action := range actions {
 			fmt.Printf("%d) %s\n", index+1, action)
 		}

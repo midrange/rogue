@@ -264,23 +264,23 @@ func (g *Game) Print() {
 }
 
 func printBorder(gameWidth int) {
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 	for x := 0; x < gameWidth; x++ {
 		fmt.Printf("~")
 	}
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 }
 
 func printMiddleLine(gameWidth int) {
 	padding := 30
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 	for x := 0; x < padding; x++ {
 		fmt.Printf(" ")
 	}
 	for x := 0; x < gameWidth-padding*2; x++ {
 		fmt.Printf("_")
 	}
-	fmt.Printf("%v", "\n\n\n")
+	fmt.Printf("%s", "\n\n\n")
 }
 
 // 0 or 1 depending on who has priority

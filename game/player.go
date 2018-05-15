@@ -323,7 +323,7 @@ func (p *Player) Play(action *Action) {
 	}
 
 	if card.IsInstant {
-		card.DoEffect(action)
+		card.CastInstant(action)
 		// TODO put instants and sorceries in graveyard (or exile)
 	} else {
 		// TODO allow for kicked creatures
@@ -346,9 +346,9 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 		PrintRowOfCards(p.NonLandPermanents(), gameWidth)
 		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
-		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d", p.AvatarString(position, gameWidth))
 	} else {
-		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
 		PrintRowOfCards(p.Lands(), gameWidth)
 		PrintRowOfCards(p.NonLandPermanents(), gameWidth)

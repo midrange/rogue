@@ -207,11 +207,11 @@ func RandomCard() *Card {
 
 func (c *Card) String() string {
 	if c.IsLand {
-		return fmt.Sprintf("%v", c.Name)
+		return fmt.Sprintf("%s", c.Name)
 	} else if c.IsCreature {
-		return fmt.Sprintf("%v (%v/%v)", c.Name, c.Power(), c.Toughness())
+		return fmt.Sprintf("%s (%d/%d)", c.Name, c.Power(), c.Toughness())
 	}
-	return fmt.Sprintf("%v", c.Name)
+	return fmt.Sprintf("%s", c.Name)
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
@@ -248,7 +248,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		}
 	} else {
 		nameRow := 2
-		words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
+		words := strings.Split(fmt.Sprintf("%s", c.Name), " ")
 		for _, word := range words {
 			wordWidth := Min(3, len(word))
 			if len(words) == 1 {
@@ -266,7 +266,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if c.IsCreature {
 			initialIndex := 2
 			statsRow := 3
-			statsString := fmt.Sprintf("%v/%v", c.Power(), c.Toughness())
+			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
 			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
@@ -276,7 +276,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if !c.IsLand {
 			initialIndex := 2
 			ccRow := 1
-			ccString := fmt.Sprintf("%v", c.CastingCost.Colorless)
+			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
 			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
 				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
 			}
@@ -336,10 +336,10 @@ func (c *Card) Targetable(targetingSpell *Card) bool {
 		return false
 	}
 	for _, effect := range c.Effects {
-		if effect.Card.Modifier.Untargetable == true {
+		if effect.Card.Modifier.Untargetable {
 			return false
 		}
-		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof == true {
+		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof {
 			return false
 		}
 	}
@@ -391,7 +391,7 @@ func (c *Card) UseForMana() {
 
 // TODO MAKE THIS NOT NAME THE CARDS, JUST USE THE KEYWORDS
 
-func (c *Card) DoEffect(action *Action) {
+func (c *Card) CastInstant(action *Action) {
 	if c.AddsTemporaryEffect {
 		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
 	}
