@@ -197,5 +197,6 @@ func newCardHelper(name CardName) *Card {
 }
 
 func (c *Card) String() string {
-	return fmt.Sprintf("%s", c.Name)
+	p := &Permanent{Card: c}
+	return p.String()
 }
