@@ -8,19 +8,21 @@ import (
 
 type Card struct {
 	// Things that are relevant wherever the card is
-	AddsTemporaryEffect bool
-	HasMorbid           bool
-	HasKicker           bool
-	IsLand              bool
-	IsCreature          bool
-	IsEnchantCreature   bool
-	IsInstant           bool
-	Kicker              *Modifier
-	ManaCost            int
-	Modifier            *Modifier
-	Morbid              *Modifier
-	Name                CardName
-	Owner               *Player
+	AddsTemporaryEffect  bool
+	CastingCost          *CastingCost
+	HasKicker            bool
+	HasMorbid            bool
+	HasPhyrexian         bool
+	IsLand               bool
+	IsCreature           bool
+	IsEnchantCreature    bool
+	IsInstant            bool
+	Kicker               *Modifier
+	Modifier             *Modifier // temporary Effect Modifiers for Power, Toughness, Untargetable, Hexproof
+	Morbid               *Modifier
+	Name                 CardName
+	Owner                *Player
+	PhyrexianCastingCost *CastingCost
 
 	// Properties that are relevant for any permanent
 	Auras      []*Card
@@ -37,6 +39,7 @@ type Card struct {
 	Flying            bool
 	GroundEvader      bool // a fake keyword for Silhana Ledgewalker that faux flies
 	Hexproof          bool
+	Lifelink          bool
 	PowerCounters     int
 	Powermenace       bool // a fake keyword for Skarrgan Pitskulk, who can only be blocked by >= Power
 	ToughnessCounters int
@@ -62,6 +65,7 @@ const (
 	Rancor
 	SilhanaLedgewalker
 	SkarrganPitskulk
+	VaultSkirge
 	VinesOfVastwood
 )
 
@@ -82,10 +86,10 @@ func newCardHelper(name CardName) *Card {
 		}
 	case GrizzlyBears:
 		return &Card{
-			IsCreature:    true,
 			BasePower:     2,
 			BaseToughness: 2,
-			ManaCost:      2,
+			CastingCost:   &CastingCost{Colorless: 2},
+			IsCreature:    true,
 		}
 	case NettleSentinel:
 		/*
@@ -93,10 +97,10 @@ func newCardHelper(name CardName) *Card {
 			Whenever you cast a green spell, you may untap Nettle Sentinel.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     2,
 			BaseToughness: 2,
-			ManaCost:      1,
+			CastingCost:   &CastingCost{Colorless: 1},
+			IsCreature:    true,
 		}
 	case SilhanaLedgewalker:
 		/*
@@ -104,11 +108,11 @@ func newCardHelper(name CardName) *Card {
 			Silhana Ledgewalker can't be blocked except by creatures with flying.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     1,
 			BaseToughness: 1,
-			ManaCost:      2,
+			CastingCost:   &CastingCost{Colorless: 2},
 			Hexproof:      true,
+			IsCreature:    true,
 			GroundEvader:  true,
 		}
 	case SkarrganPitskulk:
@@ -118,12 +122,29 @@ func newCardHelper(name CardName) *Card {
 			Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     1,
 			BaseToughness: 1,
-			ManaCost:      1,
 			Bloodthirst:   1,
+			CastingCost:   &CastingCost{Colorless: 1},
+			IsCreature:    true,
 			Powermenace:   true,
+		}
+	case VaultSkirge:
+		/*
+			(Phyrexian Black can be paid with either Black or 2 life.)
+			Flying
+			Lifelink (Damage dealt by this creature also causes you to gain that much life.)
+		*/
+		return &Card{
+			BasePower:            1,
+			BaseToughness:        1,
+			CastingCost:          &CastingCost{Colorless: 2},
+			Flying:               true,
+			HasPhyrexian:         true,
+			Hexproof:             true,
+			IsCreature:           true,
+			Lifelink:             true,
+			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
 		}
 	case Rancor:
 		/*
@@ -132,24 +153,24 @@ func newCardHelper(name CardName) *Card {
 			return Rancor to its owner's hand.
 		*/
 		return &Card{
-			IsEnchantCreature: true,
 			BasePower:         2,
 			BaseToughness:     0,
-			ManaCost:          1,
+			CastingCost:       &CastingCost{Colorless: 1},
+			IsEnchantCreature: true,
 		}
 	case VinesOfVastwood:
 		return &Card{
 			AddsTemporaryEffect: true,
+			CastingCost:         &CastingCost{Colorless: 1},
 			HasKicker:           true,
 			IsInstant:           true,
-			ManaCost:            1,
+			Kicker: &Modifier{
+				CastingCost: &CastingCost{Colorless: 2},
+				Power:       4,
+				Toughness:   4,
+			},
 			Modifier: &Modifier{
 				Untargetable: true,
-			},
-			Kicker: &Modifier{
-				Cost:      2,
-				Power:     4,
-				Toughness: 4,
 			},
 		}
 	case HungerOfTheHowlpack:
@@ -158,15 +179,15 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
-			HasMorbid:         true,
-			IsInstant:         true,
-			PowerCounters:     1,
-			ToughnessCounters: 1,
-			ManaCost:          1,
+			CastingCost: &CastingCost{Colorless: 1},
+			HasMorbid:   true,
+			IsInstant:   true,
 			Morbid: &Modifier{
 				PowerCounters:     2,
 				ToughnessCounters: 2,
 			},
+			PowerCounters:     1,
+			ToughnessCounters: 1,
 		}
 	default:
 		log.Fatalf("unimplemented card name: %d", name)
@@ -176,11 +197,11 @@ func newCardHelper(name CardName) *Card {
 
 func (c *Card) String() string {
 	if c.IsLand {
-		return fmt.Sprintf("%v", c.Name)
+		return fmt.Sprintf("%s", c.Name)
 	} else if c.IsCreature {
-		return fmt.Sprintf("%v (%v/%v)", c.Name, c.Power(), c.Toughness())
+		return fmt.Sprintf("%s (%d/%d)", c.Name, c.Power(), c.Toughness())
 	}
-	return fmt.Sprintf("%v", c.Name)
+	return fmt.Sprintf("%s", c.Name)
 }
 
 func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
@@ -217,7 +238,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		}
 	} else {
 		nameRow := 2
-		words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
+		words := strings.Split(fmt.Sprintf("%s", c.Name), " ")
 		for _, word := range words {
 			wordWidth := Min(3, len(word))
 			if len(words) == 1 {
@@ -235,7 +256,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if c.IsCreature {
 			initialIndex := 2
 			statsRow := 3
-			statsString := fmt.Sprintf("%v/%v", c.Power(), c.Toughness())
+			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
 			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
@@ -245,7 +266,7 @@ func (c *Card) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if !c.IsLand {
 			initialIndex := 2
 			ccRow := 1
-			ccString := fmt.Sprintf("%v", c.ManaCost)
+			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
 			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
 				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
 			}
@@ -305,10 +326,10 @@ func (c *Card) Targetable(targetingSpell *Card) bool {
 		return false
 	}
 	for _, effect := range c.Effects {
-		if effect.Card.Modifier.Untargetable == true {
+		if effect.Card.Modifier.Untargetable {
 			return false
 		}
-		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof == true {
+		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof {
 			return false
 		}
 	}
@@ -360,7 +381,7 @@ func (c *Card) UseForMana() {
 
 // TODO MAKE THIS NOT NAME THE CARDS, JUST USE THE KEYWORDS
 
-func (c *Card) DoEffect(action *Action) {
+func (c *Card) CastInstant(action *Action) {
 	if c.AddsTemporaryEffect {
 		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
 	}
@@ -399,5 +420,15 @@ func (c *Card) DoComesIntoPlayEffects() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.PowerCounters += c.Bloodthirst
 		c.ToughnessCounters += c.Bloodthirst
+	}
+}
+
+/*
+	Most creatures don't do anything special when they deal damage.
+	Currently just ones with Lifelink do something extra.
+*/
+func (c *Card) DidDealDamage(damage int) {
+	if c.Lifelink && damage > 0 {
+		c.Owner.Life += damage
 	}
 }

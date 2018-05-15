@@ -144,6 +144,7 @@ func (g *Game) HandleCombatDamage() {
 			if len(attacker.DamageOrder) == 0 || attacker.Trample() {
 				// Deal damage to the defending player
 				g.Defender().DealDamage(damage)
+				attacker.DidDealDamage(damage)
 			}
 
 			if attacker.Damage >= attacker.Toughness() {
@@ -249,23 +250,23 @@ func (g *Game) Print() {
 }
 
 func printBorder(gameWidth int) {
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 	for x := 0; x < gameWidth; x++ {
 		fmt.Printf("~")
 	}
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 }
 
 func printMiddleLine(gameWidth int) {
 	padding := 30
-	fmt.Printf("%v", "\n")
+	fmt.Printf("%s", "\n")
 	for x := 0; x < padding; x++ {
 		fmt.Printf(" ")
 	}
 	for x := 0; x < gameWidth-padding*2; x++ {
 		fmt.Printf("_")
 	}
-	fmt.Printf("%v", "\n\n\n")
+	fmt.Printf("%s", "\n\n\n")
 }
 
 // 0 or 1 depending on who has priority
@@ -319,8 +320,20 @@ func (g *Game) playCreature() {
 			return
 		}
 	}
-	g.Print()
 	panic("playCreature failed")
+}
+
+// playCreature plays the first creature action with Phyrexian
+func (g *Game) playCreaturePhyrexian() {
+	for _, a := range g.Priority().PlayActions(true, false) {
+		fmt.Println(a)
+		if a.Card != nil && a.Card.IsCreature && a.WithPhyrexian {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playCreaturePhyrexian failed")
 }
 
 // playInstant plays the first instant it sees in the hand

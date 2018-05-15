@@ -5,10 +5,11 @@ import (
 )
 
 type Action struct {
-	Type       ActionType
-	Card       *Card
-	Target     *Card
-	WithKicker bool
+	Type          ActionType
+	Card          *Card
+	Target        *Card
+	WithKicker    bool
+	WithPhyrexian bool
 }
 
 type ActionType int
@@ -40,25 +41,25 @@ func (a *Action) String() string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%v: %v with kicker", a.Card.Kicker.Cost, a.Card.String())
+				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card)
 			}
-			return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.Kicker.Cost, a.Card.String(), a.pronoun(), a.Target.String())
+			return fmt.Sprintf("%d: %s on %s %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card, a.pronoun(), a.Target)
 		}
 		if a.Card.IsLand {
-			return fmt.Sprintf("%v", a.Card.String())
+			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
-			return fmt.Sprintf("%v: %v", a.Card.ManaCost, a.Card.String())
+			return fmt.Sprintf("%d: %s", a.Card.CastingCost.Colorless, a.Card)
 		}
-		return fmt.Sprintf("%v: %v on %v %v", a.Card.ManaCost, a.Card.String(), a.pronoun(), a.Target.String())
+		return fmt.Sprintf("%d: %s on %s %s", a.Card.CastingCost.Colorless, a.Card, a.pronoun(), a.Target)
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:
-		return fmt.Sprintf("attack with %v", a.Card.String())
+		return fmt.Sprintf("attack with %s", a.Card)
 	case Block:
-		return fmt.Sprintf("%v blocks %v", a.Card.String(), a.Target.String())
+		return fmt.Sprintf("%s blocks %s", a.Card, a.Target)
 	case UseForMana:
-		return fmt.Sprintf("tap %v for mana", a.Card.String())
+		return fmt.Sprintf("tap %s for mana", a.Card)
 	}
 	panic("control should not reach here")
 }
