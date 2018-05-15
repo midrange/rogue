@@ -85,9 +85,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	switch g.Phase {
 	case Main1:
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
-		if g.canAttack() {
-			actions = append(actions, &Action{Type: DeclareAttack})
-		}
+		actions = append(actions, &Action{Type: DeclareAttack})
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
 		actions = g.Priority().PlayActions(true, forHuman)
@@ -115,18 +113,6 @@ func (g *Game) DefenderId() PlayerId {
 
 func (g *Game) Defender() *Player {
 	return g.Players[g.DefenderId()]
-}
-
-func (g *Game) canAttack() bool {
-	if g.Phase != Main1 {
-		return false
-	}
-	for _, card := range g.Priority().Board {
-		if card.CanAttack(g) {
-			return true
-		}
-	}
-	return false
 }
 
 func (g *Game) HandleCombatDamage() {
