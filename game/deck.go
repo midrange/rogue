@@ -26,7 +26,6 @@ func NewDeck(decklist map[CardName]int) *Deck {
 
 func Stompy() *Deck {
 	return NewDeck(map[CardName]int{
-		// BurningTreeEmissary: 0,
 		Forest:              17,
 		HungerOfTheHowlpack: 4,
 		NestInvader:         15,
