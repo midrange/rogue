@@ -141,6 +141,7 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness:        1,
 			CastingCost:          &CastingCost{Colorless: 2},
 			Flying:               true,
+			HasPhyrexian:         true,
 			Hexproof:             true,
 			IsCreature:           true,
 			Lifelink:             true,

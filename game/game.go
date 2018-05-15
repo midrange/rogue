@@ -301,8 +301,20 @@ func (g *Game) playCreature() {
 			return
 		}
 	}
-	g.Print()
 	panic("playCreature failed")
+}
+
+// playCreature plays the first creature action with Phyrexian
+func (g *Game) playCreaturePhyrexian() {
+	for _, a := range g.Priority.PlayActions(true, false) {
+		fmt.Println(a)
+		if a.Card != nil && a.Card.IsCreature && a.WithPhyrexian {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playCreaturePhyrexian failed")
 }
 
 // playInstant plays the first instant it sees in the hand

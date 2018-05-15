@@ -188,6 +188,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 			if card.IsCreature || card.IsEnchantCreature {
 				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && card.Owner.Life >= card.PhyrexianCastingCost.Life {
+					fmt.Println("can phyrexian")
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
 			}

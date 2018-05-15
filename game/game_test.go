@@ -228,15 +228,15 @@ func TestSkarrganPitskulksDontMeet(t *testing.T) {
 	}
 }
 
-func VaultSkirgeLoseAndGain(t *testing.T) {
+func TestVaultSkirgeLoseAndGain(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(VaultSkirge), deckWithTopAndForests(VaultSkirge))
-
 	g.playLand()
-	g.playCreature()
-	g.passTurn()
+	g.playCreaturePhyrexian()
 	if g.Priority.Life != 18 {
+		g.Print()
 		t.Fatal("expected the player to lose 2 life from Vault Skirge casting")
 	}
+	g.passTurn()
 
 	g.playLand()
 	g.passTurn()
@@ -244,7 +244,7 @@ func VaultSkirgeLoseAndGain(t *testing.T) {
 	g.TakeAction(&Action{Type: DeclareAttack})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
-	if g.Priority.Life != 18 {
+	if g.Priority.Life != 19 {
 		t.Fatal("expected the player to gain 1 life from Vault Skirge attack")
 	}
 }
