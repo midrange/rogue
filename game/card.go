@@ -67,8 +67,7 @@ type Card struct {
 type CardName int
 
 const (
-	BurningTreeEmissary CardName = iota
-	EldraziSpawnToken
+	EldraziSpawnToken CardName = iota
 	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
@@ -92,18 +91,6 @@ func NewCard(name CardName) *Card {
 
 func newCardHelper(name CardName) *Card {
 	switch name {
-	case BurningTreeEmissary:
-		manaCard := &Card{
-			Colorless: 2,
-		}
-		return &Card{
-			BasePower:           2,
-			BaseToughness:       2,
-			CastingCost:         &CastingCost{Colorless: 2},
-			EntersPlayAction:    &Action{Type: UseForMana, Card: manaCard},
-			HasEntersPlayAction: true,
-			IsCreature:          true,
-		}
 	case Forest:
 		return &Card{
 			Colorless: 1,
