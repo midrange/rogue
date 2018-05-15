@@ -319,6 +319,7 @@ func (p *Player) Play(action *Action) {
 
 	if card.IsInstant {
 		p.castInstant(card, action.Target, action)
+		// TODO put instants and sorceries in graveyard (or exile)
 		return
 	}
 
@@ -335,6 +336,7 @@ func (p *Player) Play(action *Action) {
 
 	p.Board = append(p.Board, perm)
 	perm.HandleComingIntoPlay()
+
 	if card.IsEnchantCreature {
 		action.Target.Auras = append(action.Target.Auras, perm)
 	}

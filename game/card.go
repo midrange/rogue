@@ -25,7 +25,6 @@ type Card struct {
 	IsCreature           bool
 	IsEnchantCreature    bool
 	IsInstant            bool
-	IsToken              bool
 	Kicker               *Modifier
 	Lifelink             bool
 	ManaCost             int
@@ -89,7 +88,6 @@ func newCardHelper(name CardName) *Card {
 			Colorless:         1,
 			HasManaAbility:    true,
 			IsCreature:        true,
-			IsToken:           true,
 			Name:              EldraziSpawnToken,
 			SacrificesForMana: true,
 		}
