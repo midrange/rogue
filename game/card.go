@@ -8,23 +8,27 @@ import (
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	AddsTemporaryEffect bool
-	Bloodthirst         int
-	Flying              bool
-	GroundEvader        bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof            bool
-	HasMorbid           bool
-	HasKicker           bool
-	IsLand              bool
-	IsCreature          bool
-	IsEnchantCreature   bool
-	IsInstant           bool
-	Kicker              *Modifier
-	ManaCost            int
-	Modifier            *Modifier
-	Morbid              *Modifier
-	Name                CardName
-	Powermenace         bool // only blockable by >= power (like Skarrgan Pitskulk)
+	AddsTemporaryEffect  bool
+	Bloodthirst          int
+	CastingCost          *CastingCost
+	Flying               bool
+	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof             bool
+	HasMorbid            bool
+	HasPhyrexian         bool
+	HasKicker            bool
+	IsLand               bool
+	IsCreature           bool
+	IsEnchantCreature    bool
+	IsInstant            bool
+	Kicker               *Modifier
+	Lifelink             bool
+	ManaCost             int
+	Modifier             *Modifier
+	Morbid               *Modifier
+	Name                 CardName
+	PhyrexianCastingCost *CastingCost
+	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// The base properties of creatures.
 	BasePower     int
@@ -43,6 +47,7 @@ const (
 	Rancor
 	SilhanaLedgewalker
 	SkarrganPitskulk
+	VaultSkirge
 	VinesOfVastwood
 )
 
@@ -63,10 +68,10 @@ func newCardHelper(name CardName) *Card {
 		}
 	case GrizzlyBears:
 		return &Card{
-			IsCreature:    true,
 			BasePower:     2,
 			BaseToughness: 2,
-			ManaCost:      2,
+			CastingCost:   &CastingCost{Colorless: 2},
+			IsCreature:    true,
 		}
 	case NettleSentinel:
 		/*
@@ -74,10 +79,10 @@ func newCardHelper(name CardName) *Card {
 			Whenever you cast a green spell, you may untap Nettle Sentinel.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     2,
 			BaseToughness: 2,
-			ManaCost:      1,
+			CastingCost:   &CastingCost{Colorless: 1},
+			IsCreature:    true,
 		}
 	case SilhanaLedgewalker:
 		/*
@@ -85,11 +90,11 @@ func newCardHelper(name CardName) *Card {
 			Silhana Ledgewalker can't be blocked except by creatures with flying.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     1,
 			BaseToughness: 1,
-			ManaCost:      2,
+			CastingCost:   &CastingCost{Colorless: 2},
 			Hexproof:      true,
+			IsCreature:    true,
 			GroundEvader:  true,
 		}
 	case SkarrganPitskulk:
@@ -99,12 +104,29 @@ func newCardHelper(name CardName) *Card {
 			Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
 		*/
 		return &Card{
-			IsCreature:    true,
 			BasePower:     1,
 			BaseToughness: 1,
-			ManaCost:      1,
 			Bloodthirst:   1,
+			CastingCost:   &CastingCost{Colorless: 1},
+			IsCreature:    true,
 			Powermenace:   true,
+		}
+	case VaultSkirge:
+		/*
+			(Phyrexian Black can be paid with either Black or 2 life.)
+			Flying
+			Lifelink (Damage dealt by this creature also causes you to gain that much life.)
+		*/
+		return &Card{
+			BasePower:            1,
+			BaseToughness:        1,
+			CastingCost:          &CastingCost{Colorless: 2},
+			Flying:               true,
+			HasPhyrexian:         true,
+			Hexproof:             true,
+			IsCreature:           true,
+			Lifelink:             true,
+			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
 		}
 	case Rancor:
 		/*
@@ -113,24 +135,24 @@ func newCardHelper(name CardName) *Card {
 			return Rancor to its owner's hand.
 		*/
 		return &Card{
-			IsEnchantCreature: true,
 			BasePower:         2,
 			BaseToughness:     0,
-			ManaCost:          1,
+			CastingCost:       &CastingCost{Colorless: 1},
+			IsEnchantCreature: true,
 		}
 	case VinesOfVastwood:
 		return &Card{
 			AddsTemporaryEffect: true,
+			CastingCost:         &CastingCost{Colorless: 1},
 			HasKicker:           true,
 			IsInstant:           true,
-			ManaCost:            1,
+			Kicker: &Modifier{
+				CastingCost: &CastingCost{Colorless: 2},
+				Power:       4,
+				Toughness:   4,
+			},
 			Modifier: &Modifier{
 				Untargetable: true,
-			},
-			Kicker: &Modifier{
-				Cost:      2,
-				Power:     4,
-				Toughness: 4,
 			},
 		}
 	case HungerOfTheHowlpack:
@@ -139,12 +161,12 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
-			HasMorbid: true,
-			IsInstant: true,
 			Modifier: &Modifier{
 				Plus1Plus1Counters: 1,
 			},
-			ManaCost: 1,
+			CastingCost: &CastingCost{Colorless: 1},
+			HasMorbid:   true,
+			IsInstant:   true,
 			Morbid: &Modifier{
 				Plus1Plus1Counters: 2,
 			},

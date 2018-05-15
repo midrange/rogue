@@ -170,10 +170,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			if card.IsLand && p.LandPlayedThisTurn == 0 {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsCreature && mana >= card.ManaCost {
+			if card.IsCreature && mana >= card.CastingCost.Colorless {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.ManaCost && p.HasLegalTarget(card) {
+			if card.IsEnchantCreature && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
 				if forHuman {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
@@ -189,9 +189,15 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 					}
 				}
 			}
+			if card.IsCreature || card.IsEnchantCreature {
+				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
+					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+				}
+			}
 		}
+
 		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant && mana >= card.ManaCost && p.HasLegalTarget(card) {
+		if card.IsInstant && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
 			if forHuman {
 				answer = append(answer, &Action{
 					Type: ChooseTargetAndMana,
@@ -209,8 +215,8 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				}
 			}
 		}
-		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.HasKicker && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && p.HasLegalTarget(card) {
+
+		if card.IsInstant && card.HasKicker && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && p.HasLegalTarget(card) {
 			if !forHuman {
 				for _, target := range p.game.Creatures() {
 					if p.IsLegalTarget(card, target) {
@@ -222,6 +228,12 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 						})
 					}
 				}
+			}
+		}
+
+		if card.IsInstant {
+			if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
+				answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 			}
 		}
 	}
@@ -293,9 +305,12 @@ func (p *Player) Play(action *Action) {
 
 	if card.IsCreature || card.IsInstant {
 		if action.WithKicker {
-			p.SpendMana(card.Kicker.Cost)
+			p.SpendMana(card.Kicker.CastingCost.Colorless)
+		} else if action.WithPhyrexian {
+			p.SpendMana(card.PhyrexianCastingCost.Colorless)
+			p.Life -= card.PhyrexianCastingCost.Life
 		} else {
-			p.SpendMana(card.ManaCost)
+			p.SpendMana(card.CastingCost.Colorless)
 		}
 		for _, permanent := range p.Board {
 			permanent.RespondToSpell()
@@ -347,9 +362,9 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 		PrintRowOfPermanents(p.NonLandPermanents(), gameWidth)
 		PrintRowOfPermanents(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
-		fmt.Printf("\n%v", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d", p.AvatarString(position, gameWidth))
 	} else {
-		fmt.Printf("\n%v\n", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%d\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
 		PrintRowOfPermanents(p.Lands(), gameWidth)
 		PrintRowOfPermanents(p.NonLandPermanents(), gameWidth)
@@ -381,7 +396,7 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	for x := 0; x < (gameWidth-len(playerString))/2; x++ {
 		playerString += " "
 	}
-	playerString += fmt.Sprintf("<Life: %v> Player %v <Mana: %v>", p.Life, position, p.ColorlessManaPool)
+	playerString += fmt.Sprintf("<Life: %d> Player %d <Mana: %d>", p.Life, position, p.ColorlessManaPool)
 	return playerString
 }
 
@@ -408,7 +423,7 @@ func PrintRowOfPermanents(perms []*Permanent, gameWidth int) {
 			}
 			fmt.Printf(" ")
 		}
-		fmt.Printf("%v", "\n")
+		fmt.Printf("%s", "\n")
 	}
 }
 

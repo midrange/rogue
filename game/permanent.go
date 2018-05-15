@@ -215,3 +215,9 @@ func (c *Permanent) HandleComingIntoPlay() {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 }
+
+func (c *Permanent) DidDealDamage(damage int) {
+	if c.Lifelink && damage > 0 {
+		c.Owner.Life += damage
+	}
+}

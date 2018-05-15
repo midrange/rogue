@@ -5,11 +5,12 @@ import (
 )
 
 type Action struct {
-	Type       ActionType
-	Card       *Card
-	With       *Permanent
-	Target     *Permanent
-	WithKicker bool
+	Type          ActionType
+	Card          *Card
+	With          *Permanent
+	Target        *Permanent
+	WithKicker    bool
+	WithPhyrexian bool
 }
 
 type ActionType int
@@ -41,10 +42,10 @@ func (a *Action) ShowTo(p *Player) string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.Cost, a.Card)
+				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card)
 			}
 			return fmt.Sprintf("%d: %s on %s %s with kicker",
-				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.CastingCost.Colorless, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%s", a.Card)
