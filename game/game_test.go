@@ -260,17 +260,17 @@ func TestNestInvader(t *testing.T) {
 	g.playLand()
 	g.playCreature()
 
-	if len(g.Priority.Creatures()) != 2 {
+	if len(g.Priority().Creatures()) != 2 {
 		t.Fatal("expected the player to have a Nest Invader and a token")
 	}
 
 	g.playManaAbilityAction()
 
-	if g.Priority.ColorlessManaPool != 1 {
+	if g.Priority().ColorlessManaPool != 1 {
 		t.Fatal("expected the player to have a colorless floating")
 	}
 
-	if len(g.Priority.Creatures()) != 1 {
+	if len(g.Priority().Creatures()) != 1 {
 		t.Fatal("expected the player to have a Nest Invader, with the token now dead")
 	}
 

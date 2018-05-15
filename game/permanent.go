@@ -183,15 +183,18 @@ func (c *Permanent) RespondToSpell() {
 }
 
 func (c *Permanent) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped {
+	if c.Name == Forest && !c.Tapped || c.HasManaAbility {
 		return []*Action{&Action{Type: UseForMana, With: c}}
 	}
 	return []*Action{}
 }
 
 func (c *Permanent) UseForMana() {
-	c.Owner.AddMana()
+	c.Owner.AddMana(c.Colorless)
 	c.Tapped = true
+	if c.SacrificesForMana {
+		c.Owner.RemoveFromBoard(c)
+	}
 }
 
 func (c *Permanent) CanBlock(attacker *Permanent) bool {
@@ -214,122 +217,16 @@ func (c *Permanent) HandleComingIntoPlay() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
-	if c.HasEntersPlayAction {
-		c.Owner.Game.TakeAction(c.EntersPlayAction)
+	if c.EntersPlayAction != nil {
+		c.Owner.game.TakeAction(c.EntersPlayAction)
 	}
-}
-
-func (c *Permanent) DidDealDamage(damage int) {
-	if c.Lifelink && damage > 0 {
-		c.Owner.Life += damage
-	}
-}
-
-func (c *Card) Targetable(targetingSpell *Card) bool {
-	answer := true
-	if targetingSpell.Owner != c.Owner && c.Hexproof {
-		return false
-	}
-	for _, effect := range c.Effects {
-		if effect.Card.Modifier.Untargetable == true {
-			return false
-		}
-		if targetingSpell.Owner != c.Owner && effect.Card.Modifier.Hexproof == true {
-			return false
-		}
-	}
-	return answer
-}
-
-func (c *Card) CanAttack(g *Game) bool {
-	if c.Tapped || !c.IsCreature || c.Power() == 0 || c.TurnPlayed == g.Turn {
-		return false
-	}
-	return true
-}
-
-func (c *Card) Trample() bool {
-	if c.BaseTrample {
-		return true
-	}
-	for _, aura := range c.Auras {
-		if aura.BaseTrample {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Card) RespondToUntapPhase() {
-	if c.Name != NettleSentinel {
-		c.Tapped = false
-	}
-}
-
-func (c *Card) RespondToSpell(spell *Card) {
-	if c.Name == NettleSentinel {
-		c.Tapped = false
-	}
-}
-
-func (c *Card) ManaActions() []*Action {
-	// TODO handle lands you can also sac for mana
-	if (c.IsLand && !c.Tapped) || c.HasManaAbility {
-		return []*Action{&Action{Type: UseForMana, Card: c}}
-	}
-	return []*Action{}
-}
-
-func (c *Card) UseForMana() {
-	c.Owner.AddMana(c.Colorless)
-	c.Tapped = true
-	if c.SacrificesForMana {
-		c.Owner.RemoveFromBoard(c)
-	}
-}
-
-func (c *Card) DoEffect(action *Action) {
-	if c.AddsTemporaryEffect {
-		action.Target.Effects = append(action.Target.Effects, &Effect{Action: action, Card: c})
-	}
-	if action.Target != nil {
-		// note that Counters and Morbid Counters are additive
-		action.Target.PowerCounters += c.PowerCounters
-		action.Target.ToughnessCounters += c.ToughnessCounters
-		if c.HasMorbid && (c.Owner.CreatureDied || c.Owner.Opponent.CreatureDied) {
-			action.Target.PowerCounters += c.Morbid.PowerCounters
-			action.Target.ToughnessCounters += c.Morbid.ToughnessCounters
-		}
-	}
-}
-
-func (c *Card) HasLegalTarget(g *Game) bool {
-	for _, creature := range g.Creatures() {
-		if creature.Targetable(c) {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Card) CanBlock(attacker *Card) bool {
-	if attacker.GroundEvader && !c.Flying {
-		return false
-	}
-	if attacker.Flying && !c.Flying {
-		return false
-	}
-	if attacker.Powermenace && attacker.Power() > c.Power() {
-		return false
-	}
-	return true
 }
 
 /*
 	Most creatures don't do anything special when they deal damage.
 	Currently just ones with Lifelink do something extra.
 */
-func (c *Card) DidDealDamage(damage int) {
+func (c *Permanent) DidDealDamage(damage int) {
 	if c.Lifelink && damage > 0 {
 		c.Owner.Life += damage
 	}

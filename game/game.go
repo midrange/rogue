@@ -376,7 +376,7 @@ func (g *Game) attackWithEveryone() {
 
 // playNonPassAction plays the first mana ability action
 func (g *Game) playManaAbilityAction() {
-	for _, a := range g.Priority.ManaActions() {
+	for _, a := range g.Priority().ManaActions() {
 		g.TakeAction(a)
 		return
 	}
