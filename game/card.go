@@ -15,7 +15,6 @@ type Card struct {
 	EntersPlayAction     *Action
 	Flying               bool
 	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
-	HasManaAbility       bool
 	Hexproof             bool
 	IsLand               bool
 	IsCreature           bool
@@ -85,7 +84,6 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness:     1,
 			CastingCost:       &CastingCost{Colorless: 0},
 			Colorless:         1,
-			HasManaAbility:    true,
 			IsCreature:        true,
 			Name:              EldraziSpawnToken,
 			SacrificesForMana: true,

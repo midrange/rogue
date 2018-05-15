@@ -183,7 +183,7 @@ func (c *Permanent) RespondToSpell() {
 }
 
 func (c *Permanent) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped || c.HasManaAbility {
+	if c.Name == Forest && !c.Tapped || c.SacrificesForMana {
 		return []*Action{&Action{Type: UseForMana, With: c}}
 	}
 	return []*Action{}
