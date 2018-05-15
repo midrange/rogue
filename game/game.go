@@ -125,6 +125,7 @@ func (g *Game) HandleCombatDamage() {
 			if len(attacker.DamageOrder) == 0 || attacker.Trample() {
 				// Deal damage to the defending player
 				g.Defender().DealDamage(damage)
+				attacker.DidDealDamage(damage)
 			}
 
 			if attacker.Damage >= attacker.Toughness() {

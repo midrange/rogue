@@ -167,10 +167,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			if card.IsLand && p.LandPlayedThisTurn == 0 {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsCreature && mana >= card.ManaCost {
+			if card.IsCreature && mana >= card.CastingCost.Colorless {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
+			if card.IsEnchantCreature && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
 				if forHuman {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
@@ -188,7 +188,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant && mana >= card.ManaCost && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && mana >= card.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
 			if forHuman {
 				answer = append(answer, &Action{
 					Type: ChooseTargetAndMana,
@@ -207,7 +207,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 		// TODO - can a card have a 0 kicker, do we need a nullable value here?
-		if card.IsInstant && card.HasKicker && card.Kicker.Cost > 0 && mana >= card.Kicker.Cost && card.HasLegalTarget(p.Game) {
+		if card.IsInstant && card.HasKicker && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && card.HasLegalTarget(p.Game) {
 			if !forHuman {
 				for _, target := range p.Game.Creatures() {
 					if target.Targetable(card) {
@@ -292,9 +292,9 @@ func (p *Player) Play(action *Action) {
 	}
 	if card.IsCreature || card.IsInstant {
 		if action.WithKicker {
-			p.SpendMana(card.Kicker.Cost)
+			p.SpendMana(card.Kicker.CastingCost.Colorless)
 		} else {
-			p.SpendMana(card.ManaCost)
+			p.SpendMana(card.CastingCost.Colorless)
 		}
 		for _, permanent := range p.Board {
 			permanent.RespondToSpell(card)

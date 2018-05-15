@@ -40,17 +40,17 @@ func (a *Action) String() string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%v: %v with kicker", a.Card.Kicker.Cost, a.Card.String())
+				return fmt.Sprintf("%v: %v with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card.String())
 			}
-			return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.Kicker.Cost, a.Card.String(), a.pronoun(), a.Target.String())
+			return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card.String(), a.pronoun(), a.Target.String())
 		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%v", a.Card.String())
 		}
 		if a.Target == nil {
-			return fmt.Sprintf("%v: %v", a.Card.ManaCost, a.Card.String())
+			return fmt.Sprintf("%v: %v", a.Card.CastingCost.Colorless, a.Card.String())
 		}
-		return fmt.Sprintf("%v: %v on %v %v", a.Card.ManaCost, a.Card.String(), a.pronoun(), a.Target.String())
+		return fmt.Sprintf("%v: %v on %v %v", a.Card.CastingCost.Colorless, a.Card.String(), a.pronoun(), a.Target.String())
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:
