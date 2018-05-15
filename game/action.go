@@ -7,7 +7,8 @@ import (
 type Action struct {
 	Type       ActionType
 	Card       *Card
-	Target     *Card
+	With       *Permanent
+	Target     *Permanent
 	WithKicker bool
 }
 
@@ -23,15 +24,15 @@ const (
 	ChooseTargetAndMana
 )
 
-func (a *Action) pronoun() string {
-	if a.Target.Owner == a.Card.Owner {
+func (a *Action) targetPronoun(p *Player) string {
+	if a.Target.Owner == p {
 		return "your"
 	}
 	return "their"
 }
 
 // For debugging and logging. Don't use this in the critical path.
-func (a *Action) String() string {
+func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case Pass:
 		return "pass"
@@ -40,25 +41,27 @@ func (a *Action) String() string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%v: %v with kicker", a.Card.Kicker.Cost, a.Card.String())
+				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.Cost, a.Card)
 			}
-			return fmt.Sprintf("%v: %v on %v %v with kicker", a.Card.Kicker.Cost, a.Card.String(), a.pronoun(), a.Target.String())
+			return fmt.Sprintf("%d: %s on %s %s with kicker",
+				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.Card.IsLand {
-			return fmt.Sprintf("%v", a.Card.String())
+			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
-			return fmt.Sprintf("%v: %v", a.Card.ManaCost, a.Card.String())
+			return fmt.Sprintf("%d: %s", a.Card.ManaCost, a.Card)
 		}
-		return fmt.Sprintf("%v: %v on %v %v", a.Card.ManaCost, a.Card.String(), a.pronoun(), a.Target.String())
+		return fmt.Sprintf("%d: %s on %s %s",
+			a.Card.ManaCost, a.Card, a.targetPronoun(p), a.Target)
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:
-		return fmt.Sprintf("attack with %v", a.Card.String())
+		return fmt.Sprintf("attack with %s", a.Card)
 	case Block:
-		return fmt.Sprintf("%v blocks %v", a.Card.String(), a.Target.String())
+		return fmt.Sprintf("%s blocks %s", a.Card, a.Target)
 	case UseForMana:
-		return fmt.Sprintf("tap %v for mana", a.Card.String())
+		return fmt.Sprintf("tap %s for mana", a.Card)
 	}
 	panic("control should not reach here")
 }
