@@ -17,7 +17,7 @@ type Card struct {
 	IsInstant           bool
 	Kicker              *Modifier
 	ManaCost            int
-	Modifier            *Modifier // temporary Effect Modifiers for Power, Toughness, Untargetable, Hexproof
+	Modifier            *Modifier
 	Morbid              *Modifier
 	Name                CardName
 	Owner               *Player
