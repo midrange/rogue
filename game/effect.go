@@ -22,12 +22,19 @@ type Effect struct {
 
 	// these properties modify a Card the Effect targets
 	Hexproof           bool
-	Kicker             *Effect
 	Plus1Plus1Counters int
 	Power              int
-	Summon             *Card
 	Toughness          int
 	Untargetable       bool
+
+	/*
+		only gets sets when the action for the Effect is withKicker
+		this child Effect adds on top of the normal Effect
+	*/
+	Kicker *Effect
+
+	// sometimes an effect summons a creature
+	Summon *Card
 
 	// these properties get copied from the Action object from which the Effect is created
 	Source *Permanent

@@ -471,22 +471,6 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 }
 
 func (p *Player) ResolveEffect(e *Effect) {
-
-	/*
-		if e.IsInstant {
-			if c.AddsTemporaryEffect {
-				target.Effects = append(target.Effects, NewEffect(a))
-			}
-
-			if c.Effect != nil {
-				target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
-			}
-			if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
-				target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
-			}
-			return
-		}*/
-
 	if e.Summon != nil {
 		perm := &Permanent{
 			Card:  e.Summon,
