@@ -5,8 +5,15 @@ import (
 	"strings"
 )
 
+// A PermanentId is provided for each permanent when it enters the battlefield.
+// Each id is unique for a particular game and is never reused for subsequent
+// permanents.
+// 0 is not a valid PermanentId.
+type PermanentId int
+
 type Permanent struct {
 	*Card
+	Id PermanentId
 
 	// Properties that are relevant for any permanent
 	Auras      []*Permanent

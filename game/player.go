@@ -324,11 +324,7 @@ func (p *Player) Play(action *Action) {
 	}
 
 	// Non-instant cards turn into a permanent
-	perm := &Permanent{
-		Card:  card,
-		Owner: p,
-	}
-	perm.TurnPlayed = p.game.Turn
+	perm := p.game.newPermanent(card, p)
 
 	if card.IsLand {
 		p.LandPlayedThisTurn++
