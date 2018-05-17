@@ -150,6 +150,9 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 
 	perm.Effects = []*Effect{}
 	for _, aura := range perm.Auras {
+		if aura.HostEntersGraveyardEffect != nil {
+			p.ResolveEffect(aura.HostEntersGraveyardEffect)
+		}
 		p.RemoveFromBoard(aura)
 	}
 }

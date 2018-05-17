@@ -368,6 +368,29 @@ func (g *Game) playCreature() {
 	panic("playCreature failed")
 }
 
+// playAura plays the first aura it sees in the hand on its own creature
+func (g *Game) playAura() {
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.IsEnchantCreature && a.Target.Owner == g.Priority() {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playAura failed")
+}
+
+// playAura plays the first aura it sees in the hand
+func (g *Game) doBlockAction() {
+	fmt.Println(g.Defender().BlockActions())
+	for _, a := range g.Defender().BlockActions() {
+		g.TakeAction(a)
+		return
+	}
+	g.Print()
+	panic("doBlockAction failed")
+}
+
 // playCreature plays the first creature action with Phyrexian
 func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {

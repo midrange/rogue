@@ -35,6 +35,9 @@ type Card struct {
 	// Properties that are relevant for Lands and other mana producers
 	Colorless         int
 	SacrificesForMana bool
+
+	// Properties that are relevant for Auras
+	HostEntersGraveyardEffect *Effect
 }
 
 //go:generate stringer -type=CardName
@@ -46,6 +49,8 @@ const (
 
 	BurningTreeEmissary
 	EldraziSpawnToken
+	ElephantGuide
+	ElephantToken
 	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
@@ -75,6 +80,9 @@ var Cards = map[CardName]*Card{
 		IsCreature:       true,
 	},
 
+	/*
+		Created by NestInvader.
+	*/
 	EldraziSpawnToken: &Card{
 		BasePower:         0,
 		BaseToughness:     1,
@@ -82,6 +90,29 @@ var Cards = map[CardName]*Card{
 		Colorless:         1,
 		IsCreature:        true,
 		SacrificesForMana: true,
+	},
+
+	/*
+
+		Enchanted creature gets +3/+3.
+		When enchanted creature dies, create a 3/3 green Elephant creature token.
+	*/
+	ElephantGuide: &Card{
+		BasePower:                 3,
+		BaseToughness:             3,
+		CastingCost:               &CastingCost{Colorless: 3},
+		IsEnchantCreature:         true,
+		HostEntersGraveyardEffect: &Effect{Summon: ElephantToken},
+	},
+
+	/*
+		Created by NestInvader.
+	*/
+	ElephantToken: &Card{
+		BasePower:     3,
+		BaseToughness: 3,
+		CastingCost:   &CastingCost{Colorless: 0},
+		IsCreature:    true,
 	},
 
 	/*
@@ -102,6 +133,22 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 2,
 		CastingCost:   &CastingCost{Colorless: 2},
 		IsCreature:    true,
+	},
+
+	/*
+		Put a +1/+1 counter on target creature.
+		Morbid - Put three +1/+1 counters on that creature instead if a creature died
+		this turn.
+	*/
+	HungerOfTheHowlpack: &Card{
+		Effect: &Effect{
+			Plus1Plus1Counters: 1,
+		},
+		CastingCost: &CastingCost{Colorless: 1},
+		IsInstant:   true,
+		Morbid: &Effect{
+			Plus1Plus1Counters: 2,
+		},
 	},
 
 	/*
@@ -220,22 +267,6 @@ var Cards = map[CardName]*Card{
 		},
 		Effect: &Effect{
 			Untargetable: true,
-		},
-	},
-
-	/*
-		Put a +1/+1 counter on target creature.
-		Morbid - Put three +1/+1 counters on that creature instead if a creature died
-		this turn.
-	*/
-	HungerOfTheHowlpack: &Card{
-		Effect: &Effect{
-			Plus1Plus1Counters: 1,
-		},
-		CastingCost: &CastingCost{Colorless: 1},
-		IsInstant:   true,
-		Morbid: &Effect{
-			Plus1Plus1Counters: 2,
 		},
 	},
 }
