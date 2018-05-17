@@ -8,7 +8,8 @@ import (
 // A PermanentId is provided for each permanent when it enters the battlefield.
 // Each id is unique for a particular game and is never reused for subsequent
 // permanents.
-// 0 is not a valid PermanentId.
+// The first allocated id is 1. This way, 0 is not a valid PermanentId, so if you
+// see anything with an id of 0 it means we are using something uninitialized.
 type PermanentId int
 
 type Permanent struct {
