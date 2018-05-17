@@ -248,3 +248,30 @@ func TestVaultSkirgeLoseAndGain(t *testing.T) {
 		t.Fatal("expected the player to gain 1 life from Vault Skirge attack")
 	}
 }
+
+func TestNestInvader(t *testing.T) {
+	g := NewGame(deckWithTopAndForests(NestInvader), deckWithTopAndForests(NestInvader))
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+
+	if len(g.Priority().Creatures()) != 2 {
+		t.Fatal("expected the player to have a Nest Invader and a token")
+	}
+
+	g.playManaAbilityAction()
+
+	if g.Priority().ColorlessManaPool != 1 {
+		t.Fatal("expected the player to have a colorless floating")
+	}
+
+	if len(g.Priority().Creatures()) != 1 {
+		t.Fatal("expected the player to have a Nest Invader, with the token now dead")
+	}
+
+}

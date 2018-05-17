@@ -51,7 +51,7 @@ func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
 		if card.IsLand && !card.Tapped {
-			answer += 1
+			answer += card.Colorless
 		}
 	}
 	answer += p.ColorlessManaPool
@@ -190,7 +190,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				}
 			}
 			if card.IsCreature || card.IsEnchantCreature {
-				if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
+				if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
 			}
@@ -216,7 +216,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
-		if card.IsInstant && card.HasKicker && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && p.HasLegalTarget(card) {
+		if card.IsInstant && card.Kicker != nil && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && p.HasLegalTarget(card) {
 			if !forHuman {
 				for _, target := range p.game.Creatures() {
 					if p.IsLegalTarget(card, target) {
@@ -232,7 +232,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		}
 
 		if card.IsInstant {
-			if card.HasPhyrexian && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
+			if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
 				answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 			}
 		}
@@ -319,6 +319,7 @@ func (p *Player) Play(action *Action) {
 
 	if card.IsInstant {
 		p.castInstant(card, action.Target, action)
+		// TODO put instants and sorceries in graveyard (or exile)
 		return
 	}
 
@@ -335,6 +336,7 @@ func (p *Player) Play(action *Action) {
 
 	p.Board = append(p.Board, perm)
 	perm.HandleComingIntoPlay()
+
 	if card.IsEnchantCreature {
 		action.Target.Auras = append(action.Target.Auras, perm)
 	}
@@ -342,19 +344,19 @@ func (p *Player) Play(action *Action) {
 
 func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
-		target.Effects = append(target.Effects, &Effect{Action: a, Card: c})
+		target.Effects = append(target.Effects, NewEffect(a))
 	}
 
-	if c.Modifier != nil {
-		target.Plus1Plus1Counters += c.Modifier.Plus1Plus1Counters
+	if c.Effect != nil {
+		target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
 	}
-	if c.HasMorbid && (p.CreatureDied || p.Opponent().CreatureDied) {
+	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
 }
 
-func (p *Player) AddMana() {
-	p.ColorlessManaPool += 1
+func (p *Player) AddMana(colorless int) {
+	p.ColorlessManaPool += colorless
 }
 
 func (p *Player) Print(position int, hideCards bool, gameWidth int) {
@@ -362,9 +364,9 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 		PrintRowOfPermanents(p.NonLandPermanents(), gameWidth)
 		PrintRowOfPermanents(p.Lands(), gameWidth)
 		PrintRowOfCards(p.Hand, gameWidth)
-		fmt.Printf("\n%d", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%s", p.AvatarString(position, gameWidth))
 	} else {
-		fmt.Printf("\n%d\n", p.AvatarString(position, gameWidth))
+		fmt.Printf("\n%s\n", p.AvatarString(position, gameWidth))
 		PrintRowOfCards(p.Hand, gameWidth)
 		PrintRowOfPermanents(p.Lands(), gameWidth)
 		PrintRowOfPermanents(p.NonLandPermanents(), gameWidth)
@@ -448,10 +450,10 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 		return false
 	}
 	for _, effect := range perm.Effects {
-		if effect.Card.Modifier.Untargetable {
+		if effect.Untargetable {
 			return false
 		}
-		if p != perm.Owner && effect.Card.Modifier.Hexproof {
+		if p != perm.Owner && effect.Hexproof {
 			return false
 		}
 	}
@@ -466,4 +468,16 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 		}
 	}
 	return false
+}
+
+func (p *Player) ResolveEffect(e *Effect) {
+	if e.Summon != nil {
+		perm := &Permanent{
+			Card:  e.Summon,
+			Owner: p,
+		}
+		perm.TurnPlayed = p.game.Turn
+		p.Board = append(p.Board, perm)
+		perm.HandleComingIntoPlay()
+	}
 }

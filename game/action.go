@@ -7,7 +7,8 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
-	With          *Permanent
+	Source        *Permanent // for targeted effects
+	With          *Permanent // for attacking
 	Target        *Permanent
 	WithKicker    bool
 	WithPhyrexian bool
@@ -42,27 +43,27 @@ func (a *Action) ShowTo(p *Player) string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%d: %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card)
+				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.CastingCost, a.Card)
 			}
-			return fmt.Sprintf("%d: %s on %s %s with kicker",
-				a.Card.Kicker.CastingCost.Colorless, a.Card, a.targetPronoun(p), a.Target)
+			return fmt.Sprintf("%s: %s on %s %s with kicker",
+				a.Card.Kicker.CastingCost, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
-			return fmt.Sprintf("%d: %s", a.Card.ManaCost, a.Card)
+			return fmt.Sprintf("%s: %s", a.Card.CastingCost, a.Card)
 		}
-		return fmt.Sprintf("%d: %s on %s %s",
-			a.Card.ManaCost, a.Card, a.targetPronoun(p), a.Target)
+		return fmt.Sprintf("%s: %s on %s %s",
+			a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target)
 	case DeclareAttack:
 		return "enter attack step"
 	case Attack:
-		return fmt.Sprintf("attack with %s", a.Card)
+		return fmt.Sprintf("attack with %s", a.With)
 	case Block:
-		return fmt.Sprintf("%s blocks %s", a.Card, a.Target)
+		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
 	case UseForMana:
-		return fmt.Sprintf("tap %s for mana", a.Card)
+		return fmt.Sprintf("tap %s for mana", a.Source)
 	}
 	panic("control should not reach here")
 }

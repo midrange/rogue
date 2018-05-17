@@ -11,21 +11,18 @@ type Card struct {
 	AddsTemporaryEffect  bool
 	Bloodthirst          int
 	CastingCost          *CastingCost
+	Effect               *Effect
+	EntersPlayEffect     *Effect
 	Flying               bool
 	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
 	Hexproof             bool
-	HasMorbid            bool
-	HasPhyrexian         bool
-	HasKicker            bool
 	IsLand               bool
 	IsCreature           bool
 	IsEnchantCreature    bool
 	IsInstant            bool
-	Kicker               *Modifier
+	Kicker               *Effect
 	Lifelink             bool
-	ManaCost             int
-	Modifier             *Modifier
-	Morbid               *Modifier
+	Morbid               *Effect
 	Name                 CardName
 	PhyrexianCastingCost *CastingCost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
@@ -34,15 +31,21 @@ type Card struct {
 	BasePower     int
 	BaseToughness int
 	BaseTrample   bool
+
+	// Properties that are relevant for Lands and other mana producers
+	Colorless         int
+	SacrificesForMana bool
 }
 
 //go:generate stringer -type=CardName
 type CardName int
 
 const (
-	Forest CardName = iota
+	EldraziSpawnToken CardName = iota
+	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
+	NestInvader
 	NettleSentinel
 	Rancor
 	SilhanaLedgewalker
@@ -62,9 +65,19 @@ func NewCard(name CardName) *Card {
 
 func newCardHelper(name CardName) *Card {
 	switch name {
+	case EldraziSpawnToken:
+		return &Card{
+			BasePower:         0,
+			BaseToughness:     1,
+			CastingCost:       &CastingCost{Colorless: 0},
+			Colorless:         1,
+			IsCreature:        true,
+			SacrificesForMana: true,
+		}
 	case Forest:
 		return &Card{
-			IsLand: true,
+			Colorless: 1,
+			IsLand:    true,
 		}
 	case GrizzlyBears:
 		return &Card{
@@ -72,6 +85,14 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness: 2,
 			CastingCost:   &CastingCost{Colorless: 2},
 			IsCreature:    true,
+		}
+	case NestInvader:
+		return &Card{
+			BasePower:        2,
+			BaseToughness:    2,
+			CastingCost:      &CastingCost{Colorless: 2},
+			EntersPlayEffect: &Effect{Summon: newCardHelper(EldraziSpawnToken)},
+			IsCreature:       true,
 		}
 	case NettleSentinel:
 		/*
@@ -83,6 +104,18 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness: 2,
 			CastingCost:   &CastingCost{Colorless: 1},
 			IsCreature:    true,
+		}
+	case Rancor:
+		/*
+			Enchanted creature gets +2/+0 and has trample.
+			When Rancor is put into a graveyard from the battlefield,
+			return Rancor to its owner's hand.
+		*/
+		return &Card{
+			BasePower:         2,
+			BaseToughness:     0,
+			CastingCost:       &CastingCost{Colorless: 1},
+			IsEnchantCreature: true,
 		}
 	case SilhanaLedgewalker:
 		/*
@@ -122,36 +155,22 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness:        1,
 			CastingCost:          &CastingCost{Colorless: 2},
 			Flying:               true,
-			HasPhyrexian:         true,
 			Hexproof:             true,
 			IsCreature:           true,
 			Lifelink:             true,
 			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
 		}
-	case Rancor:
-		/*
-			Enchanted creature gets +2/+0 and has trample.
-			When Rancor is put into a graveyard from the battlefield,
-			return Rancor to its owner's hand.
-		*/
-		return &Card{
-			BasePower:         2,
-			BaseToughness:     0,
-			CastingCost:       &CastingCost{Colorless: 1},
-			IsEnchantCreature: true,
-		}
 	case VinesOfVastwood:
 		return &Card{
 			AddsTemporaryEffect: true,
 			CastingCost:         &CastingCost{Colorless: 1},
-			HasKicker:           true,
 			IsInstant:           true,
-			Kicker: &Modifier{
+			Kicker: &Effect{
 				CastingCost: &CastingCost{Colorless: 2},
 				Power:       4,
 				Toughness:   4,
 			},
-			Modifier: &Modifier{
+			Effect: &Effect{
 				Untargetable: true,
 			},
 		}
@@ -161,13 +180,12 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
-			Modifier: &Modifier{
+			Effect: &Effect{
 				Plus1Plus1Counters: 1,
 			},
 			CastingCost: &CastingCost{Colorless: 1},
-			HasMorbid:   true,
 			IsInstant:   true,
-			Morbid: &Modifier{
+			Morbid: &Effect{
 				Plus1Plus1Counters: 2,
 			},
 		}

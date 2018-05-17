@@ -60,7 +60,7 @@ func promptForTargetAndMana(game *Game, action *Action) *Action {
 		})
 	}
 	mana := game.Priority().AvailableMana()
-	if c.IsInstant && c.HasKicker && c.Kicker.CastingCost.Colorless > 0 && mana >= c.Kicker.CastingCost.Colorless {
+	if c.IsInstant && c.Kicker != nil && c.Kicker.CastingCost.Colorless > 0 && mana >= c.Kicker.CastingCost.Colorless {
 		for _, target := range game.Creatures() {
 			if player.IsLegalTarget(c, target) {
 				actions = append(actions, &Action{
@@ -76,7 +76,7 @@ func promptForTargetAndMana(game *Game, action *Action) *Action {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		for index, action := range actions {
-			fmt.Printf("%d) %s\n", index, action)
+			fmt.Printf("%d) %s\n", index, action.ShowTo(player))
 		}
 		fmt.Print("\nEnter a number: ")
 		text, _ := reader.ReadString('\n')

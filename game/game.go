@@ -199,7 +199,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.With.UseForMana()
+		action.Source.UseForMana()
 		return
 	}
 
@@ -321,6 +321,7 @@ func (g *Game) playCreature() {
 			return
 		}
 	}
+	g.Print()
 	panic("playCreature failed")
 }
 
@@ -371,4 +372,14 @@ func (g *Game) attackWithEveryone() {
 		}
 		g.TakeAction(actions[0])
 	}
+}
+
+// playManaAbilityAction plays the first mana ability action
+func (g *Game) playManaAbilityAction() {
+	for _, a := range g.Priority().ManaActions() {
+		g.TakeAction(a)
+		return
+	}
+	g.Print()
+	panic("playManaAbilityAction failed")
 }

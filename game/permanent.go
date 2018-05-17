@@ -69,7 +69,7 @@ func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		}
 	} else {
 		nameRow := 2
-		words := strings.Split(fmt.Sprintf("%v", c.Name), " ")
+		words := strings.Split(fmt.Sprintf("%s", c.Name), " ")
 		for _, word := range words {
 			wordWidth := Min(3, len(word))
 			if len(words) == 1 {
@@ -87,7 +87,7 @@ func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if c.IsCreature {
 			initialIndex := 2
 			statsRow := 3
-			statsString := fmt.Sprintf("%v/%v", c.Power(), c.Toughness())
+			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
 			for x := initialIndex; x < len(statsString)+initialIndex; x++ {
 				imageGrid[statsRow][x] = string(statsString[x-initialIndex])
 			}
@@ -97,7 +97,7 @@ func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 		if !c.IsLand {
 			initialIndex := 2
 			ccRow := 1
-			ccString := fmt.Sprintf("%v", c.ManaCost)
+			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
 			for x := initialIndex; x < len(ccString)+initialIndex; x++ {
 				imageGrid[ccRow][x] = string(ccString[x-initialIndex])
 			}
@@ -129,9 +129,9 @@ func (p *Permanent) Power() int {
 		answer += aura.BasePower
 	}
 	for _, effect := range p.Effects {
-		answer += effect.Card.Modifier.Power
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Power
+		answer += effect.Power
+		if effect.Kicker != nil {
+			answer += effect.Kicker.Power
 		}
 	}
 	return answer
@@ -143,9 +143,9 @@ func (c *Permanent) Toughness() int {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.Effects {
-		answer += effect.Card.Modifier.Toughness
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Toughness
+		answer += effect.Toughness
+		if effect.Kicker != nil {
+			answer += effect.Kicker.Toughness
 		}
 	}
 	return answer
@@ -183,15 +183,18 @@ func (c *Permanent) RespondToSpell() {
 }
 
 func (c *Permanent) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped {
-		return []*Action{&Action{Type: UseForMana, With: c}}
+	if c.Name == Forest && !c.Tapped || c.SacrificesForMana {
+		return []*Action{&Action{Type: UseForMana, Source: c}}
 	}
 	return []*Action{}
 }
 
 func (c *Permanent) UseForMana() {
-	c.Owner.AddMana()
+	c.Owner.AddMana(c.Colorless)
 	c.Tapped = true
+	if c.SacrificesForMana {
+		c.Owner.RemoveFromBoard(c)
+	}
 }
 
 func (c *Permanent) CanBlock(attacker *Permanent) bool {
@@ -214,8 +217,15 @@ func (c *Permanent) HandleComingIntoPlay() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
+	if c.EntersPlayEffect != nil {
+		c.Owner.ResolveEffect(c.EntersPlayEffect)
+	}
 }
 
+/*
+	Most creatures don't do anything special when they deal damage.
+	Currently just ones with Lifelink do something extra.
+*/
 func (c *Permanent) DidDealDamage(damage int) {
 	if c.Lifelink && damage > 0 {
 		c.Owner.Life += damage
