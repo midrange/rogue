@@ -35,6 +35,7 @@ func Stompy() *Deck {
 		Rancor:              4,
 		SkarrganPitskulk:    4,
 		SilhanaLedgewalker:  4,
+		VaultSkirge:         4,
 		VinesOfVastwood:     4,
 	})
 }
