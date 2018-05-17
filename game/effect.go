@@ -1,7 +1,6 @@
 /*
-	An Effect is a struct with values that affect a Card's state.
-
-	It combines fields from a Card and an Action.
+	An Effect can be created by a spell, a triggered ability, or an
+	activated ability.
 
 	An Effect can be the property of a Card. For example, when the
 	Card is a Giant Growth, its effect property would be

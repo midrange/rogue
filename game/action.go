@@ -42,10 +42,10 @@ func (a *Action) ShowTo(p *Player) string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.CastingCost.Colorless, a.Card)
+				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.CastingCost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
-				a.Card.Kicker.CastingCost.Colorless, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.CastingCost, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.Card.IsLand {
 			return fmt.Sprintf("%s", a.Card)
