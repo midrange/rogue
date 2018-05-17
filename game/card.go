@@ -60,6 +60,10 @@ const CARD_HEIGHT = 5
 const CARD_WIDTH = 11
 
 var Cards = map[CardName]*Card{
+
+	/*
+		When Burning-Tree Emissary enters the battlefield, add RG.
+	*/
 	BurningTreeEmissary: &Card{
 		BasePower:        2,
 		BaseToughness:    2,
@@ -67,6 +71,7 @@ var Cards = map[CardName]*Card{
 		EntersPlayEffect: &Effect{Colorless: 2},
 		IsCreature:       true,
 	},
+
 	EldraziSpawnToken: &Card{
 		BasePower:         0,
 		BaseToughness:     1,
@@ -76,11 +81,19 @@ var Cards = map[CardName]*Card{
 		SacrificesForMana: true,
 	},
 
+	/*
+		G
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=443154
+	*/
 	Forest: &Card{
 		Colorless: 1,
 		IsLand:    true,
 	},
 
+	/*
+		No card text.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
+	*/
 	GrizzlyBears: &Card{
 		BasePower:     2,
 		BaseToughness: 2,
@@ -88,6 +101,11 @@ var Cards = map[CardName]*Card{
 		IsCreature:    true,
 	},
 
+	/*
+		When Nest Invader enters the battlefield, create a 0/1 colorless
+		Eldrazi Spawn creature token. It has "Sacrifice this creature:
+		Add (1)."
+	*/
 	NestInvader: &Card{
 		BasePower:        2,
 		BaseToughness:    2,
@@ -96,6 +114,10 @@ var Cards = map[CardName]*Card{
 		IsCreature:       true,
 	},
 
+	/*
+		Nettle Sentinel doesn't untap during your untap step.
+		Whenever you cast a green spell, you may untap Nettle Sentinel.
+	*/
 	NettleSentinel: &Card{
 		BasePower:     2,
 		BaseToughness: 2,
@@ -129,6 +151,11 @@ var Cards = map[CardName]*Card{
 		GroundEvader:  true,
 	},
 
+	/*
+		Bloodthirst 1 (If an opponent was dealt damage this turn, this creature enters
+		the battlefield with a +1/+1 counter on it.)
+		Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
+	*/
 	SkarrganPitskulk: &Card{
 		BasePower:     1,
 		BaseToughness: 1,
@@ -138,6 +165,11 @@ var Cards = map[CardName]*Card{
 		Powermenace:   true,
 	},
 
+	/*
+		(Phyrexian Black can be paid with either Black or 2 life.)
+		Flying
+		Lifelink (Damage dealt by this creature also causes you to gain that much life.)
+	*/
 	VaultSkirge: &Card{
 		BasePower:            1,
 		BaseToughness:        1,
@@ -149,6 +181,12 @@ var Cards = map[CardName]*Card{
 		PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
 	},
 
+	/*
+		Kicker Green (You may pay an additional Green as you cast this spell.)
+		Target creature can't be the target of spells or abilities your opponents
+		control this turn. If this spell was kicked, that creature gets +4/+4 until
+		end of turn.
+	*/
 	VinesOfVastwood: &Card{
 		AddsTemporaryEffect: true,
 		CastingCost:         &CastingCost{Colorless: 1},
