@@ -380,7 +380,7 @@ func (g *Game) playAura() {
 	panic("playAura failed")
 }
 
-// playAura plays the first aura it sees in the hand
+// does the first available block action
 func (g *Game) doBlockAction() {
 	fmt.Println(g.Defender().BlockActions())
 	for _, a := range g.Defender().BlockActions() {
