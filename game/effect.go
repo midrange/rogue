@@ -16,11 +16,10 @@ package game
 import ()
 
 type Effect struct {
-
-	// when an Effect is a kicker, it has a Cost
+	// when an Effect is a kicker, it has a CastingCost
 	CastingCost *CastingCost
 
-	// these properties modify Card or Game state
+	// these properties modify a Permanent the Effect targets
 	Colorless          int
 	Hexproof           bool
 	Plus1Plus1Counters int
@@ -28,17 +27,15 @@ type Effect struct {
 	Toughness          int
 	Untargetable       bool
 
-	/*
-		only gets sets when the action for the Effect is withKicker
-		this child Effect adds on top of the normal Effect
-	*/
+	// Kicker is a child Effect added on top of the normal Effect.
 	Kicker *Effect
 
 	// sometimes an effect summons a creature
-	Summon *Card
+	Summon CardName
 
-	// these properties get copied from the Action object from which the Effect is created
+	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent
+
 	Target *Permanent
 }
 

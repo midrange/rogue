@@ -11,7 +11,7 @@ type Player struct {
 	CreatureDied       bool
 	DamageThisTurn     int
 	Deck               *Deck
-	Hand               []*Card
+	Hand               []CardName
 	Id                 PlayerId
 	LandPlayedThisTurn int
 	Life               int
@@ -24,7 +24,7 @@ type Player struct {
 func NewPlayer(deck *Deck, id PlayerId) *Player {
 	p := &Player{
 		Life:  20,
-		Hand:  []*Card{},
+		Hand:  []CardName{},
 		Id:    id,
 		Board: []*Permanent{},
 		Deck:  deck,
@@ -40,8 +40,8 @@ func (p *Player) Draw() {
 	p.AddToHand(card)
 }
 
-func (p *Player) AddToHand(c *Card) {
-	if c == nil {
+func (p *Player) AddToHand(c CardName) {
+	if c == NoCard {
 		return
 	}
 	p.Hand = append(p.Hand, c)
@@ -141,7 +141,7 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 	p.Board = newBoard
 
 	if perm.Name == Rancor {
-		p.AddToHand(NewCard(Rancor))
+		p.AddToHand(Rancor)
 	} else {
 		// TODO: make sure it is actually a creature that died
 		p.CreatureDied = true
@@ -159,12 +159,13 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	answer := []*Action{&Action{Type: Pass}}
 
 	mana := p.AvailableMana()
-	for _, card := range p.Hand {
+	for _, name := range p.Hand {
 		// Don't re-check playing duplicate cards
-		if cardNames[card.Name] {
+		if cardNames[name] {
 			continue
 		}
-		cardNames[card.Name] = true
+		cardNames[name] = true
+		card := name.Card()
 
 		if allowSorcerySpeed {
 			if card.IsLand && p.LandPlayedThisTurn == 0 {
@@ -295,11 +296,18 @@ func (p *Player) BlockActions() []*Action {
 
 func (p *Player) Play(action *Action) {
 	card := action.Card
-	newHand := []*Card{}
+	newHand := []CardName{}
+	found := false
 	for _, c := range p.Hand {
-		if c != card {
-			newHand = append(newHand, c)
+		if !found && c == card.Name {
+			found = true
+			continue
 		}
+		newHand = append(newHand, c)
+	}
+	if !found {
+		log.Printf("could not play card %+v from hand %+v", card, p.Hand)
+		panic("XXX")
 	}
 	p.Hand = newHand
 
@@ -324,18 +332,11 @@ func (p *Player) Play(action *Action) {
 	}
 
 	// Non-instant cards turn into a permanent
-	perm := &Permanent{
-		Card:  card,
-		Owner: p,
-	}
-	perm.TurnPlayed = p.game.Turn
+	perm := p.game.newPermanent(card, p)
 
 	if card.IsLand {
 		p.LandPlayedThisTurn++
 	}
-
-	p.Board = append(p.Board, perm)
-	perm.HandleComingIntoPlay()
 
 	if card.IsEnchantCreature {
 		action.Target.Auras = append(action.Target.Auras, perm)
@@ -402,10 +403,10 @@ func (p *Player) AvatarString(position int, gameWidth int) string {
 	return playerString
 }
 
-func PrintRowOfCards(cards []*Card, gameWidth int) {
+func PrintRowOfCards(cards []CardName, gameWidth int) {
 	perms := []*Permanent{}
-	for _, card := range cards {
-		perms = append(perms, &Permanent{Card: card})
+	for _, name := range cards {
+		perms = append(perms, &Permanent{Card: name.Card()})
 	}
 	PrintRowOfPermanents(perms, gameWidth)
 }
@@ -471,14 +472,8 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 }
 
 func (p *Player) ResolveEffect(e *Effect) {
-	if e.Summon != nil {
-		perm := &Permanent{
-			Card:  e.Summon,
-			Owner: p,
-		}
-		perm.TurnPlayed = p.game.Turn
-		p.Board = append(p.Board, perm)
-		perm.HandleComingIntoPlay()
+	if e.Summon != NoCard {
+		p.game.newPermanent(e.Summon.Card(), p)
 	}
 
 	p.ColorlessManaPool += e.Colorless

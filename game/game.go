@@ -37,8 +37,15 @@ type Game struct {
 
 	// The id of the player with priority
 	PriorityId PlayerId
+
+	// The PermanentId that will be assigned to the next permanent that enters play
+	NextPermanentId PermanentId
+
+	// Permanents contains all permanents in play.
+	Permanents map[PermanentId]*Permanent
 }
 
+//go:generate stringer -type=CardName
 type Phase int
 
 // Phase encompasses both "phases" and "steps" as per:
@@ -59,10 +66,12 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		NewPlayer(deckToDraw, OnTheDraw),
 	}
 	g := &Game{
-		Players:    players,
-		Phase:      Main1,
-		Turn:       0,
-		PriorityId: OnThePlay,
+		Players:         players,
+		Phase:           Main1,
+		Turn:            0,
+		PriorityId:      OnThePlay,
+		NextPermanentId: PermanentId(1),
+		Permanents:      make(map[PermanentId]*Permanent),
 	}
 
 	players[0].game = g
@@ -239,6 +248,35 @@ func (g *Game) TakeAction(action *Action) {
 
 func (g *Game) IsOver() bool {
 	return g.Attacker().Lost() || g.Defender().Lost()
+}
+
+// All permanents added to the game should be created via newPermanent.
+// This assigns a unique id to the permanent and activates any coming-into-play
+// effects.
+func (g *Game) newPermanent(card *Card, owner *Player) *Permanent {
+	perm := &Permanent{
+		Card:       card,
+		Owner:      owner,
+		TurnPlayed: g.Turn,
+		Id:         g.NextPermanentId,
+	}
+	g.Permanents[g.NextPermanentId] = perm
+	g.NextPermanentId++
+	owner.Board = append(owner.Board, perm)
+	perm.HandleComingIntoPlay()
+	return perm
+}
+
+// removePermanent does nothing if the permanent has already been removed.
+func (g *Game) removePermanent(id PermanentId) {
+	delete(g.Permanents, id)
+}
+
+func (g *Game) Permanent(id PermanentId) *Permanent {
+	if id == PermanentId(0) {
+		panic("0 is not a valid PermanentId")
+	}
+	return g.Permanents[id]
 }
 
 func (g *Game) Print() {
