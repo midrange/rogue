@@ -30,9 +30,8 @@ type Effect struct {
 	Untargetable       bool
 
 	// these properties get copied from the Action object from which the Effect is created
-	ActionType ActionType
-	Source     *Permanent
-	Target     *Permanent
+	Source *Permanent
+	Target *Permanent
 }
 
 func NewEffect(action *Action) *Effect {
