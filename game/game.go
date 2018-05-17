@@ -225,10 +225,8 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			fmt.Println("PLAYING ", action)
 			g.Priority().Play(action)
 		} else if action.Type == Activate {
-			fmt.Println("ACTIVATIng")
 			g.Priority().ActivateAbility(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")

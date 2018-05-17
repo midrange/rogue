@@ -4,6 +4,7 @@
 	TODO: expand to colored mana
 
 */
+
 package game
 
 import (
