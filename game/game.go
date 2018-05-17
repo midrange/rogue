@@ -381,5 +381,5 @@ func (g *Game) playManaAbilityAction() {
 		return
 	}
 	g.Print()
-	panic("playInstant failed")
+	panic("playManaAbilityAction failed")
 }

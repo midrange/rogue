@@ -344,7 +344,7 @@ func (p *Player) Play(action *Action) {
 
 func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
-		target.Effects = append(target.Effects, NewEffect(a, c))
+		target.Effects = append(target.Effects, NewEffect(a))
 	}
 
 	if c.Effect != nil {
@@ -468,4 +468,32 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 		}
 	}
 	return false
+}
+
+func (p *Player) ResolveEffect(e *Effect) {
+
+	/*
+		if e.IsInstant {
+			if c.AddsTemporaryEffect {
+				target.Effects = append(target.Effects, NewEffect(a))
+			}
+
+			if c.Effect != nil {
+				target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
+			}
+			if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
+				target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
+			}
+			return
+		}*/
+
+	if e.Summon != nil {
+		perm := &Permanent{
+			Card:  e.Summon,
+			Owner: p,
+		}
+		perm.TurnPlayed = p.game.Turn
+		p.Board = append(p.Board, perm)
+		perm.HandleComingIntoPlay()
+	}
 }

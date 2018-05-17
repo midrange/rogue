@@ -23,19 +23,24 @@ type Effect struct {
 	Kicker             *Effect
 	Plus1Plus1Counters int
 	Power              int
+	Summon             *Card
 	Toughness          int
 	Untargetable       bool
 
 	// from Action
+	ActionType    ActionType
 	Target        *Permanent
 	With          *Permanent
 	WithKicker    bool
 	WithPhyrexian bool
 }
 
-func NewEffect(action *Action, card *Card) *Effect {
+func NewEffect(action *Action) *Effect {
+	card := action.Card
 	effect := card.Effect
 	effect.Kicker = card.Kicker
+
+	effect.ActionType = action.Type
 	effect.Target = action.Target
 	effect.With = action.With
 	effect.WithKicker = action.WithKicker

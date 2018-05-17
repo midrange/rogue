@@ -12,7 +12,7 @@ type Card struct {
 	Bloodthirst          int
 	CastingCost          *CastingCost
 	Effect               *Effect
-	EntersPlayAction     *Action
+	EntersPlayEffect     *Effect
 	Flying               bool
 	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
 	Hexproof             bool
@@ -91,7 +91,7 @@ func newCardHelper(name CardName) *Card {
 			BasePower:        2,
 			BaseToughness:    2,
 			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayAction: &Action{Type: Play, Card: tokenCard},
+			EntersPlayEffect: &Effect{Summon: tokenCard},
 			IsCreature:       true,
 		}
 	case NettleSentinel:

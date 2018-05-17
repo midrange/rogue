@@ -217,8 +217,8 @@ func (c *Permanent) HandleComingIntoPlay() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
-	if c.EntersPlayAction != nil {
-		c.Owner.game.TakeAction(c.EntersPlayAction)
+	if c.EntersPlayEffect != nil {
+		c.Owner.ResolveEffect(c.EntersPlayEffect)
 	}
 }
 
