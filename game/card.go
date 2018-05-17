@@ -66,6 +66,17 @@ func NewCard(name CardName) *Card {
 
 func newCardHelper(name CardName) *Card {
 	switch name {
+	case BurningTreeEmissary:
+		/*
+			When Burning-Tree Emissary enters the battlefield, add RG.
+		*/
+		return &Card{
+			BasePower:        2,
+			BaseToughness:    2,
+			CastingCost:      &CastingCost{Colorless: 2},
+			EntersPlayEffect: &Effect{Colorless: 2},
+			IsCreature:       true,
+		}
 	case EldraziSpawnToken:
 		/* Token created by NestInvader. */
 		return &Card{
@@ -107,17 +118,6 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness:    2,
 			CastingCost:      &CastingCost{Colorless: 2},
 			EntersPlayEffect: &Effect{Summon: newCardHelper(EldraziSpawnToken)},
-			IsCreature:       true,
-		}
-	case BurningTreeEmissary:
-		/*
-			When Burning-Tree Emissary enters the battlefield, add RG.
-		*/
-		return &Card{
-			BasePower:        2,
-			BaseToughness:    2,
-			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayEffect: &Effect{Colorless: 2},
 			IsCreature:       true,
 		}
 	case NettleSentinel:
