@@ -199,6 +199,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
+		action.With.Owner = g.Priority()
 		action.With.UseForMana()
 		return
 	}

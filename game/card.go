@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -42,7 +41,8 @@ type Card struct {
 type CardName int
 
 const (
-	EldraziSpawnToken CardName = iota
+	BurningTreeEmissary CardName = iota
+	EldraziSpawnToken
 	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
@@ -93,6 +93,17 @@ func newCardHelper(name CardName) *Card {
 			BaseToughness:    2,
 			CastingCost:      &CastingCost{Colorless: 2},
 			EntersPlayAction: &Action{Type: Play, Card: tokenCard},
+			IsCreature:       true,
+		}
+	case BurningTreeEmissary:
+		manaCard := &Card{
+			Colorless: 2,
+		}
+		return &Card{
+			BasePower:        2,
+			BaseToughness:    2,
+			CastingCost:      &CastingCost{Colorless: 2},
+			EntersPlayAction: &Action{Type: UseForMana, With: &Permanent{Card: manaCard}},
 			IsCreature:       true,
 		}
 	case NettleSentinel:
