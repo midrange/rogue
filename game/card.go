@@ -67,6 +67,7 @@ func NewCard(name CardName) *Card {
 func newCardHelper(name CardName) *Card {
 	switch name {
 	case EldraziSpawnToken:
+		/* Token created by NestInvader. */
 		return &Card{
 			BasePower:         0,
 			BaseToughness:     1,
@@ -76,11 +77,19 @@ func newCardHelper(name CardName) *Card {
 			SacrificesForMana: true,
 		}
 	case Forest:
+		/*
+			G
+			http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=443154
+		*/
 		return &Card{
 			Colorless: 1,
 			IsLand:    true,
 		}
 	case GrizzlyBears:
+		/*
+			No card text.
+			http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
+		*/
 		return &Card{
 			BasePower:     2,
 			BaseToughness: 2,
@@ -88,6 +97,11 @@ func newCardHelper(name CardName) *Card {
 			IsCreature:    true,
 		}
 	case NestInvader:
+		/*
+			When Nest Invader enters the battlefield, create a 0/1 colorless
+			Eldrazi Spawn creature token. It has "Sacrifice this creature:
+			Add Colorless."
+		*/
 		return &Card{
 			BasePower:        2,
 			BaseToughness:    2,
@@ -96,14 +110,14 @@ func newCardHelper(name CardName) *Card {
 			IsCreature:       true,
 		}
 	case BurningTreeEmissary:
-		manaCard := &Card{
-			Colorless: 2,
-		}
+		/*
+			When Burning-Tree Emissary enters the battlefield, add RG.
+		*/
 		return &Card{
 			BasePower:        2,
 			BaseToughness:    2,
 			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayAction: &Action{Type: UseForMana, With: &Permanent{Card: manaCard}},
+			EntersPlayEffect: &Effect{Colorless: 2},
 			IsCreature:       true,
 		}
 	case NettleSentinel:
@@ -173,6 +187,12 @@ func newCardHelper(name CardName) *Card {
 			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
 		}
 	case VinesOfVastwood:
+		/*
+			Kicker Green (You may pay an additional Green as you cast this spell.)
+			Target creature can't be the target of spells or abilities your opponents control this
+			turn. If this spell was kicked, that creature gets +4/+4 until end of turn.
+		*/
+
 		return &Card{
 			AddsTemporaryEffect: true,
 			CastingCost:         &CastingCost{Colorless: 1},

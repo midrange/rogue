@@ -273,5 +273,20 @@ func TestNestInvader(t *testing.T) {
 	if len(g.Priority().Creatures()) != 1 {
 		t.Fatal("expected the player to have a Nest Invader, with the token now dead")
 	}
+}
 
+func TestBurningTreeEmissary(t *testing.T) {
+	g := NewGame(deckWithTopAndForests(BurningTreeEmissary), deckWithTopAndForests(BurningTreeEmissary))
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+
+	if g.Priority().ColorlessManaPool != 2 {
+		t.Fatal("expected the player to have 2 mana from BurningTreeEmissary")
+	}
 }
