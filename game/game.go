@@ -204,6 +204,7 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
+
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -224,9 +225,13 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
+			fmt.Println("PLAYING ", action)
 			g.Priority().Play(action)
+		} else if action.Type == Activate {
+			fmt.Println("ACTIVATIng")
+			g.Priority().ActivateAbility(action)
 		} else {
-			panic("expected a play, declare attack, or pass during main phase")
+			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
 
 	case DeclareAttackers:
@@ -422,4 +427,14 @@ func (g *Game) playManaAbilityAction() {
 	}
 	g.Print()
 	panic("playManaAbilityAction failed")
+}
+
+// playActivatedAbility plays the first activated ability action
+func (g *Game) playActivatedAbility() {
+	for _, a := range g.Priority().ActivatedAbilityActions(true, false) {
+		g.TakeAction(a)
+		return
+	}
+	g.Print()
+	panic("playActivatedAbility failed")
 }

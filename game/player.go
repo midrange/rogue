@@ -111,9 +111,10 @@ func (p *Player) EndPhase() {
 }
 
 func (p *Player) EndTurn() {
-	for _, card := range p.Board {
-		card.Damage = 0
-		card.Effects = []*Effect{}
+	for _, perm := range p.Board {
+		perm.Damage = 0
+		perm.Effects = []*Effect{}
+		perm.DidActivate = false
 	}
 	p.LandPlayedThisTurn = 0
 	p.DamageThisTurn = 0
@@ -156,9 +157,8 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 // Returns possible actions when we can activate cards on he board.
 func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	permNames := make(map[CardName]bool)
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{}
 
-	mana := p.AvailableMana()
 	for _, perm := range p.Board { // TODO could be opponent's board for some actions, e.g. Warmonger
 		// Don't re-check playing duplicate actions
 		if permNames[perm.Name] {
@@ -168,16 +168,16 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 			continue
 		}
 		permNames[perm.Name] = true
-		if perm.ActivatedAbility {
+		if perm.ActivatedAbility != nil {
 			effect := perm.ActivatedAbility
 			if effect.TargetType.Type == Creature { // TODO lands etc
-				for _, c := range p.Board() {
+				for _, c := range p.Board {
 					if c.IsCreature {
 						if effect.Cost != nil {
-							if effect.Cost.Type == Land {
+							if effect.Cost.TargetType.Type == Land {
 								for _, l := range p.Lands() {
 									if effect.TargetType.Subtype == -1 || effect.TargetType.Subtype == l.Subtype {
-										answer = append(answer, &Action{Type: Activate, Permanent: perm, CostTarget: l, Target: c})
+										answer = append(answer, &Action{Type: Activate, Source: perm, CostTarget: l, Target: c})
 									}
 								}
 							}
@@ -188,6 +188,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 			}
 		}
 	}
+	return answer
 }
 
 // Returns possible actions when we can play a card from hand, including passing.
@@ -391,6 +392,13 @@ func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
+}
+
+func (p *Player) ActivateAbility(a *Action) {
+	permanentToActivate := a.Source
+	targetForCost := a.CostTarget
+	target := a.Target
+	permanentToActivate.ActivateAbility(targetForCost, target)
 }
 
 func (p *Player) AddMana(colorless int) {

@@ -26,7 +26,7 @@ type Card struct {
 	Name                 CardName
 	PhyrexianCastingCost *CastingCost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
-	Subtype MTGSubtype
+	Subtype              MTGSubtype
 	// The base properties of creatures.
 	BasePower     int
 	BaseToughness int
@@ -128,27 +128,26 @@ var Cards = map[CardName]*Card{
 		IsCreature:    true,
 	},
 
-case QuirionRanger:
-/*
-Return a Forest you control to its owner's hand: Untap target creature.
-Activate this ability only once each turn.
-*/
-return &Card{
-ActivatedAbility: &Effect{
-Cost: &Effect{
-EffectType: ReturnToHand,
-TargetType: &TargetType{Type: Land, Subtype: BasicForest, ControlledBy: SamePlayer},
-},
-EffectType: Untap,
-TargetType: &TargetType{Type: Creature}
-},
-BasePower:     1,
-BaseToughness: 1,
-CastingCost:   &CastingCost{Colorless: 1},
-IsCreature:    true,
-},
+	/*
+		Return a Forest you control to its owner's hand: Untap target creature.
+		Activate this ability only once each turn.
+	*/
+	QuirionRanger: &Card{
+		ActivatedAbility: &Effect{
+			Cost: &Effect{
+				EffectType: ReturnToHand,
+				TargetType: &TargetType{Type: Land, Subtype: BasicForest, ControlledBy: SamePlayer},
+			},
+			EffectType: Untap,
+			TargetType: &TargetType{Type: Creature},
+		},
+		BasePower:     1,
+		BaseToughness: 1,
+		CastingCost:   &CastingCost{Colorless: 1},
+		IsCreature:    true,
+	},
 
-/*
+	/*
 		Enchanted creature gets +2/+0 and has trample.
 		When Rancor is put into a graveyard from the battlefield,
 		return Rancor to its owner's hand.
