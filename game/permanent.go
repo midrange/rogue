@@ -129,9 +129,9 @@ func (p *Permanent) Power() int {
 		answer += aura.BasePower
 	}
 	for _, effect := range p.Effects {
-		answer += effect.Card.Modifier.Power
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Power
+		answer += effect.Power
+		if effect.WithKicker {
+			answer += effect.Kicker.Power
 		}
 	}
 	return answer
@@ -143,9 +143,9 @@ func (c *Permanent) Toughness() int {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.Effects {
-		answer += effect.Card.Modifier.Toughness
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Toughness
+		answer += effect.Toughness
+		if effect.WithKicker {
+			answer += effect.Kicker.Toughness
 		}
 	}
 	return answer

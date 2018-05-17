@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -12,6 +11,7 @@ type Card struct {
 	AddsTemporaryEffect  bool
 	Bloodthirst          int
 	CastingCost          *CastingCost
+	Effect               *Effect
 	EntersPlayAction     *Action
 	Flying               bool
 	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
@@ -20,10 +20,9 @@ type Card struct {
 	IsCreature           bool
 	IsEnchantCreature    bool
 	IsInstant            bool
-	Kicker               *Modifier
+	Kicker               *Effect
 	Lifelink             bool
-	Modifier             *Modifier
-	Morbid               *Modifier
+	Morbid               *Effect
 	Name                 CardName
 	PhyrexianCastingCost *CastingCost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
@@ -166,12 +165,12 @@ func newCardHelper(name CardName) *Card {
 			AddsTemporaryEffect: true,
 			CastingCost:         &CastingCost{Colorless: 1},
 			IsInstant:           true,
-			Kicker: &Modifier{
+			Kicker: &Effect{
 				CastingCost: &CastingCost{Colorless: 2},
 				Power:       4,
 				Toughness:   4,
 			},
-			Modifier: &Modifier{
+			Effect: &Effect{
 				Untargetable: true,
 			},
 		}
@@ -181,12 +180,12 @@ func newCardHelper(name CardName) *Card {
 			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
 		*/
 		return &Card{
-			Modifier: &Modifier{
+			Effect: &Effect{
 				Plus1Plus1Counters: 1,
 			},
 			CastingCost: &CastingCost{Colorless: 1},
 			IsInstant:   true,
-			Morbid: &Modifier{
+			Morbid: &Effect{
 				Plus1Plus1Counters: 2,
 			},
 		}
