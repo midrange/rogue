@@ -20,6 +20,7 @@ type Effect struct {
 	CastingCost *CastingCost
 
 	// these properties modify a Permanent the Effect targets
+	Colorless          int
 	Hexproof           bool
 	Plus1Plus1Counters int
 	Power              int

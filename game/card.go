@@ -42,6 +42,7 @@ type CardName int
 const (
 	NoCard CardName = iota
 
+	BurningTreeEmissary
 	EldraziSpawnToken
 	Forest
 	GrizzlyBears
@@ -59,6 +60,13 @@ const CARD_HEIGHT = 5
 const CARD_WIDTH = 11
 
 var Cards = map[CardName]*Card{
+	BurningTreeEmissary: &Card{
+		BasePower:        2,
+		BaseToughness:    2,
+		CastingCost:      &CastingCost{Colorless: 2},
+		EntersPlayEffect: &Effect{Colorless: 2},
+		IsCreature:       true,
+	},
 	EldraziSpawnToken: &Card{
 		BasePower:         0,
 		BaseToughness:     1,

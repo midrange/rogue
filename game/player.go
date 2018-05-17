@@ -475,4 +475,6 @@ func (p *Player) ResolveEffect(e *Effect) {
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
 	}
+
+	p.ColorlessManaPool += e.Colorless
 }
