@@ -28,7 +28,7 @@ type Card struct {
 	Name                 CardName
 	PhyrexianCastingCost *CastingCost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
-
+	Subtype MTGSubtype
 	// The base properties of creatures.
 	BasePower     int
 	BaseToughness int
@@ -98,6 +98,7 @@ func newCardHelper(name CardName) *Card {
 		return &Card{
 			Colorless: 1,
 			IsLand:    true,
+			Subtype: BasicForest,
 		}
 	case GrizzlyBears:
 		/*
@@ -140,11 +141,13 @@ func newCardHelper(name CardName) *Card {
 			Activate this ability only once each turn.
 		*/
 		return &Card{
-			ActivatedAbilityCost: &Effect{
-				ReturnToHand: &TargetType{Subtype: BasicForest, ControlledBy: SamePlayer},
-			},
 			ActivatedAbility: &Effect{
-				Untap: &TargetType{Type: Creature},
+				Cost: &Effect{
+					EffectType: ReturnToHand,
+					TargetType: &TargetType{Type: Land, Subtype: BasicForest, ControlledBy: SamePlayer},
+				},
+				EffectType: Untap,
+				TargetType: &TargetType{Type: Creature}
 			},
 			BasePower:     1,
 			BaseToughness: 1,

@@ -34,15 +34,28 @@ type Effect struct {
 	*/
 	Kicker *Effect
 
-	// things that can happen from an effect
-	ReturnToHand *TargetType
-	Summon       *Card
-	Untap        *TargetType
+	// when the effect summons a creature
+	Summon *Card
 
 	// these properties get copied from the Action object from which the Effect is created
 	Source *Permanent
 	Target *Permanent
+
+	// for effects from targeted spells
+	EffectType EffectType
+	TargetType *TargetType
+
+	// when an effect has a cost, e.g. a Quirion Ranger
+	Cost *Effect
 }
+
+//go:generate stringer -type=EffectType
+type EffectType int
+
+const (
+	ReturnToHand EffectType = iota
+	Untap
+)
 
 func NewEffect(action *Action) *Effect {
 	card := action.Card

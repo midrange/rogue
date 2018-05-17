@@ -153,6 +153,50 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 	}
 }
 
+// Returns possible actions when we can activate cards on he board.
+func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) []*Action {
+	permNames := make(map[CardName]bool)
+	answer := []*Action{&Action{Type: Pass}}
+
+	mana := p.AvailableMana()
+	for _, perm := range p.Board { // TODO could be opponent's board for some actions, e.g. Warmonger
+		// Don't re-check playing duplicate actions
+		if permNames[perm.Name] {
+			continue
+		}
+		if perm.DidActivate {
+			continue
+		}
+		permNames[perm.Name] = true
+		if perm.ActivatedAbility {
+			effect := perm.ActivatedAbility
+			if effect.ControlledBy == SamePlayer {
+				if effect.TargetType.Type == Creature { // TODO lands etc
+					for _, c := range p.Board() {
+						if c.IsCreature {
+							if effect.Cost != nil {
+								if effect.Cost.Type == Land {
+									for _, l := range p.Lands() {
+										if effect.TargetType.Subtype == -1 || effect.TargetType.Subtype == l.Subtype {
+											answer = append(answer, &Action{Type: Activate, Permanent: perm, CostTarget: l, Target: c})
+										}
+									}
+								}
+							} else {
+							}
+
+						}
+					}
+				} else {
+				}
+			} else {
+
+			}
+			answer = append(answer, &Action{Type: Activate, Card: card})
+		}
+	}
+}
+
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)

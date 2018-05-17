@@ -42,5 +42,5 @@ type TargetType struct {
 }
 
 func (tt *TargetType) String() string {
-	return fmt.Sprintf("%d, Type: %d, %d", tt.ControlledBy, tt.Type, tt.Subtype)
+	return fmt.Sprintf("%s, %s - controlled by %s", tt.Type, tt.Subtype, tt.ControlledBy)
 }

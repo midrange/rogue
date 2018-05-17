@@ -85,10 +85,12 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	switch g.Phase {
 	case Main1:
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		actions = append(actions, &Action{Type: DeclareAttack})
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
 		actions = g.Priority().PlayActions(true, forHuman)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())

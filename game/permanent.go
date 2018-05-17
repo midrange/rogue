@@ -9,11 +9,12 @@ type Permanent struct {
 	*Card
 
 	// Properties that are relevant for any permanent
-	Auras      []*Permanent
-	Effects    []*Effect
-	Owner      *Player
-	Tapped     bool
-	TurnPlayed int
+	Auras       []*Permanent
+	DidActivate bool
+	Effects     []*Effect
+	Owner       *Player
+	Tapped      bool
+	TurnPlayed  int
 
 	// Creature-specific properties
 	Attacking          bool
