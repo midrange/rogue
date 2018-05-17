@@ -7,7 +7,8 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
-	With          *Permanent
+	Source        *Permanent // for targeted effects
+	With          *Permanent // for attacking
 	Target        *Permanent
 	WithKicker    bool
 	WithPhyrexian bool
@@ -62,7 +63,7 @@ func (a *Action) ShowTo(p *Player) string {
 	case Block:
 		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
 	case UseForMana:
-		return fmt.Sprintf("tap %s for mana", a.With)
+		return fmt.Sprintf("tap %s for mana", a.Source)
 	}
 	panic("control should not reach here")
 }

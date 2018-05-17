@@ -130,7 +130,7 @@ func (p *Permanent) Power() int {
 	}
 	for _, effect := range p.Effects {
 		answer += effect.Power
-		if effect.WithKicker {
+		if effect.Kicker != nil {
 			answer += effect.Kicker.Power
 		}
 	}
@@ -144,7 +144,7 @@ func (c *Permanent) Toughness() int {
 	}
 	for _, effect := range c.Effects {
 		answer += effect.Toughness
-		if effect.WithKicker {
+		if effect.Kicker != nil {
 			answer += effect.Kicker.Toughness
 		}
 	}
@@ -184,7 +184,7 @@ func (c *Permanent) RespondToSpell() {
 
 func (c *Permanent) ManaActions() []*Action {
 	if c.Name == Forest && !c.Tapped || c.SacrificesForMana {
-		return []*Action{&Action{Type: UseForMana, With: c}}
+		return []*Action{&Action{Type: UseForMana, Source: c}}
 	}
 	return []*Action{}
 }

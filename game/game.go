@@ -199,7 +199,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.With.UseForMana()
+		action.Source.UseForMana()
 		return
 	}
 

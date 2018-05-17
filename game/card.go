@@ -65,6 +65,15 @@ func NewCard(name CardName) *Card {
 
 func newCardHelper(name CardName) *Card {
 	switch name {
+	case EldraziSpawnToken:
+		return &Card{
+			BasePower:         0,
+			BaseToughness:     1,
+			CastingCost:       &CastingCost{Colorless: 0},
+			Colorless:         1,
+			IsCreature:        true,
+			SacrificesForMana: true,
+		}
 	case Forest:
 		return &Card{
 			Colorless: 1,
@@ -78,20 +87,11 @@ func newCardHelper(name CardName) *Card {
 			IsCreature:    true,
 		}
 	case NestInvader:
-		tokenCard := &Card{
-			BasePower:         0,
-			BaseToughness:     1,
-			CastingCost:       &CastingCost{Colorless: 0},
-			Colorless:         1,
-			IsCreature:        true,
-			Name:              EldraziSpawnToken,
-			SacrificesForMana: true,
-		}
 		return &Card{
 			BasePower:        2,
 			BaseToughness:    2,
 			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayEffect: &Effect{Summon: tokenCard},
+			EntersPlayEffect: &Effect{Summon: newCardHelper(EldraziSpawnToken)},
 			IsCreature:       true,
 		}
 	case NettleSentinel:

@@ -17,8 +17,10 @@ import ()
 
 type Effect struct {
 
-	// from Card
-	CastingCost        *CastingCost // when an Effect is a kicker, it has a Cost
+	// when an Effect is a kicker, it has a Cost
+	CastingCost *CastingCost
+
+	// these properties modify a Card the Effect targets
 	Hexproof           bool
 	Kicker             *Effect
 	Plus1Plus1Counters int
@@ -27,23 +29,19 @@ type Effect struct {
 	Toughness          int
 	Untargetable       bool
 
-	// from Action
-	ActionType    ActionType
-	Target        *Permanent
-	With          *Permanent
-	WithKicker    bool
-	WithPhyrexian bool
+	// these properties get copied from the Action object from which the Effect is created
+	ActionType ActionType
+	Source     *Permanent
+	Target     *Permanent
 }
 
 func NewEffect(action *Action) *Effect {
 	card := action.Card
 	effect := card.Effect
-	effect.Kicker = card.Kicker
-
-	effect.ActionType = action.Type
+	if action.WithKicker {
+		effect.Kicker = card.Kicker
+	}
+	effect.Source = action.Source
 	effect.Target = action.Target
-	effect.With = action.With
-	effect.WithKicker = action.WithKicker
-	effect.WithPhyrexian = action.WithPhyrexian
 	return effect
 }
