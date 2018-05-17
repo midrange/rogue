@@ -30,7 +30,7 @@ type Effect struct {
 	Kicker *Effect
 
 	// sometimes an effect summons a creature
-	Summon *Card
+	Summon CardName
 
 	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent

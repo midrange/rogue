@@ -22,3 +22,11 @@ You should see it print out something like:
 
 Enter a number:
 ```
+
+If you are doing development, you should also run:
+
+```
+go get golang.org/x/tools/cmd/stringer
+```
+
+and run `go generate ./...` when you change any enums.

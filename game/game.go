@@ -45,6 +45,7 @@ type Game struct {
 	Permanents map[PermanentId]*Permanent
 }
 
+//go:generate stringer -type=CardName
 type Phase int
 
 // Phase encompasses both "phases" and "steps" as per:
@@ -250,7 +251,8 @@ func (g *Game) IsOver() bool {
 }
 
 // All permanents added to the game should be created via newPermanent.
-// This assigns a unique id to the permanent.
+// This assigns a unique id to the permanent and activates any coming-into-play
+// effects.
 func (g *Game) newPermanent(card *Card, owner *Player) *Permanent {
 	perm := &Permanent{
 		Card:       card,
@@ -260,6 +262,8 @@ func (g *Game) newPermanent(card *Card, owner *Player) *Permanent {
 	}
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
+	owner.Board = append(owner.Board, perm)
+	perm.HandleComingIntoPlay()
 	return perm
 }
 

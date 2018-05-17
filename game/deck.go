@@ -5,16 +5,17 @@ import (
 )
 
 type Deck struct {
-	Cards        []*Card
+	Cards        []CardName
 	FailedToDraw bool
 }
 
 func NewEmptyDeck() *Deck {
 	return &Deck{
-		Cards: []*Card{},
+		Cards: []CardName{},
 	}
 }
 
+// Constructs a new deck from the count of each card.
 func NewDeck(decklist map[CardName]int) *Deck {
 	deck := NewEmptyDeck()
 	for name, count := range decklist {
@@ -37,10 +38,10 @@ func Stompy() *Deck {
 	})
 }
 
-func (d *Deck) Draw() *Card {
+func (d *Deck) Draw() CardName {
 	if len(d.Cards) == 0 {
 		d.FailedToDraw = true
-		return nil
+		return NoCard
 	}
 	answer := d.Cards[0]
 	d.Cards = d.Cards[1:]
@@ -58,6 +59,6 @@ func (d *Deck) Shuffle() {
 // Adds cards to the deck, on bottom
 func (d *Deck) Add(n int, name CardName) {
 	for i := 0; i < n; i++ {
-		d.Cards = append(d.Cards, NewCard(name))
+		d.Cards = append(d.Cards, name)
 	}
 }
