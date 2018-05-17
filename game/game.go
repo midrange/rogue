@@ -199,8 +199,8 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.With.Owner = g.Priority()
-		action.With.UseForMana()
+		action.Source.Owner = g.Priority()
+		action.Source.UseForMana()
 		return
 	}
 
@@ -382,5 +382,5 @@ func (g *Game) playManaAbilityAction() {
 		return
 	}
 	g.Print()
-	panic("playInstant failed")
+	panic("playManaAbilityAction failed")
 }

@@ -344,11 +344,11 @@ func (p *Player) Play(action *Action) {
 
 func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
-		target.Effects = append(target.Effects, &Effect{Action: a, Card: c})
+		target.Effects = append(target.Effects, NewEffect(a))
 	}
 
-	if c.Modifier != nil {
-		target.Plus1Plus1Counters += c.Modifier.Plus1Plus1Counters
+	if c.Effect != nil {
+		target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
 	}
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
@@ -450,10 +450,10 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 		return false
 	}
 	for _, effect := range perm.Effects {
-		if effect.Card.Modifier.Untargetable {
+		if effect.Untargetable {
 			return false
 		}
-		if p != perm.Owner && effect.Card.Modifier.Hexproof {
+		if p != perm.Owner && effect.Hexproof {
 			return false
 		}
 	}
@@ -468,4 +468,16 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 		}
 	}
 	return false
+}
+
+func (p *Player) ResolveEffect(e *Effect) {
+	if e.Summon != nil {
+		perm := &Permanent{
+			Card:  e.Summon,
+			Owner: p,
+		}
+		perm.TurnPlayed = p.game.Turn
+		p.Board = append(p.Board, perm)
+		perm.HandleComingIntoPlay()
+	}
 }

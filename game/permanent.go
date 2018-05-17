@@ -129,9 +129,9 @@ func (p *Permanent) Power() int {
 		answer += aura.BasePower
 	}
 	for _, effect := range p.Effects {
-		answer += effect.Card.Modifier.Power
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Power
+		answer += effect.Power
+		if effect.Kicker != nil {
+			answer += effect.Kicker.Power
 		}
 	}
 	return answer
@@ -143,9 +143,9 @@ func (c *Permanent) Toughness() int {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.Effects {
-		answer += effect.Card.Modifier.Toughness
-		if effect.Action.WithKicker {
-			answer += effect.Card.Kicker.Toughness
+		answer += effect.Toughness
+		if effect.Kicker != nil {
+			answer += effect.Kicker.Toughness
 		}
 	}
 	return answer
@@ -184,7 +184,7 @@ func (c *Permanent) RespondToSpell() {
 
 func (c *Permanent) ManaActions() []*Action {
 	if c.Name == Forest && !c.Tapped || c.SacrificesForMana {
-		return []*Action{&Action{Type: UseForMana, With: c}}
+		return []*Action{&Action{Type: UseForMana, Source: c}}
 	}
 	return []*Action{}
 }
@@ -217,8 +217,8 @@ func (c *Permanent) HandleComingIntoPlay() {
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
-	if c.EntersPlayAction != nil {
-		c.Owner.game.TakeAction(c.EntersPlayAction)
+	if c.EntersPlayEffect != nil {
+		c.Owner.ResolveEffect(c.EntersPlayEffect)
 	}
 }
 
