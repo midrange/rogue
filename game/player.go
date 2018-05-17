@@ -480,4 +480,6 @@ func (p *Player) ResolveEffect(e *Effect) {
 		p.Board = append(p.Board, perm)
 		perm.HandleComingIntoPlay()
 	}
+
+	p.ColorlessManaPool += e.Colorless
 }
