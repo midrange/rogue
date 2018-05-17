@@ -170,29 +170,22 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 		permNames[perm.Name] = true
 		if perm.ActivatedAbility {
 			effect := perm.ActivatedAbility
-			if effect.ControlledBy == SamePlayer {
-				if effect.TargetType.Type == Creature { // TODO lands etc
-					for _, c := range p.Board() {
-						if c.IsCreature {
-							if effect.Cost != nil {
-								if effect.Cost.Type == Land {
-									for _, l := range p.Lands() {
-										if effect.TargetType.Subtype == -1 || effect.TargetType.Subtype == l.Subtype {
-											answer = append(answer, &Action{Type: Activate, Permanent: perm, CostTarget: l, Target: c})
-										}
+			if effect.TargetType.Type == Creature { // TODO lands etc
+				for _, c := range p.Board() {
+					if c.IsCreature {
+						if effect.Cost != nil {
+							if effect.Cost.Type == Land {
+								for _, l := range p.Lands() {
+									if effect.TargetType.Subtype == -1 || effect.TargetType.Subtype == l.Subtype {
+										answer = append(answer, &Action{Type: Activate, Permanent: perm, CostTarget: l, Target: c})
 									}
 								}
-							} else {
 							}
-
 						}
-					}
-				} else {
-				}
-			} else {
 
+					}
+				}
 			}
-			answer = append(answer, &Action{Type: Activate, Card: card})
 		}
 	}
 }
