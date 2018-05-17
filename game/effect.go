@@ -28,13 +28,15 @@ type Effect struct {
 	Untargetable       bool
 
 	/*
-		only gets sets when the action for the Effect is withKicker
+		gets sets when the action for the Effect is withKicker
 		this child Effect adds on top of the normal Effect
 	*/
 	Kicker *Effect
 
-	// sometimes an effect summons a creature
-	Summon *Card
+	// things that can happen from an effect
+	ReturnToHand *TargetType
+	Summon       *Card
+	Untap        *TargetType
 
 	// these properties get copied from the Action object from which the Effect is created
 	Source *Permanent

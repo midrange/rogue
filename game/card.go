@@ -8,6 +8,8 @@ import (
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
+	ActivatedAbility     *Effect
+	ActivatedAbilityCost *Effect
 	AddsTemporaryEffect  bool
 	Bloodthirst          int
 	CastingCost          *CastingCost
@@ -47,6 +49,7 @@ const (
 	HungerOfTheHowlpack
 	NestInvader
 	NettleSentinel
+	QuirionRanger
 	Rancor
 	SilhanaLedgewalker
 	SkarrganPitskulk
@@ -102,6 +105,23 @@ func newCardHelper(name CardName) *Card {
 		return &Card{
 			BasePower:     2,
 			BaseToughness: 2,
+			CastingCost:   &CastingCost{Colorless: 1},
+			IsCreature:    true,
+		}
+	case QuirionRanger:
+		/*
+			Return a Forest you control to its owner's hand: Untap target creature.
+			Activate this ability only once each turn.
+		*/
+		return &Card{
+			ActivatedAbilityCost: &Effect{
+				ReturnToHand: &TargetType{Subtype: BasicForest, ControlledBy: SamePlayer},
+			},
+			ActivatedAbility: &Effect{
+				Untap: &TargetType{Type: Creature},
+			},
+			BasePower:     1,
+			BaseToughness: 1,
 			CastingCost:   &CastingCost{Colorless: 1},
 			IsCreature:    true,
 		}
