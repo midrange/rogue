@@ -1,8 +1,6 @@
 package game
 
-import (
-	"log"
-)
+import ()
 
 // Card should be treated as immutable.
 // The properties on Card are the properties like "base toughness" that do not change
@@ -42,8 +40,11 @@ type Card struct {
 //go:generate stringer -type=CardName
 type CardName int
 
+// Keep NoCard first, the rest in alphabetical order.
 const (
-	BurningTreeEmissary CardName = iota
+	NoCard CardName = iota
+
+	BurningTreeEmissary
 	EldraziSpawnToken
 	Forest
 	GrizzlyBears
@@ -61,193 +62,193 @@ const (
 const CARD_HEIGHT = 5
 const CARD_WIDTH = 11
 
-func NewCard(name CardName) *Card {
-	card := newCardHelper(name)
-	card.Name = name
-	return card
+var Cards = map[CardName]*Card{
+
+	/*
+		When Burning-Tree Emissary enters the battlefield, add RG.
+	*/
+	BurningTreeEmissary: &Card{
+		BasePower:        2,
+		BaseToughness:    2,
+		CastingCost:      &CastingCost{Colorless: 2},
+		EntersPlayEffect: &Effect{Colorless: 2},
+		IsCreature:       true,
+	},
+
+	EldraziSpawnToken: &Card{
+		BasePower:         0,
+		BaseToughness:     1,
+		CastingCost:       &CastingCost{Colorless: 0},
+		Colorless:         1,
+		IsCreature:        true,
+		SacrificesForMana: true,
+	},
+
+	/*
+		G
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=443154
+	*/
+	Forest: &Card{
+		Colorless: 1,
+		IsLand:    true,
+	},
+
+	/*
+		No card text.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
+	*/
+	GrizzlyBears: &Card{
+		BasePower:     2,
+		BaseToughness: 2,
+		CastingCost:   &CastingCost{Colorless: 2},
+		IsCreature:    true,
+	},
+
+	/*
+		When Nest Invader enters the battlefield, create a 0/1 colorless
+		Eldrazi Spawn creature token. It has "Sacrifice this creature:
+		Add (1)."
+	*/
+	NestInvader: &Card{
+		BasePower:        2,
+		BaseToughness:    2,
+		CastingCost:      &CastingCost{Colorless: 2},
+		EntersPlayEffect: &Effect{Summon: EldraziSpawnToken},
+		IsCreature:       true,
+	},
+
+	/*
+		Nettle Sentinel doesn't untap during your untap step.
+		Whenever you cast a green spell, you may untap Nettle Sentinel.
+	*/
+	NettleSentinel: &Card{
+		BasePower:     2,
+		BaseToughness: 2,
+		CastingCost:   &CastingCost{Colorless: 1},
+		IsCreature:    true,
+	},
+
+case QuirionRanger:
+/*
+Return a Forest you control to its owner's hand: Untap target creature.
+Activate this ability only once each turn.
+*/
+return &Card{
+ActivatedAbility: &Effect{
+Cost: &Effect{
+EffectType: ReturnToHand,
+TargetType: &TargetType{Type: Land, Subtype: BasicForest, ControlledBy: SamePlayer},
+},
+EffectType: Untap,
+TargetType: &TargetType{Type: Creature}
+},
+BasePower:     1,
+BaseToughness: 1,
+CastingCost:   &CastingCost{Colorless: 1},
+IsCreature:    true,
+},
+
+/*
+		Enchanted creature gets +2/+0 and has trample.
+		When Rancor is put into a graveyard from the battlefield,
+		return Rancor to its owner's hand.
+	*/
+	Rancor: &Card{
+		BasePower:         2,
+		BaseToughness:     0,
+		CastingCost:       &CastingCost{Colorless: 1},
+		IsEnchantCreature: true,
+	},
+
+	/*
+		Hexproof (This creature can't be the target of spells or abilities your
+		opponents control.)
+		Silhana Ledgewalker can't be blocked except by creatures with flying.
+	*/
+	SilhanaLedgewalker: &Card{
+		BasePower:     1,
+		BaseToughness: 1,
+		CastingCost:   &CastingCost{Colorless: 2},
+		Hexproof:      true,
+		IsCreature:    true,
+		GroundEvader:  true,
+	},
+
+	/*
+		Bloodthirst 1 (If an opponent was dealt damage this turn, this creature enters
+		the battlefield with a +1/+1 counter on it.)
+		Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
+	*/
+	SkarrganPitskulk: &Card{
+		BasePower:     1,
+		BaseToughness: 1,
+		Bloodthirst:   1,
+		CastingCost:   &CastingCost{Colorless: 1},
+		IsCreature:    true,
+		Powermenace:   true,
+	},
+
+	/*
+		(Phyrexian Black can be paid with either Black or 2 life.)
+		Flying
+		Lifelink (Damage dealt by this creature also causes you to gain that much life.)
+	*/
+	VaultSkirge: &Card{
+		BasePower:            1,
+		BaseToughness:        1,
+		CastingCost:          &CastingCost{Colorless: 2},
+		Flying:               true,
+		Hexproof:             true,
+		IsCreature:           true,
+		Lifelink:             true,
+		PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
+	},
+
+	/*
+		Kicker Green (You may pay an additional Green as you cast this spell.)
+		Target creature can't be the target of spells or abilities your opponents
+		control this turn. If this spell was kicked, that creature gets +4/+4 until
+		end of turn.
+	*/
+	VinesOfVastwood: &Card{
+		AddsTemporaryEffect: true,
+		CastingCost:         &CastingCost{Colorless: 1},
+		IsInstant:           true,
+		Kicker: &Effect{
+			CastingCost: &CastingCost{Colorless: 2},
+			Power:       4,
+			Toughness:   4,
+		},
+		Effect: &Effect{
+			Untargetable: true,
+		},
+	},
+
+	/*
+		Put a +1/+1 counter on target creature.
+		Morbid - Put three +1/+1 counters on that creature instead if a creature died
+		this turn.
+	*/
+	HungerOfTheHowlpack: &Card{
+		Effect: &Effect{
+			Plus1Plus1Counters: 1,
+		},
+		CastingCost: &CastingCost{Colorless: 1},
+		IsInstant:   true,
+		Morbid: &Effect{
+			Plus1Plus1Counters: 2,
+		},
+	},
 }
 
-func newCardHelper(name CardName) *Card {
-	switch name {
-	case BurningTreeEmissary:
-		/*
-			When Burning-Tree Emissary enters the battlefield, add RG.
-		*/
-		return &Card{
-			BasePower:        2,
-			BaseToughness:    2,
-			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayEffect: &Effect{Colorless: 2},
-			IsCreature:       true,
-		}
-	case EldraziSpawnToken:
-		/* Token created by NestInvader. */
-		return &Card{
-			BasePower:         0,
-			BaseToughness:     1,
-			CastingCost:       &CastingCost{Colorless: 0},
-			Colorless:         1,
-			IsCreature:        true,
-			SacrificesForMana: true,
-		}
-	case Forest:
-		/*
-			G
-			http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=443154
-		*/
-		return &Card{
-			Colorless: 1,
-			IsLand:    true,
-			Subtype: BasicForest,
-		}
-	case GrizzlyBears:
-		/*
-			No card text.
-			http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
-		*/
-		return &Card{
-			BasePower:     2,
-			BaseToughness: 2,
-			CastingCost:   &CastingCost{Colorless: 2},
-			IsCreature:    true,
-		}
-	case NestInvader:
-		/*
-			When Nest Invader enters the battlefield, create a 0/1 colorless
-			Eldrazi Spawn creature token. It has "Sacrifice this creature:
-			Add Colorless."
-		*/
-		return &Card{
-			BasePower:        2,
-			BaseToughness:    2,
-			CastingCost:      &CastingCost{Colorless: 2},
-			EntersPlayEffect: &Effect{Summon: newCardHelper(EldraziSpawnToken)},
-			IsCreature:       true,
-		}
-	case NettleSentinel:
-		/*
-			Nettle Sentinel doesn't untap during your untap step.
-			Whenever you cast a green spell, you may untap Nettle Sentinel.
-		*/
-		return &Card{
-			BasePower:     2,
-			BaseToughness: 2,
-			CastingCost:   &CastingCost{Colorless: 1},
-			IsCreature:    true,
-		}
-	case QuirionRanger:
-		/*
-			Return a Forest you control to its owner's hand: Untap target creature.
-			Activate this ability only once each turn.
-		*/
-		return &Card{
-			ActivatedAbility: &Effect{
-				Cost: &Effect{
-					EffectType: ReturnToHand,
-					TargetType: &TargetType{Type: Land, Subtype: BasicForest, ControlledBy: SamePlayer},
-				},
-				EffectType: Untap,
-				TargetType: &TargetType{Type: Creature}
-			},
-			BasePower:     1,
-			BaseToughness: 1,
-			CastingCost:   &CastingCost{Colorless: 1},
-			IsCreature:    true,
-		}
-	case Rancor:
-		/*
-			Enchanted creature gets +2/+0 and has trample.
-			When Rancor is put into a graveyard from the battlefield,
-			return Rancor to its owner's hand.
-		*/
-		return &Card{
-			BasePower:         2,
-			BaseToughness:     0,
-			CastingCost:       &CastingCost{Colorless: 1},
-			IsEnchantCreature: true,
-		}
-	case SilhanaLedgewalker:
-		/*
-			Hexproof (This creature can't be the target of spells or abilities your opponents control.)
-			Silhana Ledgewalker can't be blocked except by creatures with flying.
-		*/
-		return &Card{
-			BasePower:     1,
-			BaseToughness: 1,
-			CastingCost:   &CastingCost{Colorless: 2},
-			Hexproof:      true,
-			IsCreature:    true,
-			GroundEvader:  true,
-		}
-	case SkarrganPitskulk:
-		/*
-			Bloodthirst 1 (If an opponent was dealt damage this turn, this creature enters the
-			battlefield with a +1/+1 counter on it.)
-			Creatures with power less than Skarrgan Pit-Skulk's power can't block it.
-		*/
-		return &Card{
-			BasePower:     1,
-			BaseToughness: 1,
-			Bloodthirst:   1,
-			CastingCost:   &CastingCost{Colorless: 1},
-			IsCreature:    true,
-			Powermenace:   true,
-		}
-	case VaultSkirge:
-		/*
-			(Phyrexian Black can be paid with either Black or 2 life.)
-			Flying
-			Lifelink (Damage dealt by this creature also causes you to gain that much life.)
-		*/
-		return &Card{
-			BasePower:            1,
-			BaseToughness:        1,
-			CastingCost:          &CastingCost{Colorless: 2},
-			Flying:               true,
-			Hexproof:             true,
-			IsCreature:           true,
-			Lifelink:             true,
-			PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
-		}
-	case VinesOfVastwood:
-		/*
-			Kicker Green (You may pay an additional Green as you cast this spell.)
-			Target creature can't be the target of spells or abilities your opponents control this
-			turn. If this spell was kicked, that creature gets +4/+4 until end of turn.
-		*/
-
-		return &Card{
-			AddsTemporaryEffect: true,
-			CastingCost:         &CastingCost{Colorless: 1},
-			IsInstant:           true,
-			Kicker: &Effect{
-				CastingCost: &CastingCost{Colorless: 2},
-				Power:       4,
-				Toughness:   4,
-			},
-			Effect: &Effect{
-				Untargetable: true,
-			},
-		}
-	case HungerOfTheHowlpack:
-		/*
-			Put a +1/+1 counter on target creature.
-			Morbid - Put three +1/+1 counters on that creature instead if a creature died this turn.
-		*/
-		return &Card{
-			Effect: &Effect{
-				Plus1Plus1Counters: 1,
-			},
-			CastingCost: &CastingCost{Colorless: 1},
-			IsInstant:   true,
-			Morbid: &Effect{
-				Plus1Plus1Counters: 2,
-			},
-		}
-	default:
-		log.Fatalf("unimplemented card name: %d", name)
+func init() {
+	for name, card := range Cards {
+		card.Name = name
 	}
-	panic("control should not reach here")
+}
+
+func (cn CardName) Card() *Card {
+	return Cards[cn]
 }
 
 func (c *Card) String() string {

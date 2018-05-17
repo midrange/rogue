@@ -1,6 +1,7 @@
 package game
 
 import (
+	"log"
 	"testing"
 )
 
@@ -32,10 +33,16 @@ func TestDecking(t *testing.T) {
 }
 
 func TestTwoBearsFighting(t *testing.T) {
-	g := NewGame(deckWithTopAndForests(GrizzlyBears), deckWithTopAndForests(GrizzlyBears))
+	g := NewGame(
+		deckWithTopAndForests(GrizzlyBears),
+		deckWithTopAndForests(GrizzlyBears))
+
+	log.Printf("starting first turn")
 
 	g.playLand()
 	g.passTurn()
+
+	log.Printf("finished first turn")
 
 	g.playLand()
 	g.passTurn()
