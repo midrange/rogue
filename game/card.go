@@ -56,6 +56,7 @@ const (
 	FaerieMiscreant
 	Forest
 	GrizzlyBears
+	Gush
 	HungerOfTheHowlpack
 	Island
 	MutagenicGrowth
@@ -157,6 +158,26 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 2,
 		CastingCost:   &Cost{Colorless: 2},
 		Type:          []Type{Creature},
+	},
+
+	/*
+		You may return two Islands you control to their owner's hand rather than pay this spell's mana cost.
+		Draw two cards.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=20404
+	*/
+	Gush: &Card{
+		AlternateCastingCost: &Cost{
+			Effect: &Effect{
+				EffectType: ReturnToHand,
+				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 2},
+			},
+		},
+		CastingCost: &Cost{Colorless: 5},
+		Effect: &Effect{
+			EffectType:  DrawCard,
+			EffectCount: 2,
+		},
+		Type: []Type{Instant},
 	},
 
 	/*
@@ -393,6 +414,19 @@ func (c *Card) IsEnchantment() bool {
 
 func (c *Card) IsEnchantCreature() bool {
 	return c.IsEnchantment() && c.Selector.Type == Creature
+}
+
+func (c *Card) IsSorcery() bool {
+	for _, t := range c.Type {
+		if t == Sorcery {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Card) IsSpell() bool {
+	return c.IsSorcery() || c.IsInstant()
 }
 
 func (c *Card) HasSubtype(subtype Subtype) bool {

@@ -11,6 +11,7 @@ type Action struct {
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent
+	WithAlternate bool
 	WithKicker    bool
 	WithPhyrexian bool
 }

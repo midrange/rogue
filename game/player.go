@@ -73,31 +73,6 @@ func (p *Player) Lost() bool {
 	return p.Life <= 0 || p.Deck.FailedToDraw
 }
 
-// Automatically spends the given amount of mana.
-// Panics if we do not have that much.
-func (p *Player) SpendMana(amount int) {
-	if p.ColorlessManaPool >= amount {
-		p.ColorlessManaPool -= amount
-		return
-	} else {
-		amount -= p.ColorlessManaPool
-		p.ColorlessManaPool = 0
-
-	}
-	for _, card := range p.Board {
-		if amount == 0 {
-			return
-		}
-		if card.IsLand() && !card.Tapped {
-			card.Tapped = true
-			amount -= 1
-		}
-	}
-	if amount > 0 {
-		panic("could not spend mana")
-	}
-}
-
 func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
@@ -212,7 +187,6 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
 	answer := []*Action{&Action{Type: Pass}}
 
-	mana := p.AvailableMana()
 	for _, name := range p.Hand {
 		// Don't re-check playing duplicate cards
 		if cardNames[name] {
@@ -222,85 +196,93 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		card := name.Card()
 
 		if allowSorcerySpeed {
-			if card.IsLand() && p.LandPlayedThisTurn == 0 {
-				answer = append(answer, &Action{Type: Play, Card: card})
+			if card.IsLand() {
+				if p.LandPlayedThisTurn == 0 {
+					answer = append(answer, &Action{Type: Play, Card: card})
+				}
+			} else if !card.IsInstant() {
+				if p.CanPayCost(card.CastingCost) {
+					if card.IsCreature() {
+						answer = append(answer, &Action{Type: Play, Card: card})
+					}
+					if card.IsEnchantment() && p.CanPayCost(card.CastingCost) && p.HasLegalTarget(card) {
+						if forHuman {
+							answer = append(answer, &Action{
+								Type: ChooseTargetAndMana,
+								Card: card,
+							})
+						} else {
+							for _, target := range p.game.Creatures() {
+								answer = append(answer, &Action{
+									Type:   Play,
+									Card:   card,
+									Target: target,
+								})
+							}
+						}
+					}
+				}
+				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+				}
+				if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
+					answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
+				}
 			}
-			if card.IsCreature() && mana >= card.CastingCost.Colorless {
-				answer = append(answer, &Action{Type: Play, Card: card})
-			}
-			if card.IsEnchantment() && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
-				if forHuman {
+		}
+
+		if card.IsInstant() && p.HasLegalTarget(card) {
+			if forHuman {
+				if p.CanPayCost(card.CastingCost) ||
+					(card.Kicker != nil && p.CanPayCost(card.Kicker.Cost)) ||
+					(card.PhyrexianCastingCost != nil) && p.CanPayCost(card.PhyrexianCastingCost) {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
 						Card: card,
 					})
-				} else {
+				}
+			} else { // TODO - add player targets - this assumes all instants target creatures for now
+				if p.CanPayCost(card.CastingCost) {
 					for _, target := range p.game.Creatures() {
-						answer = append(answer, &Action{
-							Type:   Play,
-							Card:   card,
-							Target: target,
-						})
+						if p.IsLegalTarget(card, target) {
+							answer = append(answer, &Action{
+								Type:   Play,
+								Card:   card,
+								Target: target,
+							})
+						}
 					}
 				}
-			}
-			if card.IsCreature() || card.IsEnchantment() {
-				if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
-					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
-				}
-			}
-		}
-
-		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant() && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
-			if forHuman {
-				answer = append(answer, &Action{
-					Type: ChooseTargetAndMana,
-					Card: card,
-				})
-			} else {
-				for _, target := range p.game.Creatures() {
-					if p.IsLegalTarget(card, target) {
-						answer = append(answer, &Action{
-							Type:   Play,
-							Card:   card,
-							Target: target,
-						})
+				if card.Kicker != nil && p.CanPayCost(card.Kicker.Cost) {
+					for _, target := range p.game.Creatures() {
+						if p.IsLegalTarget(card, target) {
+							answer = append(answer, &Action{
+								Type:       Play,
+								Card:       card,
+								WithKicker: true,
+								Target:     target,
+							})
+						}
 					}
 				}
-			}
-		}
 
-		if card.IsInstant() && card.Kicker != nil && card.Kicker.Cost.Colorless > 0 && mana >= card.Kicker.Cost.Colorless && p.HasLegalTarget(card) {
-			if !forHuman {
-				for _, target := range p.game.Creatures() {
-					if p.IsLegalTarget(card, target) {
-						answer = append(answer, &Action{
-							Type:       Play,
-							Card:       card,
-							WithKicker: true,
-							Target:     target,
-						})
+				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+					for _, target := range p.game.Creatures() {
+						if p.IsLegalTarget(card, target) {
+							answer = append(answer, &Action{
+								Type:          Play,
+								Card:          card,
+								Target:        target,
+								WithPhyrexian: true,
+							})
+						}
 					}
 				}
 			}
 		}
 
-		if card.IsInstant() {
-			if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
-				for _, target := range p.game.Creatures() {
-					if p.IsLegalTarget(card, target) {
-						answer = append(answer, &Action{
-							Type:          Play,
-							Card:          card,
-							Target:        target,
-							WithPhyrexian: true,
-						})
-					}
-				}
-			}
-		}
 	}
+
 	return answer
 }
 
@@ -374,47 +356,49 @@ func (p *Player) Play(action *Action) {
 	}
 	p.Hand = newHand
 
-	if card.IsCreature() || card.IsInstant() {
+	if !card.IsLand() {
 		if action.WithKicker {
-			p.SpendMana(card.Kicker.Cost.Colorless)
+			p.PayCost(card.Kicker.Cost)
+		} else if action.WithAlternate {
+			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
-			p.SpendMana(card.PhyrexianCastingCost.Colorless)
-			p.Life -= card.PhyrexianCastingCost.Life
+			p.PayCost(card.PhyrexianCastingCost)
 		} else {
-			p.SpendMana(card.CastingCost.Colorless)
+			p.PayCost(card.CastingCost)
 		}
 		for _, permanent := range p.Board {
 			permanent.RespondToSpell()
 		}
 	}
 
-	if card.IsInstant() {
-		p.castInstant(card, action.Target, action)
-		// TODO put instants and sorceries in graveyard (or exile)
-		return
+	if card.IsSpell() {
+		p.CastSpell(card, action.Target, action)
+		// TODO put spells (instants and sorceries) in graveyard (or exile)
+	} else {
+		// Non-instant cards turn into a permanent
+		perm := p.game.newPermanent(card, p)
+
+		if card.IsLand() {
+			p.LandPlayedThisTurn++
+		}
+
+		if card.IsEnchantCreature() {
+			action.Target.Auras = append(action.Target.Auras, perm)
+		}
 	}
 
-	// Non-instant cards turn into a permanent
-	perm := p.game.newPermanent(card, p)
-
-	if card.IsLand() {
-		p.LandPlayedThisTurn++
-	}
-
-	if card.IsEnchantCreature() {
-		action.Target.Auras = append(action.Target.Auras, perm)
-	}
 }
 
-func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
+func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
 		target.Effects = append(target.Effects, NewEffect(a))
+	} else if c.Effect != nil {
+		p.ResolveEffect(NewEffect(a), nil)
 	}
-
-	if c.Effect != nil {
+	if c.Effect != nil && target != nil {
 		target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
 	}
-	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
+	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && target != nil {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
 }
@@ -568,7 +552,94 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.Draw()
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
+	} else if e.EffectType == DrawCard {
+		for i := 0; i < Max(1, e.EffectCount); i++ {
+			p.Draw()
+		}
 	} else {
 		panic("tried to resolve unknown effect")
+	}
+}
+
+// CanPayCost returns whether the player has the resources (life, mana, etc) to pay Cost.
+func (p *Player) CanPayCost(c *Cost) bool {
+	if c.Effect == nil {
+		return p.Life >= c.Life && p.AvailableMana() >= c.Colorless
+	} else {
+		if c.Effect.EffectType == ReturnToHand {
+			if c.Effect.Selector.Subtype != NoSubtype {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, l := range p.Lands() {
+					for _, st := range l.Subtype {
+						if st == c.Effect.Selector.Subtype {
+							count--
+							break
+						}
+					}
+					if count == 0 {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+// PayCost spends the resources for a Cost
+func (p *Player) PayCost(c *Cost) bool {
+
+	// regular mana costs
+	p.SpendMana(c.Colorless)
+
+	// Phyrexian costs
+	p.Life -= c.Life
+
+	// costs like Gush
+	if c.Effect != nil {
+		if c.Effect.EffectType == ReturnToHand {
+			if c.Effect.Selector.Subtype != NoSubtype {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, l := range p.Lands() {
+					for _, st := range l.Subtype {
+						if st == c.Effect.Selector.Subtype {
+							p.RemoveFromBoard(l)
+							p.Hand = append(p.Hand, l.Card.Name)
+							count--
+							break
+						}
+					}
+					if count == 0 {
+						break
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+// Automatically spends the given amount of mana.
+// Panics if we do not have that much.
+func (p *Player) SpendMana(amount int) {
+	if p.ColorlessManaPool >= amount {
+		p.ColorlessManaPool -= amount
+		return
+	} else {
+		amount -= p.ColorlessManaPool
+		p.ColorlessManaPool = 0
+
+	}
+	for _, card := range p.Board {
+		if amount == 0 {
+			return
+		}
+		if card.IsLand() && !card.Tapped {
+			card.Tapped = true
+			amount -= 1
+		}
+	}
+	if amount > 0 {
+		panic("could not spend mana")
 	}
 }

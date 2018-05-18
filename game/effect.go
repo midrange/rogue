@@ -46,8 +46,9 @@ type Effect struct {
 	Target          *Permanent
 
 	// for effects from targeted spells
-	EffectType EffectType
-	Selector   *Selector
+	EffectCount int // the number of times to do the effect
+	EffectType  EffectType
+	Selector    *Selector
 }
 
 //go:generate stringer -type=EffectType
@@ -55,7 +56,7 @@ type EffectType int
 
 const (
 	AddMana EffectType = iota
-	Draw
+	DrawCard
 	ReturnToHand
 	Untap
 )
