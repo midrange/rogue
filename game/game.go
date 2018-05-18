@@ -371,7 +371,7 @@ func (g *Game) playCreature() {
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsEnchantCreature && a.Target.Owner == g.Priority() {
+		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
 			g.TakeAction(a)
 			return
 		}

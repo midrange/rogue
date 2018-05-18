@@ -38,7 +38,7 @@ type Card struct {
 	SacrificesForMana bool
 
 	// Properties that are relevant for Auras
-	HostEntersGraveyardEffect *Effect
+	EnchantedPermanentDiesEffect *Effect
 }
 
 //go:generate stringer -type=CardName
@@ -101,11 +101,12 @@ var Cards = map[CardName]*Card{
 		When enchanted creature dies, create a 3/3 green Elephant creature token.
 	*/
 	ElephantGuide: &Card{
-		BasePower:                 3,
-		BaseToughness:             3,
-		CastingCost:               &CastingCost{Colorless: 3},
-		IsEnchantCreature:         true,
-		HostEntersGraveyardEffect: &Effect{Summon: ElephantToken},
+		BasePower:                    3,
+		BaseToughness:                3,
+		CastingCost:                  &Cost{Colorless: 3},
+		EnchantedPermanentDiesEffect: &Effect{Summon: ElephantToken},
+		Selector:                     &Selector{Type: Creature},
+		Type:                         []Type{Enchantment},
 	},
 
 	/*
@@ -114,8 +115,8 @@ var Cards = map[CardName]*Card{
 	ElephantToken: &Card{
 		BasePower:     3,
 		BaseToughness: 3,
-		CastingCost:   &CastingCost{Colorless: 0},
-		IsCreature:    true,
+		CastingCost:   &Cost{Colorless: 0},
+		Type:          []Type{Creature},
 	},
 
 	/*
