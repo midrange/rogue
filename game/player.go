@@ -288,7 +288,16 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 
 		if card.IsInstant() {
 			if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
-				answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+				for _, target := range p.game.Creatures() {
+					if p.IsLegalTarget(card, target) {
+						answer = append(answer, &Action{
+							Type:          Play,
+							Card:          card,
+							Target:        target,
+							WithPhyrexian: true,
+						})
+					}
+				}
 			}
 		}
 	}
@@ -398,6 +407,7 @@ func (p *Player) Play(action *Action) {
 }
 
 func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
+	fmt.Println("target is ", target)
 	if c.AddsTemporaryEffect {
 		target.Effects = append(target.Effects, NewEffect(a))
 	}

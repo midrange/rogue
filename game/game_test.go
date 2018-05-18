@@ -400,5 +400,24 @@ func TestRancor(t *testing.T) {
 	if len(g.Priority().Hand) != 6 {
 		t.Fatal("expected the rancor to return to hand")
 	}
+}
 
+func TestMutagenicGrowth(t *testing.T) {
+	skirgeGrowth := NewEmptyDeck()
+	skirgeGrowth.Add(1, MutagenicGrowth)
+	skirgeGrowth.Add(1, VaultSkirge)
+	skirgeGrowth.Add(58, Forest)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(skirgeGrowth, allForests)
+
+	g.playLand()
+	g.playCreature()
+	g.playInstant()
+
+	if len(g.Priority().Hand) != 4 {
+		t.Fatal("expected the hand size to be 4 after forest, skirge, mutagenic growth")
+	}
 }
