@@ -347,7 +347,7 @@ func (g *Game) passTurn() {
 // playLand plays the first land it sees in the hand
 func (g *Game) playLand() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsLand {
+		if a.Card != nil && a.Card.IsLand() {
 			g.TakeAction(a)
 			return
 		}
@@ -359,7 +359,7 @@ func (g *Game) playLand() {
 // playCreature plays the first creature it sees in the hand
 func (g *Game) playCreature() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsCreature {
+		if a.Card != nil && a.Card.IsCreature() {
 			g.TakeAction(a)
 			return
 		}
@@ -371,7 +371,7 @@ func (g *Game) playCreature() {
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsEnchantCreature && a.Target.Owner == g.Priority() {
+		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
 			g.TakeAction(a)
 			return
 		}
@@ -395,7 +395,7 @@ func (g *Game) doBlockAction() {
 func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		fmt.Println(a)
-		if a.Card != nil && a.Card.IsCreature && a.WithPhyrexian {
+		if a.Card != nil && a.Card.IsCreature() && a.WithPhyrexian {
 			g.TakeAction(a)
 			return
 		}
@@ -407,7 +407,7 @@ func (g *Game) playCreaturePhyrexian() {
 // playInstant plays the first instant it sees in the hand
 func (g *Game) playInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsInstant && a.Type == Play {
+		if a.Card != nil && a.Card.IsInstant() && a.Type == Play {
 			g.TakeAction(a)
 			return
 		}
@@ -419,7 +419,7 @@ func (g *Game) playInstant() {
 // playKickedInstant kicks the first kickable instant it sees in the hand
 func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsInstant && a.WithKicker {
+		if a.Card != nil && a.Card.IsInstant() && a.WithKicker {
 			g.TakeAction(a)
 			return
 		}

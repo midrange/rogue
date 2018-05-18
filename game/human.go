@@ -60,7 +60,7 @@ func promptForTargetAndMana(game *Game, action *Action) *Action {
 		})
 	}
 	mana := game.Priority().AvailableMana()
-	if c.IsInstant && c.Kicker != nil && c.Kicker.CastingCost.Colorless > 0 && mana >= c.Kicker.CastingCost.Colorless {
+	if c.IsInstant() && c.Kicker != nil && c.Kicker.Cost.Colorless > 0 && mana >= c.Kicker.Cost.Colorless {
 		for _, target := range game.Creatures() {
 			if player.IsLegalTarget(c, target) {
 				actions = append(actions, &Action{

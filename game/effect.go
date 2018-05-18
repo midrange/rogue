@@ -16,8 +16,8 @@ package game
 import ()
 
 type Effect struct {
-	// when an Effect is a kicker, it has a CastingCost
-	CastingCost *CastingCost
+	// when an Effect is a kicker, it has a Cost
+	Cost *Cost
 
 	// these properties modify a Permanent the Effect targets, or the Game state
 	Colorless          int
@@ -39,14 +39,12 @@ type Effect struct {
 	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent
 
-	Target *Permanent
+	SelectedForCost *Permanent
+	Target          *Permanent
 
 	// for effects from targeted spells
 	EffectType EffectType
-	TargetType *TargetType
-
-	// when an effect has a cost, e.g. a Quirion Ranger
-	Cost *Effect
+	Selector   *Selector
 }
 
 //go:generate stringer -type=EffectType
