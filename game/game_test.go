@@ -362,3 +362,43 @@ func TestElephantGuide(t *testing.T) {
 		t.Fatal("expected the opponent to have gotten a token")
 	}
 }
+
+func TestRancor(t *testing.T) {
+	skirgeRancor := NewEmptyDeck()
+	skirgeRancor.Add(1, Rancor)
+	skirgeRancor.Add(1, VaultSkirge)
+	skirgeRancor.Add(58, Forest)
+
+	skirgeRancor2 := NewEmptyDeck()
+	skirgeRancor2.Add(1, Rancor)
+	skirgeRancor2.Add(1, VaultSkirge)
+	skirgeRancor2.Add(58, Forest)
+
+	g := NewGame(skirgeRancor, skirgeRancor2)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playAura()
+
+	if len(g.Priority().Hand) != 5 {
+		t.Fatal("expected the hand size to be 5 before rancor return")
+	}
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(DeclareBlockers)
+	g.doBlockAction()
+
+	g.passUntilPhase(Main2)
+
+	if len(g.Priority().Hand) != 6 {
+		t.Fatal("expected the rancor to return to hand")
+	}
+
+}

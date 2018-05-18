@@ -140,18 +140,18 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 		}
 	}
 	p.Board = newBoard
+	if perm.EntersGraveyardEffect != nil {
+		p.ResolveEffect(perm.EntersGraveyardEffect, perm)
+	}
 
-	if perm.Name == Rancor {
-		p.AddToHand(Rancor)
-	} else {
-		// TODO: make sure it is actually a creature that died
+	if perm.IsCreature {
 		p.CreatureDied = true
 	}
 
 	perm.Effects = []*Effect{}
 	for _, aura := range perm.Auras {
 		if aura.HostEntersGraveyardEffect != nil {
-			p.ResolveEffect(aura.HostEntersGraveyardEffect)
+			p.ResolveEffect(aura.HostEntersGraveyardEffect, aura)
 		}
 		p.RemoveFromBoard(aura)
 	}
@@ -519,9 +519,15 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 	return false
 }
 
-func (p *Player) ResolveEffect(e *Effect) {
+func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
+	}
+
+	if e.EffectType == ReturnToHand {
+		if e.TargetType == nil {
+			p.Hand = append(p.Hand, perm.Card.Name)
+		}
 	}
 
 	p.ColorlessManaPool += e.Colorless
