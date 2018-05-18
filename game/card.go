@@ -6,23 +6,22 @@ import ()
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	ActivatedAbility      *Effect
-	AddsTemporaryEffect   bool
-	AlternateCastingCost  *Cost
-	Bloodthirst           int
-	CastingCost           *Cost
-	Effect                *Effect
-	EntersGraveyardEffect *Effect
-	EntersPlayEffect      *Effect
-	Flying                bool
-	GroundEvader          bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof              bool
-	Kicker                *Effect
-	Lifelink              bool
-	Morbid                *Effect
-	Name                  CardName
-	PhyrexianCastingCost  *Cost
-	Powermenace           bool // only blockable by >= power (like Skarrgan Pitskulk)
+	ActivatedAbility           *Effect
+	AddsTemporaryEffect        bool
+	Bloodthirst                int
+	CastingCost                *Cost
+	Effect                     *Effect
+	EntersGraveyardEffect      *Effect
+	EntersTheBattlefieldEffect *Effect
+	Flying                     bool
+	GroundEvader               bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof                   bool
+	Kicker                     *Effect
+	Lifelink                   bool
+	Morbid                     *Effect
+	Name                       CardName
+	PhyrexianCastingCost       *Cost
+	Powermenace                bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
 	Subtype   []Subtype
@@ -54,6 +53,7 @@ const (
 	EldraziSpawnToken
 	ElephantGuide
 	ElephantToken
+	FaerieMiscreant
 	Forest
 	GrizzlyBears
 	Gush
@@ -81,11 +81,11 @@ var Cards = map[CardName]*Card{
 		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=366467
 	*/
 	BurningTreeEmissary: &Card{
-		BasePower:        2,
-		BaseToughness:    2,
-		CastingCost:      &Cost{Colorless: 2},
-		EntersPlayEffect: &Effect{Colorless: 2, EffectType: AddMana},
-		Type:             []Type{Creature},
+		BasePower:                  2,
+		BaseToughness:              2,
+		CastingCost:                &Cost{Colorless: 2},
+		EntersTheBattlefieldEffect: &Effect{Colorless: 2, EffectType: AddMana},
+		Type: []Type{Creature},
 	},
 
 	/*
@@ -122,6 +122,20 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 3,
 		CastingCost:   &Cost{Colorless: 0},
 		Type:          []Type{Creature},
+	},
+
+	/*
+		Flying (This creature can't be blocked except by creatures with flying or reach.)
+		When Faerie Miscreant enters the battlefield, if you control another creature
+		named Faerie Miscreant, draw a card.
+	*/
+	FaerieMiscreant: &Card{
+		BasePower:                  1,
+		BaseToughness:              1,
+		CastingCost:                &Cost{Colorless: 1},
+		EntersTheBattlefieldEffect: &Effect{Condition: &Condition{ControlAnother: FaerieMiscreant}, EffectType: Draw},
+		Flying: true,
+		Type:   []Type{Creature},
 	},
 
 	/*
@@ -217,11 +231,11 @@ var Cards = map[CardName]*Card{
 		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=193420
 	*/
 	NestInvader: &Card{
-		BasePower:        2,
-		BaseToughness:    2,
-		CastingCost:      &Cost{Colorless: 2},
-		EntersPlayEffect: &Effect{Summon: EldraziSpawnToken},
-		Type:             []Type{Creature},
+		BasePower:                  2,
+		BaseToughness:              2,
+		CastingCost:                &Cost{Colorless: 2},
+		EntersTheBattlefieldEffect: &Effect{Summon: EldraziSpawnToken},
+		Type: []Type{Creature},
 	},
 
 	/*
@@ -320,7 +334,6 @@ var Cards = map[CardName]*Card{
 		BaseToughness:        1,
 		CastingCost:          &Cost{Colorless: 2},
 		Flying:               true,
-		Hexproof:             true,
 		Lifelink:             true,
 		PhyrexianCastingCost: &Cost{Life: 2, Colorless: 1},
 		Type:                 []Type{Artifact, Creature},

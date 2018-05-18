@@ -523,6 +523,22 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 }
 
 func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
+	if e.Condition != nil {
+		if e.Condition.ControlAnother != NoCard {
+			controlsOne := false
+			for _, boardPerm := range p.Board {
+				if boardPerm.Name == e.Condition.ControlAnother && boardPerm.Id != perm.Id {
+					controlsOne = true
+					break
+				}
+			}
+			if !controlsOne {
+				return
+			}
+		} else {
+			panic("unhandled Condition in ResolveEffect")
+		}
+	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
 		return
@@ -532,6 +548,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			p.Hand = append(p.Hand, perm.Card.Name)
 		}
 		return
+	} else if e.EffectType == Draw {
+		p.Draw()
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else if e.EffectType == DrawCard {
