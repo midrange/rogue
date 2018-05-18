@@ -11,7 +11,7 @@ type Card struct {
 	AlternateCastingCost  *Cost
 	Bloodthirst           int
 	CastingCost           *Cost
-	Effect                *Effect
+	Effects               []*Effect
 	EntersGraveyardEffect *Effect
 	EntersPlayEffect      *Effect
 	Flying                bool
@@ -148,10 +148,10 @@ var Cards = map[CardName]*Card{
 			},
 		},
 		CastingCost: &Cost{Colorless: 5},
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			EffectType:  DrawCard,
 			EffectCount: 2,
-		},
+		}},
 		Type: []Type{Sorcery},
 	},
 
@@ -172,9 +172,9 @@ var Cards = map[CardName]*Card{
 		this turn.
 	*/
 	HungerOfTheHowlpack: &Card{
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Plus1Plus1Counters: 1,
-		},
+		}},
 		CastingCost: &Cost{Colorless: 1},
 		Morbid: &Effect{
 			Plus1Plus1Counters: 2,
@@ -201,10 +201,10 @@ var Cards = map[CardName]*Card{
 	MutagenicGrowth: &Card{
 		AddsTemporaryEffect: true,
 		CastingCost:         &Cost{Colorless: 1},
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Power:     2,
 			Toughness: 2,
-		},
+		}},
 		PhyrexianCastingCost: &Cost{Life: 2},
 		Type:                 []Type{Instant},
 	},
@@ -308,6 +308,25 @@ var Cards = map[CardName]*Card{
 	},
 
 	/*
+		Return target creature to its owner's hand. Untap up to two lands.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=snap
+	*/
+	Snap: &Card{
+		CastingCost: &Cost{Colorless: 2},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Untap,
+				Selector:   &Selector{Subtype: LandIsland, Count: 2},
+			},
+			&Effect{
+				EffectType: ReturnToHand,
+				Selector:   &Selector{Type: Creature},
+			},
+		},
+		Type: []Type{Instant},
+	},
+
+	/*
 
 		Artifact Creature — Imp
 		(Phyrexian Black can be paid with either Black or 2 life.)
@@ -341,9 +360,9 @@ var Cards = map[CardName]*Card{
 			Power:     4,
 			Toughness: 4,
 		},
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Untargetable: true,
-		},
+		}},
 		Type: []Type{Instant},
 	},
 }

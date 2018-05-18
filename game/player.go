@@ -88,7 +88,7 @@ func (p *Player) EndPhase() {
 func (p *Player) EndTurn() {
 	for _, perm := range p.Board {
 		perm.Damage = 0
-		perm.Effects = []*Effect{}
+		perm.TemporaryEffects = []*Effect{}
 		perm.ActivatedThisTurn = false
 	}
 	p.LandPlayedThisTurn = 0
@@ -117,7 +117,7 @@ func (p *Player) SendToGraveyard(perm *Permanent) {
 		p.CreatureDied = true
 	}
 
-	perm.Effects = []*Effect{}
+	perm.TemporaryEffects = []*Effect{}
 	for _, aura := range perm.Auras {
 		if aura.EnchantedPermanentDiesEffect != nil {
 			p.ResolveEffect(aura.EnchantedPermanentDiesEffect, aura)
@@ -391,12 +391,17 @@ func (p *Player) Play(action *Action) {
 
 func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
-		target.Effects = append(target.Effects, NewEffect(a))
-	} else if c.Effect != nil {
-		p.ResolveEffect(NewEffect(a), nil)
-	}
-	if c.Effect != nil && target != nil {
-		target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
+		for _, e := range c.Effects {
+			target.TemporaryEffects = append(target.TemporaryEffects, NewEffect(a, e))
+		}
+	} else if c.Effects != nil {
+		for _, e := range c.Effects {
+			if target == nil {
+				p.ResolveEffect(NewEffect(a, e), nil)
+			} else {
+				target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
+			}
+		}
 	}
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && target != nil {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
@@ -501,7 +506,7 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 	if p != perm.Owner && perm.Hexproof {
 		return false
 	}
-	for _, effect := range perm.Effects {
+	for _, effect := range perm.TemporaryEffects {
 		if effect.Untargetable {
 			return false
 		}
@@ -530,6 +535,62 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		if e.Selector == nil {
 			p.RemoveFromBoard(perm)
 			p.Hand = append(p.Hand, perm.Card.Name)
+		} else {
+			if e.Selector.Subtype != NoSubtype {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, l := range p.Lands() {
+					for _, st := range l.Subtype {
+						if st == c.Effect.Selector.Subtype {
+							p.RemoveFromBoard(l)
+							p.Hand = append(p.Hand, l.Card.Name)
+							count--
+							break
+						}
+					}
+					if count == 0 {
+						break
+					}
+				}
+			} else if e.Selector.Type == Creature {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, c := range p.game.Creatures() {
+					p.RemoveFromBoard(c)
+					c.Owner.Hand = append(c.Owner.Hand, c.Card.Name)
+					count--
+					if count == 0 {
+						break
+					}
+				}
+			}
+		}
+		return
+	} else if e.EffectType == Untap {
+		if e.Selector == nil {
+			perm.Tapped = false
+		} else {
+			if e.Selector.Subtype != NoSubtype {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, l := range p.Lands() {
+					for _, st := range l.Subtype {
+						if st == c.Effect.Selector.Subtype {
+							l.Tapped = false
+							count--
+							break
+						}
+					}
+					if count == 0 {
+						break
+					}
+				}
+			} else if e.Selector.Type == Creature {
+				count := Max(c.Effect.Selector.Count, 1)
+				for _, c := range p.game.Creatures() {
+					c.Tapped = false
+					if count == 0 {
+						break
+					}
+				}
+			}
 		}
 		return
 	} else if e.EffectType == AddMana {

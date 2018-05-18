@@ -58,13 +58,12 @@ const (
 	Untap
 )
 
-func NewEffect(action *Action) *Effect {
-	card := action.Card
-	effect := card.Effect
+func NewEffect(action *Action, effect *Effect) *Effect {
+	newEffect := effect
 	if action.WithKicker {
-		effect.Kicker = card.Kicker
+		newEffect.Kicker = card.Kicker
 	}
-	effect.Source = action.Source
-	effect.Target = action.Target
-	return effect
+	newEffect.Source = action.Source
+	newEffect.Target = action.Target
+	return newEffect
 }
