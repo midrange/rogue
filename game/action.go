@@ -7,7 +7,7 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
-	CostTarget    *Permanent
+	Cost          *Cost
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent

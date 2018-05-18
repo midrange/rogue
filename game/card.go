@@ -23,10 +23,10 @@ type Card struct {
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
-	Subtype    []Subtype
-	Supertype  []Supertype
-	TargetType *TargetType
-	Type       []Type
+	Subtype   []Subtype
+	Supertype []Supertype
+	Selector  *Selector
+	Type      []Type
 
 	// The base properties of creatures.
 	BasePower     int
@@ -162,11 +162,11 @@ var Cards = map[CardName]*Card{
 			Cost: &Cost{
 				Effect: &Effect{
 					EffectType: ReturnToHand,
-					TargetType: &TargetType{Subtype: LandForest, ControlledBy: SamePlayer},
+					Selector:   &Selector{Subtype: LandForest, ControlledBy: SamePlayer},
 				},
 			},
 			EffectType: Untap,
-			TargetType: &TargetType{Type: Creature},
+			Selector:   &Selector{Type: Creature},
 		},
 		BasePower:     1,
 		BaseToughness: 1,
@@ -184,7 +184,7 @@ var Cards = map[CardName]*Card{
 		BasePower:     2,
 		BaseToughness: 0,
 		CastingCost:   &Cost{Colorless: 1},
-		TargetType:    &TargetType{Type: Creature},
+		Selector:      &Selector{Type: Creature},
 		Type:          []Type{Enchantment},
 	},
 
@@ -313,7 +313,7 @@ func (c *Card) IsEnchantment() bool {
 }
 
 func (c *Card) IsEnchantCreature() bool {
-	return c.IsEnchantment() && c.TargetType.Type == Creature
+	return c.IsEnchantment() && c.Selector.Type == Creature
 }
 
 func (c *Card) HasSubtype(subtype Subtype) bool {

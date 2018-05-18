@@ -172,19 +172,26 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 		// TODO make actions unique, like don't allow two untaped Forests to both be cost targets
 		if perm.ActivatedAbility != nil {
 			effect := perm.ActivatedAbility
-			costTargets := []*Permanent{}
-			if effect.Cost.Effect != nil && effect.Cost.Effect.TargetType.Subtype != NoSubtype {
+			landsForCost := []*Permanent{}
+			if effect.Cost.Effect != nil && effect.Cost.Effect.Selector.Subtype != NoSubtype {
 				for _, l := range p.Lands() {
-					if l.HasSubtype(effect.Cost.Effect.TargetType.Subtype) {
-						costTargets = append(costTargets, l)
+					if l.HasSubtype(effect.Cost.Effect.Selector.Subtype) {
+						landsForCost = append(landsForCost, l)
 					}
 				}
 			}
 
-			if effect.TargetType.Type == Creature { // TODO lands etc
+			if effect.Selector.Type == Creature { // TODO lands etc
 				for _, c := range p.Creatures() {
-					for _, costTarget := range costTargets {
-						answer = append(answer, &Action{Type: Activate, Source: perm, CostTarget: costTarget, Target: c})
+					for _, land := range landsForCost {
+						costEffect := effect.Cost.Effect
+						costEffect.SelectedForCost = land
+						answer = append(answer,
+							&Action{
+								Type:   Activate,
+								Source: perm,
+								Cost:   &Cost{Effect: costEffect},
+								Target: c})
 					}
 				}
 			}
@@ -397,10 +404,7 @@ func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 }
 
 func (p *Player) ActivateAbility(a *Action) {
-	permanentToActivate := a.Source
-	targetForCost := a.CostTarget
-	target := a.Target
-	permanentToActivate.ActivateAbility(targetForCost, target)
+	a.Source.ActivateAbility(a.Cost, a.Target)
 }
 
 func (p *Player) AddMana(colorless int) {

@@ -241,14 +241,15 @@ func (c *Permanent) DidDealDamage(damage int) {
 	}
 }
 
-func (c *Permanent) ActivateAbility(targetForCost *Permanent, target *Permanent) {
+func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
 	c.ActivatedThisTurn = true
+	selectedForCost := cost.Effect.SelectedForCost
 	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
-		targetForCost.Owner.RemoveFromBoard(targetForCost)
-		targetForCost.Owner.Hand = append(targetForCost.Owner.Hand, targetForCost.Card.Name)
+		selectedForCost.Owner.RemoveFromBoard(selectedForCost)
+		selectedForCost.Owner.Hand = append(selectedForCost.Owner.Hand, selectedForCost.Card.Name)
 	}
 	if c.ActivatedAbility.EffectType == Untap {
 		target.Tapped = false

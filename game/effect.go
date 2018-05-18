@@ -39,11 +39,12 @@ type Effect struct {
 	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent
 
-	Target *Permanent
+	SelectedForCost *Permanent
+	Target          *Permanent
 
 	// for effects from targeted spells
 	EffectType EffectType
-	TargetType *TargetType
+	Selector   *Selector
 }
 
 //go:generate stringer -type=EffectType
