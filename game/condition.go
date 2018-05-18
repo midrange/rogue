@@ -1,6 +1,6 @@
 /*
-	A Condition currently accomodates ust InPlay for a given CardName,
-	so we can do faerie Miscreant.
+	A Condition currently accommodates just InPlay for a given CardName,
+	so we can do Faerie Miscreant.
 */
 
 package game
