@@ -56,6 +56,7 @@ const (
 	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
+	Island
 	NestInvader
 	NettleSentinel
 	QuirionRanger
@@ -156,6 +157,17 @@ var Cards = map[CardName]*Card{
 			Plus1Plus1Counters: 2,
 		},
 		Type: []Type{Instant},
+	},
+
+	/*
+		U
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=ISLAND
+	*/
+	Island: &Card{
+		Colorless: 1,
+		Subtype:   []Subtype{LandIsland},
+		Supertype: []Supertype{Basic},
+		Type:      []Type{Land},
 	},
 
 	/*
