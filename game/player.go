@@ -560,6 +560,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else {
-		panic("tried to resolve unklnwo effect")
+		panic("tried to resolve unknown effect")
 	}
 }
