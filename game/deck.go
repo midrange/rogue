@@ -28,7 +28,7 @@ func NewDeck(decklist map[CardName]int) *Deck {
 func Stompy() *Deck {
 	return NewDeck(map[CardName]int{
 		BurningTreeEmissary: 4,
-		ElephantGuide:       15,
+		ElephantGuide:       4,
 		Forest:              17,
 		HungerOfTheHowlpack: 4,
 		NestInvader:         4,
@@ -36,7 +36,7 @@ func Stompy() *Deck {
 		QuirionRanger:       4,
 		Rancor:              4,
 		SkarrganPitskulk:    4,
-		SilhanaLedgewalker:  4,
+		SilhanaLedgewalker:  3,
 		VaultSkirge:         4,
 		VinesOfVastwood:     4,
 	})

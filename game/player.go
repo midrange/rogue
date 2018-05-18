@@ -132,6 +132,25 @@ func (p *Player) Creatures() []*Permanent {
 	return answer
 }
 
+func (p *Player) SendToGraveyard(perm *Permanent) {
+	p.RemoveFromBoard(perm)
+	if perm.EntersGraveyardEffect != nil {
+		p.ResolveEffect(perm.EntersGraveyardEffect, perm)
+	}
+
+	if perm.IsCreature() {
+		p.CreatureDied = true
+	}
+
+	perm.Effects = []*Effect{}
+	for _, aura := range perm.Auras {
+		if aura.EnchantedPermanentDiesEffect != nil {
+			p.ResolveEffect(aura.EnchantedPermanentDiesEffect, aura)
+		}
+		p.SendToGraveyard(aura)
+	}
+}
+
 func (p *Player) RemoveFromBoard(perm *Permanent) {
 	newBoard := []*Permanent{}
 	for _, permanent := range p.Board {
@@ -140,21 +159,6 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 		}
 	}
 	p.Board = newBoard
-
-	if perm.Name == Rancor {
-		p.AddToHand(Rancor)
-	} else {
-		// TODO: make sure it is actually a creature that died
-		p.CreatureDied = true
-	}
-
-	perm.Effects = []*Effect{}
-	for _, aura := range perm.Auras {
-		if aura.EnchantedPermanentDiesEffect != nil {
-			p.ResolveEffect(aura.EnchantedPermanentDiesEffect)
-		}
-		p.RemoveFromBoard(aura)
-	}
 }
 
 // Returns possible actions when we can activate cards on he board.
@@ -525,10 +529,22 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 	return false
 }
 
-func (p *Player) ResolveEffect(e *Effect) {
+func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
+		return
+	} else if e.EffectType == ReturnToHand {
+		fmt.Println("ReturnToHand")
+		if e.Selector == nil {
+			fmt.Println("nil selector, returning perm: ", perm)
+			p.RemoveFromBoard(perm)
+			p.Hand = append(p.Hand, perm.Card.Name)
+		}
+		return
+	} else if e.EffectType == AddMana {
+		// so far the only other thing is mana ability
+		p.ColorlessManaPool += e.Colorless
+	} else {
+		panic("tried to resolve unklnwo effect")
 	}
-
-	p.ColorlessManaPool += e.Colorless
 }

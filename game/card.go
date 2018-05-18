@@ -6,21 +6,22 @@ import ()
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	ActivatedAbility     *Effect
-	AddsTemporaryEffect  bool
-	Bloodthirst          int
-	CastingCost          *Cost
-	Effect               *Effect
-	EntersPlayEffect     *Effect
-	Flying               bool
-	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof             bool
-	Kicker               *Effect
-	Lifelink             bool
-	Morbid               *Effect
-	Name                 CardName
-	PhyrexianCastingCost *Cost
-	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
+	ActivatedAbility      *Effect
+	AddsTemporaryEffect   bool
+	Bloodthirst           int
+	CastingCost           *Cost
+	Effect                *Effect
+	EntersGraveyardEffect *Effect
+	EntersPlayEffect      *Effect
+	Flying                bool
+	GroundEvader          bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof              bool
+	Kicker                *Effect
+	Lifelink              bool
+	Morbid                *Effect
+	Name                  CardName
+	PhyrexianCastingCost  *Cost
+	Powermenace           bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
 	Subtype   []Subtype
@@ -79,7 +80,7 @@ var Cards = map[CardName]*Card{
 		BasePower:        2,
 		BaseToughness:    2,
 		CastingCost:      &Cost{Colorless: 2},
-		EntersPlayEffect: &Effect{Colorless: 2},
+		EntersPlayEffect: &Effect{Colorless: 2, EffectType: AddMana},
 		Type:             []Type{Creature},
 	},
 
@@ -216,8 +217,11 @@ var Cards = map[CardName]*Card{
 		BasePower:     2,
 		BaseToughness: 0,
 		CastingCost:   &Cost{Colorless: 1},
-		Selector:      &Selector{Type: Creature},
-		Type:          []Type{Enchantment},
+		EntersGraveyardEffect: &Effect{
+			EffectType: ReturnToHand,
+		},
+		Selector: &Selector{Type: Creature},
+		Type:     []Type{Enchantment},
 	},
 
 	/*

@@ -19,7 +19,7 @@ type Effect struct {
 	// when an Effect is a kicker, it has a Cost
 	Cost *Cost
 
-	// these properties modify a Permanent the Effect targets
+	// these properties modify a Permanent the Effect targets, or the Game state
 	Colorless          int
 	Hexproof           bool
 	Plus1Plus1Counters int
@@ -51,7 +51,8 @@ type Effect struct {
 type EffectType int
 
 const (
-	ReturnToHand EffectType = iota
+	AddMana EffectType = iota
+	ReturnToHand
 	Untap
 )
 
