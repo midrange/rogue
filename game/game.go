@@ -146,7 +146,7 @@ func (g *Game) HandleCombatDamage() {
 						blocker.Damage += damage
 						damage = 0
 					} else {
-						g.Defender().RemoveFromBoard(blocker)
+						g.Defender().SendToGraveyard(blocker)
 						damage -= remaining
 					}
 				}
@@ -159,7 +159,7 @@ func (g *Game) HandleCombatDamage() {
 			}
 
 			if attacker.Damage >= attacker.Toughness() {
-				g.Attacker().RemoveFromBoard(attacker)
+				g.Attacker().SendToGraveyard(attacker)
 			}
 		}
 	}

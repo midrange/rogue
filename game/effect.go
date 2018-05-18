@@ -51,7 +51,8 @@ type Effect struct {
 type EffectType int
 
 const (
-	ReturnToHand EffectType = iota
+	AddMana EffectType = iota
+	ReturnToHand
 	Untap
 )
 

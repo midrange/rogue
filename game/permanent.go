@@ -202,7 +202,7 @@ func (c *Permanent) UseForMana() {
 	c.Owner.AddMana(c.Colorless)
 	c.Tapped = true
 	if c.SacrificesForMana {
-		c.Owner.RemoveFromBoard(c)
+		c.Owner.SendToGraveyard(c)
 	}
 }
 
@@ -227,6 +227,7 @@ func (c *Permanent) HandleComingIntoPlay() {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 	if c.EntersPlayEffect != nil {
+		fmt.Println("enters play effect for ", c)
 		c.Owner.ResolveEffect(c.EntersPlayEffect, c)
 	}
 }
