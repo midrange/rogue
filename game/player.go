@@ -522,13 +522,14 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
-	}
-
-	if e.EffectType == ReturnToHand {
+		return
+	} else if e.EffectType == ReturnToHand {
 		if e.TargetType == nil {
 			p.Hand = append(p.Hand, perm.Card.Name)
 		}
+		return
+	} else {
+		// so far the only other thing is mana ability
+		p.ColorlessManaPool += e.Colorless
 	}
-
-	p.ColorlessManaPool += e.Colorless
 }
