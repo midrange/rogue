@@ -17,12 +17,12 @@ type Permanent struct {
 	Id PermanentId
 
 	// Properties that are relevant for any permanent
-	Auras       []*Permanent
-	DidActivate bool
-	Effects     []*Effect
-	Owner       *Player
-	Tapped      bool
-	TurnPlayed  int
+	ActivatedThisTurn bool
+	Auras             []*Permanent
+	Effects           []*Effect
+	Owner             *Player
+	Tapped            bool
+	TurnPlayed        int
 
 	// Creature-specific properties
 	Attacking          bool
@@ -245,8 +245,8 @@ func (c *Permanent) ActivateAbility(targetForCost *Permanent, target *Permanent)
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
-	c.DidActivate = true
-	if c.ActivatedAbility.Cost.EffectType == ReturnToHand {
+	c.ActivatedThisTurn = true
+	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
 		targetForCost.Owner.RemoveFromBoard(targetForCost)
 		targetForCost.Owner.Hand = append(targetForCost.Owner.Hand, targetForCost.Card.Name)
 	}

@@ -114,7 +114,7 @@ func (p *Player) EndTurn() {
 	for _, perm := range p.Board {
 		perm.Damage = 0
 		perm.Effects = []*Effect{}
-		perm.DidActivate = false
+		perm.ActivatedThisTurn = false
 	}
 	p.LandPlayedThisTurn = 0
 	p.DamageThisTurn = 0
@@ -164,23 +164,27 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 		if permNames[perm.Name] {
 			continue
 		}
-		if perm.DidActivate {
+		if perm.ActivatedThisTurn {
 			continue
 		}
 		permNames[perm.Name] = true
+
+		// TODO make actions unique, like don't allow two untaped Forests to both be cost targets
 		if perm.ActivatedAbility != nil {
 			effect := perm.ActivatedAbility
-			if effect.TargetType.Type == Creature { // TODO lands etc
-				for _, c := range p.Board {
-					if c.IsCreature() {
-						if effect.Cost != nil && effect.Cost.TargetType.Subtype != NoSubtype {
-							for _, l := range p.Lands() {
-								if l.HasSubtype(effect.Cost.TargetType.Subtype) {
-									answer = append(answer, &Action{Type: Activate, Source: perm, CostTarget: l, Target: c})
-								}
-							}
-						}
+			costTargets := []*Permanent{}
+			if effect.Cost.Effect != nil && effect.Cost.Effect.TargetType.Subtype != NoSubtype {
+				for _, l := range p.Lands() {
+					if l.HasSubtype(effect.Cost.Effect.TargetType.Subtype) {
+						costTargets = append(costTargets, l)
+					}
+				}
+			}
 
+			if effect.TargetType.Type == Creature { // TODO lands etc
+				for _, c := range p.Creatures() {
+					for _, costTarget := range costTargets {
+						answer = append(answer, &Action{Type: Activate, Source: perm, CostTarget: costTarget, Target: c})
 					}
 				}
 			}
@@ -253,7 +257,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
-		if card.IsInstant() && card.Kicker != nil && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && p.HasLegalTarget(card) {
+		if card.IsInstant() && card.Kicker != nil && card.Kicker.Cost.Colorless > 0 && mana >= card.Kicker.Cost.Colorless && p.HasLegalTarget(card) {
 			if !forHuman {
 				for _, target := range p.game.Creatures() {
 					if p.IsLegalTarget(card, target) {
@@ -349,7 +353,7 @@ func (p *Player) Play(action *Action) {
 
 	if card.IsCreature() || card.IsInstant() {
 		if action.WithKicker {
-			p.SpendMana(card.Kicker.CastingCost.Colorless)
+			p.SpendMana(card.Kicker.Cost.Colorless)
 		} else if action.WithPhyrexian {
 			p.SpendMana(card.PhyrexianCastingCost.Colorless)
 			p.Life -= card.PhyrexianCastingCost.Life

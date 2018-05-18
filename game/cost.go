@@ -1,5 +1,6 @@
 /*
-	A Casting Cost currently only accomodates colorless and Life for Phyrexian Spells.
+	A Cost currently accomodates colorless, Life for Phyrexian Spells,
+	and Effects such as Quirion Ranger.
 
 	TODO: expand to colored mana
 
@@ -11,12 +12,13 @@ import (
 	"fmt"
 )
 
-type CastingCost struct {
+type Cost struct {
 	Colorless int
+	Effect    *Effect
 	Life      int // for Phyrexian
 }
 
-func (cc *CastingCost) String() string {
+func (cc *Cost) String() string {
 	if cc.Life > 0 {
 		return fmt.Sprintf("%d (%d life)", cc.Colorless, cc.Life)
 	} else {

@@ -7,10 +7,9 @@ import ()
 // over time for a particular card.
 type Card struct {
 	ActivatedAbility     *Effect
-	ActivatedAbilityCost *Effect
 	AddsTemporaryEffect  bool
 	Bloodthirst          int
-	CastingCost          *CastingCost
+	CastingCost          *Cost
 	Effect               *Effect
 	EntersPlayEffect     *Effect
 	Flying               bool
@@ -20,7 +19,7 @@ type Card struct {
 	Lifelink             bool
 	Morbid               *Effect
 	Name                 CardName
-	PhyrexianCastingCost *CastingCost
+	PhyrexianCastingCost *Cost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
@@ -74,7 +73,7 @@ var Cards = map[CardName]*Card{
 	BurningTreeEmissary: &Card{
 		BasePower:        2,
 		BaseToughness:    2,
-		CastingCost:      &CastingCost{Colorless: 2},
+		CastingCost:      &Cost{Colorless: 2},
 		EntersPlayEffect: &Effect{Colorless: 2},
 		Type:             []Type{Creature},
 	},
@@ -82,7 +81,7 @@ var Cards = map[CardName]*Card{
 	EldraziSpawnToken: &Card{
 		BasePower:         0,
 		BaseToughness:     1,
-		CastingCost:       &CastingCost{Colorless: 0},
+		CastingCost:       &Cost{Colorless: 0},
 		Colorless:         1,
 		SacrificesForMana: true,
 		Type:              []Type{Creature},
@@ -106,7 +105,7 @@ var Cards = map[CardName]*Card{
 	GrizzlyBears: &Card{
 		BasePower:     2,
 		BaseToughness: 2,
-		CastingCost:   &CastingCost{Colorless: 2},
+		CastingCost:   &Cost{Colorless: 2},
 		Type:          []Type{Creature},
 	},
 
@@ -119,7 +118,7 @@ var Cards = map[CardName]*Card{
 		Effect: &Effect{
 			Plus1Plus1Counters: 1,
 		},
-		CastingCost: &CastingCost{Colorless: 1},
+		CastingCost: &Cost{Colorless: 1},
 		Morbid: &Effect{
 			Plus1Plus1Counters: 2,
 		},
@@ -136,7 +135,7 @@ var Cards = map[CardName]*Card{
 	NestInvader: &Card{
 		BasePower:        2,
 		BaseToughness:    2,
-		CastingCost:      &CastingCost{Colorless: 2},
+		CastingCost:      &Cost{Colorless: 2},
 		EntersPlayEffect: &Effect{Summon: EldraziSpawnToken},
 		Type:             []Type{Creature},
 	},
@@ -148,7 +147,7 @@ var Cards = map[CardName]*Card{
 	NettleSentinel: &Card{
 		BasePower:     2,
 		BaseToughness: 2,
-		CastingCost:   &CastingCost{Colorless: 1},
+		CastingCost:   &Cost{Colorless: 1},
 		Type:          []Type{Creature},
 	},
 
@@ -160,16 +159,18 @@ var Cards = map[CardName]*Card{
 	*/
 	QuirionRanger: &Card{
 		ActivatedAbility: &Effect{
-			Cost: &Effect{
-				EffectType: ReturnToHand,
-				TargetType: &TargetType{Subtype: LandForest, ControlledBy: SamePlayer},
+			Cost: &Cost{
+				Effect: &Effect{
+					EffectType: ReturnToHand,
+					TargetType: &TargetType{Subtype: LandForest, ControlledBy: SamePlayer},
+				},
 			},
 			EffectType: Untap,
 			TargetType: &TargetType{Type: Creature},
 		},
 		BasePower:     1,
 		BaseToughness: 1,
-		CastingCost:   &CastingCost{Colorless: 1},
+		CastingCost:   &Cost{Colorless: 1},
 		Type:          []Type{Creature},
 	},
 
@@ -182,7 +183,7 @@ var Cards = map[CardName]*Card{
 	Rancor: &Card{
 		BasePower:     2,
 		BaseToughness: 0,
-		CastingCost:   &CastingCost{Colorless: 1},
+		CastingCost:   &Cost{Colorless: 1},
 		TargetType:    &TargetType{Type: Creature},
 		Type:          []Type{Enchantment},
 	},
@@ -197,7 +198,7 @@ var Cards = map[CardName]*Card{
 	SilhanaLedgewalker: &Card{
 		BasePower:     1,
 		BaseToughness: 1,
-		CastingCost:   &CastingCost{Colorless: 2},
+		CastingCost:   &Cost{Colorless: 2},
 		Hexproof:      true,
 		GroundEvader:  true,
 		Type:          []Type{Creature},
@@ -214,7 +215,7 @@ var Cards = map[CardName]*Card{
 		BasePower:     1,
 		BaseToughness: 1,
 		Bloodthirst:   1,
-		CastingCost:   &CastingCost{Colorless: 1},
+		CastingCost:   &Cost{Colorless: 1},
 		Powermenace:   true,
 		Type:          []Type{Creature},
 	},
@@ -230,11 +231,11 @@ var Cards = map[CardName]*Card{
 	VaultSkirge: &Card{
 		BasePower:            1,
 		BaseToughness:        1,
-		CastingCost:          &CastingCost{Colorless: 2},
+		CastingCost:          &Cost{Colorless: 2},
 		Flying:               true,
 		Hexproof:             true,
 		Lifelink:             true,
-		PhyrexianCastingCost: &CastingCost{Life: 2, Colorless: 1},
+		PhyrexianCastingCost: &Cost{Life: 2, Colorless: 1},
 		Type:                 []Type{Artifact, Creature},
 	},
 
@@ -247,11 +248,11 @@ var Cards = map[CardName]*Card{
 	*/
 	VinesOfVastwood: &Card{
 		AddsTemporaryEffect: true,
-		CastingCost:         &CastingCost{Colorless: 1},
+		CastingCost:         &Cost{Colorless: 1},
 		Kicker: &Effect{
-			CastingCost: &CastingCost{Colorless: 2},
-			Power:       4,
-			Toughness:   4,
+			Cost:      &Cost{Colorless: 2},
+			Power:     4,
+			Toughness: 4,
 		},
 		Effect: &Effect{
 			Untargetable: true,
