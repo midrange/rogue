@@ -58,6 +58,7 @@ const (
 	GrizzlyBears
 	HungerOfTheHowlpack
 	Island
+	MutagenicGrowth
 	NestInvader
 	NettleSentinel
 	QuirionRanger
@@ -183,6 +184,22 @@ var Cards = map[CardName]*Card{
 		Subtype:   []Subtype{LandIsland},
 		Supertype: []Supertype{Basic},
 		Type:      []Type{Land},
+	},
+
+	/*
+		(Phyrexian Green can be paid with either Green or 2 life.)
+		Target creature gets +2/+2 until end of turn.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=mutagenic%20growth
+	*/
+	MutagenicGrowth: &Card{
+		AddsTemporaryEffect: true,
+		CastingCost:         &Cost{Colorless: 1},
+		Effect: &Effect{
+			Power:     2,
+			Toughness: 2,
+		},
+		PhyrexianCastingCost: &Cost{Life: 2},
+		Type:                 []Type{Instant},
 	},
 
 	/*
