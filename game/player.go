@@ -407,7 +407,6 @@ func (p *Player) Play(action *Action) {
 }
 
 func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
-	fmt.Println("target is ", target)
 	if c.AddsTemporaryEffect {
 		target.Effects = append(target.Effects, NewEffect(a))
 	}
