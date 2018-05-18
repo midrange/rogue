@@ -50,7 +50,7 @@ func (p *Player) AddToHand(c CardName) {
 func (p *Player) AvailableMana() int {
 	answer := 0
 	for _, card := range p.Board {
-		if card.IsLand && !card.Tapped {
+		if card.IsLand() && !card.Tapped {
 			answer += card.Colorless
 		}
 	}
@@ -88,7 +88,7 @@ func (p *Player) SpendMana(amount int) {
 		if amount == 0 {
 			return
 		}
-		if card.IsLand && !card.Tapped {
+		if card.IsLand() && !card.Tapped {
 			card.Tapped = true
 			amount -= 1
 		}
@@ -111,9 +111,10 @@ func (p *Player) EndPhase() {
 }
 
 func (p *Player) EndTurn() {
-	for _, card := range p.Board {
-		card.Damage = 0
-		card.Effects = []*Effect{}
+	for _, perm := range p.Board {
+		perm.Damage = 0
+		perm.Effects = []*Effect{}
+		perm.ActivatedThisTurn = false
 	}
 	p.LandPlayedThisTurn = 0
 	p.DamageThisTurn = 0
@@ -124,7 +125,7 @@ func (p *Player) EndTurn() {
 func (p *Player) Creatures() []*Permanent {
 	answer := []*Permanent{}
 	for _, card := range p.Board {
-		if card.IsCreature {
+		if card.IsCreature() {
 			answer = append(answer, card)
 		}
 	}
@@ -153,6 +154,52 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 	}
 }
 
+// Returns possible actions when we can activate cards on he board.
+func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) []*Action {
+	permNames := make(map[CardName]bool)
+	answer := []*Action{}
+
+	for _, perm := range p.Board { // TODO could be opponent's board for some actions, e.g. Warmonger
+		// Don't re-check playing duplicate actions
+		if permNames[perm.Name] {
+			continue
+		}
+		if perm.ActivatedThisTurn {
+			continue
+		}
+		permNames[perm.Name] = true
+
+		// TODO make actions unique, like don't allow two untaped Forests to both be cost targets
+		if perm.ActivatedAbility != nil {
+			effect := perm.ActivatedAbility
+			landsForCost := []*Permanent{}
+			if effect.Cost.Effect != nil && effect.Cost.Effect.Selector.Subtype != NoSubtype {
+				for _, l := range p.Lands() {
+					if l.HasSubtype(effect.Cost.Effect.Selector.Subtype) {
+						landsForCost = append(landsForCost, l)
+					}
+				}
+			}
+
+			if effect.Selector.Type == Creature { // TODO lands etc
+				for _, c := range p.Creatures() {
+					for _, land := range landsForCost {
+						costEffect := effect.Cost.Effect
+						costEffect.SelectedForCost = land
+						answer = append(answer,
+							&Action{
+								Type:   Activate,
+								Source: perm,
+								Cost:   &Cost{Effect: costEffect},
+								Target: c})
+					}
+				}
+			}
+		}
+	}
+	return answer
+}
+
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
@@ -168,13 +215,13 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		card := name.Card()
 
 		if allowSorcerySpeed {
-			if card.IsLand && p.LandPlayedThisTurn == 0 {
+			if card.IsLand() && p.LandPlayedThisTurn == 0 {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsCreature && mana >= card.CastingCost.Colorless {
+			if card.IsCreature() && mana >= card.CastingCost.Colorless {
 				answer = append(answer, &Action{Type: Play, Card: card})
 			}
-			if card.IsEnchantCreature && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
+			if card.IsEnchantment() && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
 				if forHuman {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
@@ -190,7 +237,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 					}
 				}
 			}
-			if card.IsCreature || card.IsEnchantCreature {
+			if card.IsCreature() || card.IsEnchantment() {
 				if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
@@ -198,7 +245,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		}
 
 		// TODO - add player targets - this assumes all instants target creatures for now
-		if card.IsInstant && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
+		if card.IsInstant() && mana >= card.CastingCost.Colorless && p.HasLegalTarget(card) {
 			if forHuman {
 				answer = append(answer, &Action{
 					Type: ChooseTargetAndMana,
@@ -217,7 +264,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
-		if card.IsInstant && card.Kicker != nil && card.Kicker.CastingCost.Colorless > 0 && mana >= card.Kicker.CastingCost.Colorless && p.HasLegalTarget(card) {
+		if card.IsInstant() && card.Kicker != nil && card.Kicker.Cost.Colorless > 0 && mana >= card.Kicker.Cost.Colorless && p.HasLegalTarget(card) {
 			if !forHuman {
 				for _, target := range p.game.Creatures() {
 					if p.IsLegalTarget(card, target) {
@@ -232,7 +279,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
-		if card.IsInstant {
+		if card.IsInstant() {
 			if card.PhyrexianCastingCost != nil && mana >= card.PhyrexianCastingCost.Colorless && p.Life >= card.PhyrexianCastingCost.Life {
 				answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 			}
@@ -262,7 +309,7 @@ func (p *Player) AttackActions() []*Action {
 	}
 	answer := []*Action{}
 	for _, card := range p.Board {
-		if card.IsCreature && !card.Attacking && !card.Tapped && card.TurnPlayed != p.game.Turn {
+		if card.IsCreature() && !card.Attacking && !card.Tapped && card.TurnPlayed != p.game.Turn {
 			answer = append(answer, &Action{Type: Attack, With: card})
 		}
 	}
@@ -279,7 +326,7 @@ func (p *Player) BlockActions() []*Action {
 		}
 	}
 	for _, perm := range p.Board {
-		if perm.Blocking == nil && !perm.Tapped && perm.IsCreature {
+		if perm.Blocking == nil && !perm.Tapped && perm.IsCreature() {
 			for _, attacker := range attackers {
 				if perm.CanBlock(attacker) {
 					answer = append(answer, &Action{
@@ -311,9 +358,9 @@ func (p *Player) Play(action *Action) {
 	}
 	p.Hand = newHand
 
-	if card.IsCreature || card.IsInstant {
+	if card.IsCreature() || card.IsInstant() {
 		if action.WithKicker {
-			p.SpendMana(card.Kicker.CastingCost.Colorless)
+			p.SpendMana(card.Kicker.Cost.Colorless)
 		} else if action.WithPhyrexian {
 			p.SpendMana(card.PhyrexianCastingCost.Colorless)
 			p.Life -= card.PhyrexianCastingCost.Life
@@ -325,7 +372,7 @@ func (p *Player) Play(action *Action) {
 		}
 	}
 
-	if card.IsInstant {
+	if card.IsInstant() {
 		p.castInstant(card, action.Target, action)
 		// TODO put instants and sorceries in graveyard (or exile)
 		return
@@ -334,11 +381,11 @@ func (p *Player) Play(action *Action) {
 	// Non-instant cards turn into a permanent
 	perm := p.game.newPermanent(card, p)
 
-	if card.IsLand {
+	if card.IsLand() {
 		p.LandPlayedThisTurn++
 	}
 
-	if card.IsEnchantCreature {
+	if card.IsEnchantCreature() {
 		action.Target.Auras = append(action.Target.Auras, perm)
 	}
 }
@@ -354,6 +401,10 @@ func (p *Player) castInstant(c *Card, target *Permanent, a *Action) {
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
+}
+
+func (p *Player) ActivateAbility(a *Action) {
+	a.Source.ActivateAbility(a.Cost, a.Target)
 }
 
 func (p *Player) AddMana(colorless int) {
@@ -377,7 +428,7 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 func (p *Player) Lands() []*Permanent {
 	lands := []*Permanent{}
 	for _, perm := range p.Board {
-		if perm.IsLand {
+		if perm.IsLand() {
 			lands = append(lands, perm)
 		}
 	}
@@ -387,7 +438,7 @@ func (p *Player) Lands() []*Permanent {
 func (p *Player) NonLandPermanents() []*Permanent {
 	other := []*Permanent{}
 	for _, perm := range p.Board {
-		if !perm.IsLand && !perm.IsEnchantCreature {
+		if !perm.IsLand() && !perm.IsEnchantment() {
 			other = append(other, perm)
 		}
 	}

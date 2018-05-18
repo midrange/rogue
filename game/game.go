@@ -94,10 +94,12 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	switch g.Phase {
 	case Main1:
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		actions = append(actions, &Action{Type: DeclareAttack})
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
 		actions = g.Priority().PlayActions(true, forHuman)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())
@@ -202,6 +204,7 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
+
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -223,8 +226,10 @@ func (g *Game) TakeAction(action *Action) {
 	case Main2:
 		if action.Type == Play {
 			g.Priority().Play(action)
+		} else if action.Type == Activate {
+			g.Priority().ActivateAbility(action)
 		} else {
-			panic("expected a play, declare attack, or pass during main phase")
+			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
 
 	case DeclareAttackers:
@@ -342,7 +347,7 @@ func (g *Game) passTurn() {
 // playLand plays the first land it sees in the hand
 func (g *Game) playLand() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsLand {
+		if a.Card != nil && a.Card.IsLand() {
 			g.TakeAction(a)
 			return
 		}
@@ -354,7 +359,7 @@ func (g *Game) playLand() {
 // playCreature plays the first creature it sees in the hand
 func (g *Game) playCreature() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsCreature {
+		if a.Card != nil && a.Card.IsCreature() {
 			g.TakeAction(a)
 			return
 		}
@@ -367,7 +372,7 @@ func (g *Game) playCreature() {
 func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		fmt.Println(a)
-		if a.Card != nil && a.Card.IsCreature && a.WithPhyrexian {
+		if a.Card != nil && a.Card.IsCreature() && a.WithPhyrexian {
 			g.TakeAction(a)
 			return
 		}
@@ -379,7 +384,7 @@ func (g *Game) playCreaturePhyrexian() {
 // playInstant plays the first instant it sees in the hand
 func (g *Game) playInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsInstant && a.Type == Play {
+		if a.Card != nil && a.Card.IsInstant() && a.Type == Play {
 			g.TakeAction(a)
 			return
 		}
@@ -391,7 +396,7 @@ func (g *Game) playInstant() {
 // playKickedInstant kicks the first kickable instant it sees in the hand
 func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsInstant && a.WithKicker {
+		if a.Card != nil && a.Card.IsInstant() && a.WithKicker {
 			g.TakeAction(a)
 			return
 		}
@@ -420,4 +425,14 @@ func (g *Game) playManaAbilityAction() {
 	}
 	g.Print()
 	panic("playManaAbilityAction failed")
+}
+
+// playActivatedAbility plays the first activated ability action
+func (g *Game) playActivatedAbility() {
+	for _, a := range g.Priority().ActivatedAbilityActions(true, false) {
+		g.TakeAction(a)
+		return
+	}
+	g.Print()
+	panic("playActivatedAbility failed")
 }

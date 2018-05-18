@@ -30,11 +30,13 @@ func Stompy() *Deck {
 		BurningTreeEmissary: 4,
 		Forest:              17,
 		HungerOfTheHowlpack: 4,
-		NestInvader:         15,
+		NestInvader:         4,
 		NettleSentinel:      4,
+		QuirionRanger:       15,
 		Rancor:              4,
 		SkarrganPitskulk:    4,
 		SilhanaLedgewalker:  4,
+		VaultSkirge:         4,
 		VinesOfVastwood:     4,
 	})
 }

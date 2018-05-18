@@ -297,3 +297,18 @@ func TestBurningTreeEmissary(t *testing.T) {
 		t.Fatal("expected the player to have 2 mana from BurningTreeEmissary")
 	}
 }
+
+func TestQuirionRanger(t *testing.T) {
+	g := NewGame(deckWithTopAndForests(QuirionRanger), deckWithTopAndForests(QuirionRanger))
+	g.playLand()
+	g.playCreature()
+	g.playActivatedAbility()
+
+	if len(g.Priority().Board) != 1 {
+		t.Fatal("expected the player to only have Quirion Ranger in play, not ", g.Priority().Board)
+	}
+
+	if len(g.Priority().Hand) != 6 {
+		t.Fatal("expected player to have 6 cards in hand after returning Forest with Quirion Ranger")
+	}
+}

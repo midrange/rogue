@@ -7,6 +7,7 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
+	Cost          *Cost
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent
@@ -14,6 +15,7 @@ type Action struct {
 	WithPhyrexian bool
 }
 
+//go:generate stringer -type=ActionType
 type ActionType int
 
 const (
@@ -24,6 +26,7 @@ const (
 	Block
 	UseForMana
 	ChooseTargetAndMana
+	Activate
 )
 
 func (a *Action) targetPronoun(p *Player) string {
@@ -43,12 +46,12 @@ func (a *Action) ShowTo(p *Player) string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.CastingCost, a.Card)
+				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.Cost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
-				a.Card.Kicker.CastingCost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
 		}
-		if a.Card.IsLand {
+		if a.Card.IsLand() {
 			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
@@ -64,6 +67,8 @@ func (a *Action) ShowTo(p *Player) string {
 		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
 	case UseForMana:
 		return fmt.Sprintf("tap %s for mana", a.Source)
+	case Activate:
+		return fmt.Sprintf("use %s", a.Source)
 	}
 	panic("control should not reach here")
 }

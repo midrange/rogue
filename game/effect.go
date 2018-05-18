@@ -16,8 +16,8 @@ package game
 import ()
 
 type Effect struct {
-	// when an Effect is a kicker, it has a CastingCost
-	CastingCost *CastingCost
+	// when an Effect is a kicker, it has a Cost
+	Cost *Cost
 
 	// these properties modify a Permanent the Effect targets
 	Colorless          int
@@ -27,7 +27,10 @@ type Effect struct {
 	Toughness          int
 	Untargetable       bool
 
-	// Kicker is a child Effect added on top of the normal Effect.
+	/*
+		gets sets when the action for the Effect is withKicker
+		this child Effect adds on top of the normal Effect
+	*/
 	Kicker *Effect
 
 	// sometimes an effect summons a creature
@@ -36,8 +39,21 @@ type Effect struct {
 	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent
 
-	Target *Permanent
+	SelectedForCost *Permanent
+	Target          *Permanent
+
+	// for effects from targeted spells
+	EffectType EffectType
+	Selector   *Selector
 }
+
+//go:generate stringer -type=EffectType
+type EffectType int
+
+const (
+	ReturnToHand EffectType = iota
+	Untap
+)
 
 func NewEffect(action *Action) *Effect {
 	card := action.Card
