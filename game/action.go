@@ -7,7 +7,7 @@ import (
 type Action struct {
 	Type          ActionType
 	Card          *Card
-	CostTarget    *Permanent
+	Cost          *Cost
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent
@@ -46,12 +46,12 @@ func (a *Action) ShowTo(p *Player) string {
 	case Play:
 		if a.WithKicker {
 			if a.Target == nil {
-				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.CastingCost, a.Card)
+				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.Cost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
-				a.Card.Kicker.CastingCost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
 		}
-		if a.Card.IsLand {
+		if a.Card.IsLand() {
 			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {
