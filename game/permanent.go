@@ -227,7 +227,7 @@ func (c *Permanent) HandleComingIntoPlay() {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 	if c.EntersPlayEffect != nil {
-		c.Owner.ResolveEffect(c.EntersPlayEffect)
+		c.Owner.ResolveEffect(c.EntersPlayEffect, c)
 	}
 }
 

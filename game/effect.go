@@ -19,7 +19,7 @@ type Effect struct {
 	// when an Effect is a kicker, it has a CastingCost
 	CastingCost *CastingCost
 
-	// these properties modify a Permanent the Effect targets
+	// these properties modify a Permanent the Effect targets, or the Game state
 	Colorless          int
 	Hexproof           bool
 	Plus1Plus1Counters int

@@ -6,27 +6,28 @@ import ()
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	ActivatedAbility     *Effect
-	ActivatedAbilityCost *Effect
-	AddsTemporaryEffect  bool
-	Bloodthirst          int
-	CastingCost          *CastingCost
-	Effect               *Effect
-	EntersPlayEffect     *Effect
-	Flying               bool
-	GroundEvader         bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof             bool
-	IsLand               bool
-	IsCreature           bool
-	IsEnchantCreature    bool
-	IsInstant            bool
-	Kicker               *Effect
-	Lifelink             bool
-	Morbid               *Effect
-	Name                 CardName
-	PhyrexianCastingCost *CastingCost
-	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
-	Subtype              MTGSubtype
+	ActivatedAbility      *Effect
+	ActivatedAbilityCost  *Effect
+	AddsTemporaryEffect   bool
+	Bloodthirst           int
+	CastingCost           *CastingCost
+	Effect                *Effect
+	EntersGraveyardEffect *Effect
+	EntersPlayEffect      *Effect
+	Flying                bool
+	GroundEvader          bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof              bool
+	IsLand                bool
+	IsCreature            bool
+	IsEnchantCreature     bool
+	IsInstant             bool
+	Kicker                *Effect
+	Lifelink              bool
+	Morbid                *Effect
+	Name                  CardName
+	PhyrexianCastingCost  *CastingCost
+	Powermenace           bool // only blockable by >= power (like Skarrgan Pitskulk)
+	Subtype               MTGSubtype
 	// The base properties of creatures.
 	BasePower     int
 	BaseToughness int
@@ -200,9 +201,12 @@ var Cards = map[CardName]*Card{
 		return Rancor to its owner's hand.
 	*/
 	Rancor: &Card{
-		BasePower:         2,
-		BaseToughness:     0,
-		CastingCost:       &CastingCost{Colorless: 1},
+		BasePower:     2,
+		BaseToughness: 0,
+		CastingCost:   &CastingCost{Colorless: 1},
+		EntersGraveyardEffect: &Effect{
+			EffectType: ReturnToHand,
+		},
 		IsEnchantCreature: true,
 	},
 
