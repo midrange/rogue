@@ -382,7 +382,6 @@ func (g *Game) playAura() {
 
 // does the first available block action
 func (g *Game) doBlockAction() {
-	fmt.Println(g.Defender().BlockActions())
 	for _, a := range g.Defender().BlockActions() {
 		g.TakeAction(a)
 		return
@@ -394,7 +393,6 @@ func (g *Game) doBlockAction() {
 // playCreature plays the first creature action with Phyrexian
 func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		fmt.Println(a)
 		if a.Card != nil && a.Card.IsCreature() && a.WithPhyrexian {
 			g.TakeAction(a)
 			return
@@ -426,6 +424,18 @@ func (g *Game) playKickedInstant() {
 	}
 	g.Print()
 	panic("playKickedInstant failed")
+}
+
+// playSorcery plays the first sorcery it sees in the hand
+func (g *Game) playSorcery() {
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.IsSorcery() && a.Type == Play {
+			g.TakeAction(a)
+			return
+		}
+	}
+	g.Print()
+	panic("playSorcery failed")
 }
 
 // attackWithEveryone passes priority when it's done attacking

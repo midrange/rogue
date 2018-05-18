@@ -132,6 +132,13 @@ func Min(x, y int) int {
 	return y
 }
 
+func Max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
 func (p *Permanent) Power() int {
 	answer := p.BasePower + p.Plus1Plus1Counters
 	for _, aura := range p.Auras {
@@ -227,7 +234,6 @@ func (c *Permanent) HandleComingIntoPlay() {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 	if c.EntersPlayEffect != nil {
-		fmt.Println("enters play effect for ", c)
 		c.Owner.ResolveEffect(c.EntersPlayEffect, c)
 	}
 }
