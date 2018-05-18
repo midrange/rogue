@@ -136,6 +136,17 @@ var Cards = map[CardName]*Card{
 	},
 
 	/*
+		No card text.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
+	*/
+	GrizzlyBears: &Card{
+		BasePower:     2,
+		BaseToughness: 2,
+		CastingCost:   &Cost{Colorless: 2},
+		Type:          []Type{Creature},
+	},
+
+	/*
 		You may return two Islands you control to their owner's hand rather than pay this spell's mana cost.
 		Draw two cards.
 		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=20404
@@ -152,18 +163,7 @@ var Cards = map[CardName]*Card{
 			EffectType:  DrawCard,
 			EffectCount: 2,
 		},
-		Type: []Type{Sorcery},
-	},
-
-	/*
-		No card text.
-		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
-	*/
-	GrizzlyBears: &Card{
-		BasePower:     2,
-		BaseToughness: 2,
-		CastingCost:   &Cost{Colorless: 2},
-		Type:          []Type{Creature},
+		Type: []Type{Instant},
 	},
 
 	/*
