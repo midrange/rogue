@@ -51,7 +51,7 @@ func (a *Action) ShowTo(p *Player) string {
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
 				a.Card.Kicker.CastingCost, a.Card, a.targetPronoun(p), a.Target)
 		}
-		if a.Card.IsLand {
+		if a.Card.IsLand() {
 			return fmt.Sprintf("%s", a.Card)
 		}
 		if a.Target == nil {

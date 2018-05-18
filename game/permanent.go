@@ -36,9 +36,9 @@ type Permanent struct {
 }
 
 func (p *Permanent) String() string {
-	if p.IsLand {
+	if p.IsLand() {
 		return fmt.Sprintf("%s", p.Name)
-	} else if p.IsCreature {
+	} else if p.IsCreature() {
 		return fmt.Sprintf("%s (%d/%d)", p.Name, p.Power(), p.Toughness())
 	}
 	return fmt.Sprintf("%s", p.Name)
@@ -93,7 +93,7 @@ func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 			}
 		}
 
-		if c.IsCreature {
+		if c.IsCreature() {
 			initialIndex := 2
 			statsRow := 3
 			statsString := fmt.Sprintf("%d/%d", c.Power(), c.Toughness())
@@ -103,7 +103,7 @@ func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 
 		}
 
-		if !c.IsLand {
+		if !c.IsLand() {
 			initialIndex := 2
 			ccRow := 1
 			ccString := fmt.Sprintf("%d", c.CastingCost.Colorless)
@@ -161,7 +161,7 @@ func (c *Permanent) Toughness() int {
 }
 
 func (c *Permanent) CanAttack(g *Game) bool {
-	if c.Tapped || !c.IsCreature || c.Power() == 0 || c.TurnPlayed == g.Turn {
+	if c.Tapped || !c.IsCreature() || c.Power() == 0 || c.TurnPlayed == g.Turn {
 		return false
 	}
 	return true
@@ -192,7 +192,7 @@ func (c *Permanent) RespondToSpell() {
 }
 
 func (c *Permanent) ManaActions() []*Action {
-	if c.Name == Forest && !c.Tapped || c.SacrificesForMana {
+	if c.IsLand() && !c.Tapped || c.SacrificesForMana {
 		return []*Action{&Action{Type: UseForMana, Source: c}}
 	}
 	return []*Action{}

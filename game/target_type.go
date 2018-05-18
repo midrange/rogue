@@ -19,28 +19,54 @@ const (
 )
 
 // https://mtg.gamepedia.com/Subtype
-//go:generate stringer -type=MTGSubtype
-type MTGSubtype int
+//go:generate stringer -type=Supertype
+type Supertype int
 
 const (
-	BasicForest MTGSubtype = iota
-	BasicIsland
+	Basic Supertype = iota
+	Legendary
+	Snow
+	World
 )
 
-//go:generate stringer -type=MTGType
-type MTGType int
+//go:generate stringer -type=Subtype
+type Subtype int
 
+// For example, Cat, Goblin, Bird, and Elf are creature subtypes.
+// Ajani and Jace are planeswalker subtypes.
+// Equipment, Aura, Trap, Arcane, are more subtypes.
 const (
-	Creature MTGType = iota
+	NoSubtype Subtype = iota
+	LandForest
+	LandIsland
+	LandMountain
+	LandPlains
+	LandSwamp
+)
+
+//go:generate stringer -type=Type
+type Type int
+
+// Some card types appear only on cards used in variants such as Planechase and Archenemy.
+// Phenomenon, Vanguards, Schemes
+const (
+	Artifact Type = iota
+	Creature
+	Enchantment
+	Instant
 	Land
+	Planeswalker
+	Sorcery
+	Tribal
 )
 
 type TargetType struct {
 	ControlledBy PlayerTargetType
-	Subtype      MTGSubtype
-	Type         MTGType
+	Supertype    Supertype
+	Subtype      Subtype
+	Type         Type
 }
 
 func (tt *TargetType) String() string {
-	return fmt.Sprintf("%s, %s - controlled by %s", tt.Type, tt.Subtype, tt.ControlledBy)
+	return fmt.Sprintf("%s, %s, %s  - controlled by %s", tt.Type, tt.Subtype, tt.Supertype, tt.ControlledBy)
 }
