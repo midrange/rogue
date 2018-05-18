@@ -36,6 +36,9 @@ type Card struct {
 	// Properties that are relevant for Lands and other mana producers
 	Colorless         int
 	SacrificesForMana bool
+
+	// Properties that are relevant for Auras
+	EnchantedPermanentDiesEffect *Effect
 }
 
 //go:generate stringer -type=CardName
@@ -47,6 +50,8 @@ const (
 
 	BurningTreeEmissary
 	EldraziSpawnToken
+	ElephantGuide
+	ElephantToken
 	Forest
 	GrizzlyBears
 	HungerOfTheHowlpack
@@ -78,6 +83,9 @@ var Cards = map[CardName]*Card{
 		Type:             []Type{Creature},
 	},
 
+	/*
+		Created by NestInvader.
+	*/
 	EldraziSpawnToken: &Card{
 		BasePower:         0,
 		BaseToughness:     1,
@@ -85,6 +93,30 @@ var Cards = map[CardName]*Card{
 		Colorless:         1,
 		SacrificesForMana: true,
 		Type:              []Type{Creature},
+	},
+
+	/*
+
+		Enchanted creature gets +3/+3.
+		When enchanted creature dies, create a 3/3 green Elephant creature token.
+	*/
+	ElephantGuide: &Card{
+		BasePower:                    3,
+		BaseToughness:                3,
+		CastingCost:                  &Cost{Colorless: 3},
+		EnchantedPermanentDiesEffect: &Effect{Summon: ElephantToken},
+		Selector:                     &Selector{Type: Creature},
+		Type:                         []Type{Enchantment},
+	},
+
+	/*
+		Created by NestInvader.
+	*/
+	ElephantToken: &Card{
+		BasePower:     3,
+		BaseToughness: 3,
+		CastingCost:   &Cost{Colorless: 0},
+		Type:          []Type{Creature},
 	},
 
 	/*

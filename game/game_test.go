@@ -312,3 +312,53 @@ func TestQuirionRanger(t *testing.T) {
 		t.Fatal("expected player to have 6 cards in hand after returning Forest with Quirion Ranger")
 	}
 }
+
+func TestElephantGuide(t *testing.T) {
+	skirgeGuide := NewEmptyDeck()
+	skirgeGuide.Add(1, ElephantGuide)
+	skirgeGuide.Add(1, VaultSkirge)
+	skirgeGuide.Add(58, Forest)
+
+	skirgeGuide2 := NewEmptyDeck()
+	skirgeGuide2.Add(1, ElephantGuide)
+	skirgeGuide2.Add(1, VaultSkirge)
+	skirgeGuide2.Add(58, Forest)
+
+	g := NewGame(skirgeGuide, skirgeGuide2)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playAura()
+	g.passTurn()
+
+	g.playLand()
+	g.playAura()
+	g.passTurn()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(DeclareBlockers)
+	g.doBlockAction()
+	g.passUntilPhase(Main2)
+
+	if len(g.Priority().Board) != 4 {
+		t.Fatal("expected the attacker to have gotten a token")
+	}
+
+	if len(g.Priority().Opponent().Board) != 4 {
+		t.Fatal("expected the opponent to have gotten a token")
+	}
+}
