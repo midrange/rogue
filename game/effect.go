@@ -16,6 +16,9 @@ package game
 import ()
 
 type Effect struct {
+	// required for effect to occur
+	Condition *Condition
+
 	// when an Effect is a kicker, it has a Cost
 	Cost *Cost
 
@@ -52,6 +55,7 @@ type EffectType int
 
 const (
 	AddMana EffectType = iota
+	Draw
 	ReturnToHand
 	Untap
 )

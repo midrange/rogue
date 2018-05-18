@@ -402,6 +402,25 @@ func TestRancor(t *testing.T) {
 	}
 }
 
+func TestFaerieMiscreant(t *testing.T) {
+	twoMiscreants := NewEmptyDeck()
+	twoMiscreants.Add(2, FaerieMiscreant)
+	twoMiscreants.Add(58, Island)
+	g := NewGame(twoMiscreants, deckWithTopAndForests(BurningTreeEmissary))
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playCreature()
+
+	if len(g.Priority().Hand) != 6 {
+		t.Fatal("expected the player to have 6 cards after playing 2nd miscreant")
+  }
+}
+
 func TestMutagenicGrowth(t *testing.T) {
 	skirgeGrowth := NewEmptyDeck()
 	skirgeGrowth.Add(1, MutagenicGrowth)
