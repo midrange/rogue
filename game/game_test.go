@@ -418,7 +418,7 @@ func TestFaerieMiscreant(t *testing.T) {
 
 	if len(g.Priority().Hand) != 6 {
 		t.Fatal("expected the player to have 6 cards after playing 2nd miscreant")
-  }
+	}
 }
 
 func TestMutagenicGrowth(t *testing.T) {
@@ -457,7 +457,7 @@ func TestGush(t *testing.T) {
 	g.passTurn()
 
 	g.playLand()
-	g.playSorcery()
+	g.playInstant()
 
 	if len(g.Priority().Hand) != 9 {
 		t.Fatal("expected the hand size to be 9 after Gush: draw 7, island, draw, island, play gush, draw 2")

@@ -225,9 +225,6 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
-				if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
-					answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
-				}
 			}
 		}
 
@@ -278,6 +275,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 						}
 					}
 				}
+			}
+		} else if card.IsInstant() {
+			if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
+				answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
 			}
 		}
 
@@ -548,8 +549,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			p.Hand = append(p.Hand, perm.Card.Name)
 		}
 		return
-	} else if e.EffectType == Draw {
-		p.Draw()
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else if e.EffectType == DrawCard {

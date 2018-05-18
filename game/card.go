@@ -8,6 +8,7 @@ import ()
 type Card struct {
 	ActivatedAbility           *Effect
 	AddsTemporaryEffect        bool
+	AlternateCastingCost       *Cost
 	Bloodthirst                int
 	CastingCost                *Cost
 	Effect                     *Effect
@@ -133,7 +134,7 @@ var Cards = map[CardName]*Card{
 		BasePower:                  1,
 		BaseToughness:              1,
 		CastingCost:                &Cost{Colorless: 1},
-		EntersTheBattlefieldEffect: &Effect{Condition: &Condition{ControlAnother: FaerieMiscreant}, EffectType: Draw},
+		EntersTheBattlefieldEffect: &Effect{Condition: &Condition{ControlAnother: FaerieMiscreant}, EffectType: DrawCard},
 		Flying: true,
 		Type:   []Type{Creature},
 	},
