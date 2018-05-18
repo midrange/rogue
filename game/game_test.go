@@ -421,3 +421,26 @@ func TestMutagenicGrowth(t *testing.T) {
 		t.Fatal("expected the hand size to be 4 after forest, skirge, mutagenic growth")
 	}
 }
+
+func TestGush(t *testing.T) {
+	gush := NewEmptyDeck()
+	gush.Add(1, Gush)
+	gush.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(gush, allForests)
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+	g.playSorcery()
+
+	if len(g.Priority().Hand) != 9 {
+		t.Fatal("expected the hand size to be 9 after Gush: draw 7, island, draw, island, play gush, draw 2")
+	}
+}

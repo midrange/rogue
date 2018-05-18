@@ -61,6 +61,7 @@ const (
 )
 
 type Selector struct {
+	Count        int
 	ControlledBy PlayerSelector
 	Supertype    Supertype
 	Subtype      Subtype
