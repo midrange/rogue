@@ -378,7 +378,7 @@ func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, car
 	if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
 		selectableLandCount := card.AlternateCastingCost.Effect.Selector.Count
 		if selectableLandCount > 0 { // gush
-			islands := p.LandsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
+			islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
 			for i := 1; i <= len(islands)-1; i++ {
 				comb := combinations(makeRange(0, i), selectableLandCount)
 				for _, c := range comb {
@@ -400,16 +400,6 @@ func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, car
 	}
 
 	return answer
-}
-
-func (p *Player) LandsOfSubtype(subtype Subtype) []*Permanent {
-	lands := []*Permanent{}
-	for _, l := range p.Lands() {
-		if l.HasSubtype(subtype) {
-			lands = append(lands, l)
-		}
-	}
-	return lands
 }
 
 // Returns possible actions to generate mana.
