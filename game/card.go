@@ -72,9 +72,6 @@ const (
 	VinesOfVastwood
 )
 
-const CARD_HEIGHT = 5
-const CARD_WIDTH = 11
-
 var Cards = map[CardName]*Card{
 
 	/*

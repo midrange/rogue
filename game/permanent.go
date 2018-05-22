@@ -44,6 +44,8 @@ func (p *Permanent) String() string {
 	return fmt.Sprintf("%s", p.Name)
 }
 
+const CARD_HEIGHT = 5
+const CARD_WIDTH = 11
 func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 	const cardWidth = CARD_WIDTH
 	const cardHeight = CARD_HEIGHT
