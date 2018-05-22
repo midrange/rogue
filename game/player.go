@@ -479,7 +479,7 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
+func (p *Player) RemoveCardForActionFromHand(action *Action) {
 	card := action.Card
 	newHand := []CardName{}
 	found := false
@@ -496,7 +496,12 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 		panic("XXX")
 	}
 	p.Hand = newHand
+}
 
+func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
+	p.RemoveCardForActionFromHand(action)
+
+	card := action.Card
 	if !card.IsLand() {
 		if action.WithKicker {
 			p.PayCost(card.Kicker.Cost) // TODO use UpdatedEffectForAction when cardpool expands
@@ -511,13 +516,19 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 	}
 }
 
+func (p *Player) PlayLand(action *Action) {
+	p.RemoveCardForActionFromHand(action)
+	card := action.Card
+	p.game.newPermanent(card, p)
+	p.LandPlayedThisTurn++
+}
+
+// Resolve an action to play a spell (non-land)
 func (p *Player) ResolveSpell(action *Action) {
 	card := action.Card
 
-	if !card.IsLand() {
-		for _, permanent := range p.Board {
-			permanent.RespondToSpell()
-		}
+	for _, permanent := range p.Board {
+		permanent.RespondToSpell()
 	}
 
 	if card.IsSpell() {
@@ -526,10 +537,6 @@ func (p *Player) ResolveSpell(action *Action) {
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p)
-
-		if card.IsLand() {
-			p.LandPlayedThisTurn++
-		}
 
 		if card.IsEnchantCreature() {
 			action.Target.Auras = append(action.Target.Auras, perm)

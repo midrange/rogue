@@ -277,8 +277,12 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Stack = append(g.Stack, action)
-			g.Priority().PayCostsAndPutSpellOnStack(action)
+			if action.Card.IsLand() {
+				g.Priority().PlayLand(action)
+			} else {
+				g.Stack = append(g.Stack, action)
+				g.Priority().PayCostsAndPutSpellOnStack(action)
+			}
 		} else if action.Type == Activate {
 			g.Stack = append(g.Stack, action)
 			g.Priority().PayCostsAndPutAbilityOnStack(action)
@@ -403,8 +407,6 @@ func (g *Game) playLand() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsLand() {
 			g.TakeAction(a)
-			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
