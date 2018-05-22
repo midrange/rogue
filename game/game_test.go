@@ -1,7 +1,6 @@
 package game
 
 import (
-	"log"
 	"testing"
 )
 
@@ -37,12 +36,8 @@ func TestTwoBearsFighting(t *testing.T) {
 		deckWithTopAndForests(GrizzlyBears),
 		deckWithTopAndForests(GrizzlyBears))
 
-	log.Printf("starting first turn")
-
 	g.playLand()
 	g.passTurn()
-
-	log.Printf("finished first turn")
 
 	g.playLand()
 	g.passTurn()
@@ -479,6 +474,7 @@ func TestSnap(t *testing.T) {
 	g.playCreature()
 	g.passTurn()
 
+	g.playLand()
 	g.passTurn()
 
 	g.playLand()
@@ -489,7 +485,7 @@ func TestSnap(t *testing.T) {
 	}
 
 	for _, land := range g.Priority().Lands() {
-		if !land.Tapped {
+		if land.Tapped {
 			t.Fatal("expected all player's lands to be untapped from snap")
 		}
 	}

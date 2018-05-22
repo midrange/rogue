@@ -413,9 +413,7 @@ func (g *Game) playCreaturePhyrexian() {
 
 // playInstant plays the first instant it sees in the hand
 func (g *Game) playInstant() {
-	fmt.Println("in play inst")
 	for _, a := range g.Priority().PlayActions(true, false) {
-		fmt.Println("poss act ", a)
 		if a.Card != nil && a.Card.IsInstant() && a.Type == Play {
 			g.TakeAction(a)
 			return

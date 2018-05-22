@@ -263,23 +263,62 @@ func selectableLandCount(card *Card) int {
 	return count
 }
 
-// http://www.golangprograms.com/golang-program-to-generate-slice-permutations-of-number-entered-by-user.html
-func permutations(xs []*Permanent, selectCount int) (permuts [][]*Permanent) {
-	var rc func([]*Permanent, int)
-	rc = func(a []*Permanent, k int) {
-		if k == selectCount {
-			permuts = append(permuts, append([]*Permanent{}, a...))
-		} else {
-			for i := k; i < len(xs); i++ {
-				a[k], a[i] = a[i], a[k]
-				rc(a, k+1)
-				a[k], a[i] = a[i], a[k]
-			}
-		}
-	}
-	rc(xs, 0)
+// https://play.golang.org/p/JEgfXR2zSH
+// returns a list of indexes of lands
+func combinations(iterable []int, r int) [][]int {
+	resultList := [][]int{}
+	pool := iterable
+	n := len(pool)
 
-	return permuts
+	if r > n {
+		return resultList
+	}
+
+	indices := make([]int, r)
+	for i := range indices {
+		indices[i] = i
+	}
+
+	result := make([]int, r)
+	for i, el := range indices {
+		result[i] = pool[el]
+	}
+
+	resCopy := make([]int, r)
+	copy(resCopy, result)
+	resultList = append(resultList, resCopy)
+
+	for {
+		i := r - 1
+		for ; i >= 0 && indices[i] == i+n-r; i -= 1 {
+		}
+
+		if i < 0 {
+			return resultList
+		}
+
+		indices[i] += 1
+		for j := i + 1; j < r; j += 1 {
+			indices[j] = indices[j-1] + 1
+		}
+
+		for ; i < len(indices); i += 1 {
+			result[i] = pool[indices[i]]
+		}
+		newResCopy := make([]int, r)
+		copy(newResCopy, result)
+		resultList = append(resultList, newResCopy)
+	}
+	return resultList
+
+}
+
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
 }
 
 func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, card *Card) []*Action {
@@ -288,14 +327,17 @@ func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, car
 			if p.IsLegalTarget(card, targetCreature) {
 				selectableLandCount := selectableLandCount(card)
 				if selectableLandCount > 0 { // snap
-					perms := permutations(p.game.Lands(), selectableLandCount)
-					fmt.Println("the perms are ", perms)
-					for _, permutation := range perms {
+					comb := combinations(makeRange(0, len(p.game.Lands())-1), selectableLandCount)
+					for _, c := range comb {
+						selected := []*Permanent{}
+						for _, index := range c {
+							selected = append(selected, p.game.Lands()[index])
+						}
 						answer = append(answer, &Action{
 							Type:     Play,
 							Card:     card,
 							Target:   targetCreature,
-							Selected: permutation,
+							Selected: selected,
 						})
 					}
 
@@ -612,10 +654,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			fmt.Println("untap with no target ", e)
 			perm.Tapped = false
 		} else {
-			// MAYBE I CHUNKED IT ON SNAP?
-			fmt.Println("targetted untap ", e)
 			for _, p := range e.Selected {
-				fmt.Println("untapping ", p)
 				p.Tapped = false
 			}
 		}
@@ -630,6 +669,19 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	}
 }
 
+func (p *Player) landsOfSubtype(subtype Subtype) []*Permanent {
+	lands := []*Permanent{}
+	for _, l := range p.Lands() {
+		for _, st := range l.Subtype {
+			if st == subtype {
+				lands = append(lands, l)
+				break
+			}
+		}
+	}
+	return lands
+}
+
 // CanPayCost returns whether the player has the resources (life, mana, etc) to pay Cost.
 func (p *Player) CanPayCost(c *Cost) bool {
 	if c.Effect == nil {
@@ -638,17 +690,7 @@ func (p *Player) CanPayCost(c *Cost) bool {
 		if c.Effect.EffectType == ReturnToHand {
 			if c.Effect.Selector.Subtype != NoSubtype {
 				count := Max(c.Effect.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
-							count--
-							break
-						}
-					}
-					if count == 0 {
-						return true
-					}
-				}
+				return len(p.landsOfSubtype(c.Effect.Selector.Subtype)) >= count
 			}
 		}
 	}
@@ -669,15 +711,10 @@ func (p *Player) PayCost(c *Cost) bool {
 		if c.Effect.EffectType == ReturnToHand {
 			if c.Effect.Selector.Subtype != NoSubtype {
 				count := Max(c.Effect.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
-							p.RemoveFromBoard(l)
-							p.Hand = append(p.Hand, l.Card.Name)
-							count--
-							break
-						}
-					}
+				for _, l := range p.landsOfSubtype(c.Effect.Selector.Subtype) {
+					p.RemoveFromBoard(l)
+					p.Hand = append(p.Hand, l.Card.Name)
+					count--
 					if count == 0 {
 						break
 					}
