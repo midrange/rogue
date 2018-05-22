@@ -225,9 +225,6 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
 					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 				}
-				if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
-					answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
-				}
 			}
 		}
 
@@ -278,6 +275,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 						}
 					}
 				}
+			}
+		} else if card.IsInstant() {
+			if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
+				answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
 			}
 		}
 
@@ -528,6 +529,22 @@ func (p *Player) HasLegalTarget(c *Card) bool {
 }
 
 func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
+	if e.Condition != nil {
+		if e.Condition.ControlAnother != NoCard {
+			controlsOne := false
+			for _, boardPerm := range p.Board {
+				if boardPerm.Name == e.Condition.ControlAnother && boardPerm.Id != perm.Id {
+					controlsOne = true
+					break
+				}
+			}
+			if !controlsOne {
+				return
+			}
+		} else {
+			panic("unhandled Condition in ResolveEffect")
+		}
+	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
 		return
