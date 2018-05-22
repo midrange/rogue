@@ -247,9 +247,9 @@ func (g *Game) TakeAction(action *Action) {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackAction := g.Stack[len(g.Stack)-1]
 		if stackAction.Type == Play {
-			stackAction.Owner.Play(stackAction)
+			stackAction.Owner.ResolveSpell(stackAction)
 		} else if stackAction.Type == Activate {
-			stackAction.Owner.ActivateAbility(stackAction)
+			stackAction.Owner.ResolveActivatedAbility(stackAction)
 		}
 		g.Stack = g.Stack[:len(g.Stack)-1]
 		return
@@ -276,10 +276,8 @@ func (g *Game) TakeAction(action *Action) {
 	case Main2:
 		if action.Type == Play {
 			g.Stack = append(g.Stack, action)
-			// g.Priority().Play(action)
 		} else if action.Type == Activate {
 			g.Stack = append(g.Stack, action)
-			// g.Priority().ActivateAbility(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}

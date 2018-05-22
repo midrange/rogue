@@ -479,7 +479,7 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) Play(action *Action) {
+func (p *Player) ResolveSpell(action *Action) {
 	card := action.Card
 	newHand := []CardName{}
 	found := false
@@ -548,7 +548,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	}
 }
 
-func (p *Player) ActivateAbility(a *Action) {
+func (p *Player) ResolveActivatedAbility(a *Action) {
 	a.Source.ActivateAbility(a.Cost, a.Target)
 }
 
