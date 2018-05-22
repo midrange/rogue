@@ -455,3 +455,14 @@ func (c *Card) HasSubtype(subtype Subtype) bool {
 	}
 	return false
 }
+
+func (c *Card) HasCreatureTargets() bool {
+	for _, e := range c.Effects {
+		if e.Selector != nil {
+			if e.Selector.Type == Creature {
+				return true
+			}
+		}
+	}
+	return false
+}
