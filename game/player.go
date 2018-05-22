@@ -550,8 +550,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.newPermanent(e.Summon.Card(), p)
 		return
 	} else if e.EffectType == ReturnToHand {
-		fmt.Println("effect is ", e)
-		if e.Target == nil { // quirion ranger, gush?
+		if e.Target == nil { // rancor, or any effect of a permanent on itself
 			p.RemoveFromBoard(perm)
 			p.Hand = append(p.Hand, perm.Card.Name)
 		} else {
@@ -560,31 +559,15 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 		return
 	} else if e.EffectType == Untap {
-		if e.Selector == nil {
+		if e.Selector == nil {  // nettle sentinel, or any effect of a permanent on itself
+			fmt.Println("untap with no target ", e)
 			perm.Tapped = false
 		} else {
-			if e.Selector.Subtype != NoSubtype {
-				count := Max(e.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == e.Selector.Subtype {
-							l.Tapped = false
-							count--
-							break
-						}
-					}
-					if count == 0 {
-						break
-					}
-				}
-			} else if e.Selector.Type == Creature {
-				count := Max(e.Selector.Count, 1)
-				for _, c := range p.game.Creatures() {
-					c.Tapped = false
-					if count == 0 {
-						break
-					}
-				}
+
+			// MAYBE I CHUNKED IT ON SNAP?
+			fmt.Println("targetted untap ", e)
+			for i := 0; i < Max(1, e.Count); i++ {
+				e.Target.Tapped = false
 			}
 		}
 		return

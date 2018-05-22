@@ -487,4 +487,10 @@ func TestSnap(t *testing.T) {
 	if len(g.Priority().Hand) != 5 {
 		t.Fatal("expected the hand size to be 5 after Snap: draw 7, island, skirge, draw, island, snap")
 	}
+
+	for _, land := range g.Priority().Lands() {
+		if land.Tapped {
+			t.Fatal("expected all player's lands to be untapped from snap")
+		}
+	}
 }
