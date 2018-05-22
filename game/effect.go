@@ -49,6 +49,9 @@ type Effect struct {
 	EffectCount int // the number of times to do the effect
 	EffectType  EffectType
 	Selector    *Selector
+
+	// for non-targetted effects of spells, such as Snap
+	Selected []*Permanent
 }
 
 //go:generate stringer -type=EffectType
@@ -68,5 +71,6 @@ func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
 	}
 	newEffect.Source = action.Source
 	newEffect.Target = action.Target
+	newEffect.Selected = action.Selected
 	return newEffect
 }

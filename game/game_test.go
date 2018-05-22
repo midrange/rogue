@@ -489,7 +489,7 @@ func TestSnap(t *testing.T) {
 	}
 
 	for _, land := range g.Priority().Lands() {
-		if land.Tapped {
+		if !land.Tapped {
 			t.Fatal("expected all player's lands to be untapped from snap")
 		}
 	}

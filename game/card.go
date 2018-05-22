@@ -329,7 +329,7 @@ var Cards = map[CardName]*Card{
 		Effects: []*Effect{
 			&Effect{
 				EffectType: Untap,
-				Selector:   &Selector{Subtype: LandIsland, Count: 2},
+				Selector:   &Selector{Type: Land, Count: 2},
 			},
 			&Effect{
 				EffectType: ReturnToHand,

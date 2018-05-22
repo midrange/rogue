@@ -228,6 +228,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
+		// TODO - add player targets - this assumes all instants target creatures for now
 		if card.IsInstant() && p.HasLegalTarget(card) {
 			if forHuman {
 				if p.CanPayCost(card.CastingCost) ||
@@ -238,45 +239,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 						Card: card,
 					})
 				}
-			} else { // TODO - add player targets - this assumes all instants target creatures for now
-				if p.CanPayCost(card.CastingCost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:   Play,
-								Card:   card,
-								Target: target,
-							})
-						}
-					}
-				}
-				if card.Kicker != nil && p.CanPayCost(card.Kicker.Cost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:       Play,
-								Card:       card,
-								WithKicker: true,
-								Target:     target,
-							})
-						}
-					}
-				}
-
-				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:          Play,
-								Card:          card,
-								Target:        target,
-								WithPhyrexian: true,
-							})
-						}
-					}
-				}
+			} else {
+				answer = p.appendActionsForInstantTargettingCreature(answer, card)
 			}
-		} else if card.IsInstant() {
+		} else if card.IsInstant() { // Gush has no target
 			if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
 				answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
 			}
@@ -284,6 +250,91 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 
 	}
 
+	return answer
+}
+
+func selectableLandCount(card *Card) int {
+	count := 0
+	for _, e := range card.Effects {
+		if e.Selector != nil && e.Selector.Type == Land {
+			count += e.Selector.Count
+		}
+	}
+	return count
+}
+
+// http://www.golangprograms.com/golang-program-to-generate-slice-permutations-of-number-entered-by-user.html
+func permutations(xs []*Permanent, selectCount int) (permuts [][]*Permanent) {
+	var rc func([]*Permanent, int)
+	rc = func(a []*Permanent, k int) {
+		if k == selectCount {
+			permuts = append(permuts, append([]*Permanent{}, a...))
+		} else {
+			for i := k; i < len(xs); i++ {
+				a[k], a[i] = a[i], a[k]
+				rc(a, k+1)
+				a[k], a[i] = a[i], a[k]
+			}
+		}
+	}
+	rc(xs, 0)
+
+	return permuts
+}
+
+func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, card *Card) []*Action {
+	if p.CanPayCost(card.CastingCost) {
+		for _, targetCreature := range p.game.Creatures() {
+			if p.IsLegalTarget(card, targetCreature) {
+				selectableLandCount := selectableLandCount(card)
+				if selectableLandCount > 0 { // snap
+					perms := permutations(p.game.Lands(), selectableLandCount)
+					fmt.Println("the perms are ", perms)
+					for _, permutation := range perms {
+						answer = append(answer, &Action{
+							Type:     Play,
+							Card:     card,
+							Target:   targetCreature,
+							Selected: permutation,
+						})
+					}
+
+				} else {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: targetCreature,
+					})
+				}
+
+			}
+		}
+	}
+	if card.Kicker != nil && p.CanPayCost(card.Kicker.Cost) {
+		for _, target := range p.game.Creatures() {
+			if p.IsLegalTarget(card, target) {
+				answer = append(answer, &Action{
+					Type:       Play,
+					Card:       card,
+					WithKicker: true,
+					Target:     target,
+				})
+			}
+		}
+	}
+
+	if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+		for _, target := range p.game.Creatures() {
+			if p.IsLegalTarget(card, target) {
+				answer = append(answer, &Action{
+					Type:          Play,
+					Card:          card,
+					Target:        target,
+					WithPhyrexian: true,
+				})
+			}
+		}
+	}
 	return answer
 }
 
@@ -548,29 +599,26 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
-		return
 	} else if e.EffectType == ReturnToHand {
-		if e.Target == nil { // rancor, or any effect of a permanent on itself
-			p.RemoveFromBoard(perm)
-			p.Hand = append(p.Hand, perm.Card.Name)
-		} else {
-			p.RemoveFromBoard(e.Target)
-			p.Hand = append(p.Hand, e.Target.Card.Name)
+		// target is nil for rancor, or any effect of a permanent on itself
+		effectedPermanent := e.Target
+		if effectedPermanent == nil {
+			effectedPermanent = perm
 		}
-		return
+		p.RemoveFromBoard(effectedPermanent)
+		p.Hand = append(p.Hand, effectedPermanent.Card.Name)
 	} else if e.EffectType == Untap {
-		if e.Selector == nil {  // nettle sentinel, or any effect of a permanent on itself
+		if e.Selector == nil { // nettle sentinel, or any effect of a permanent on itself
 			fmt.Println("untap with no target ", e)
 			perm.Tapped = false
 		} else {
-
 			// MAYBE I CHUNKED IT ON SNAP?
 			fmt.Println("targetted untap ", e)
-			for i := 0; i < Max(1, e.Count); i++ {
-				e.Target.Tapped = false
+			for _, p := range e.Selected {
+				fmt.Println("untapping ", p)
+				p.Tapped = false
 			}
 		}
-		return
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else if e.EffectType == DrawCard {

@@ -174,6 +174,15 @@ func (g *Game) Creatures() []*Permanent {
 	return answer
 }
 
+// Lands() returns the lands in play.
+func (g *Game) Lands() []*Permanent {
+	answer := []*Permanent{}
+	for _, player := range g.Players {
+		answer = append(answer, player.Lands()...)
+	}
+	return answer
+}
+
 func (g *Game) nextPhase() {
 	switch g.Phase {
 	case Main1:
