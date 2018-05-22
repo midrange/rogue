@@ -327,18 +327,20 @@ func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, car
 			if p.IsLegalTarget(card, targetCreature) {
 				selectableLandCount := selectableLandCount(card)
 				if selectableLandCount > 0 { // snap
-					comb := combinations(makeRange(0, len(p.game.Lands())-1), selectableLandCount)
-					for _, c := range comb {
-						selected := []*Permanent{}
-						for _, index := range c {
-							selected = append(selected, p.game.Lands()[index])
+					for i := 1; i <= len(p.game.Lands())-1; i++ {
+						comb := combinations(makeRange(0, i), selectableLandCount)
+						for _, c := range comb {
+							selected := []*Permanent{}
+							for _, index := range c {
+								selected = append(selected, p.game.Lands()[index])
+							}
+							answer = append(answer, &Action{
+								Type:     Play,
+								Card:     card,
+								Target:   targetCreature,
+								Selected: selected,
+							})
 						}
-						answer = append(answer, &Action{
-							Type:     Play,
-							Card:     card,
-							Target:   targetCreature,
-							Selected: selected,
-						})
 					}
 
 				} else {
@@ -661,7 +663,11 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else if e.EffectType == DrawCard {
-		for i := 0; i < Max(1, e.EffectCount); i++ {
+		drawCount := 1
+		if e.Selector != nil {
+			drawCount = Max(drawCount, e.Selector.Count)
+		}
+		for i := 0; i < drawCount; i++ {
 			p.Draw()
 		}
 	} else {

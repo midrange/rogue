@@ -173,8 +173,8 @@ var Cards = map[CardName]*Card{
 		},
 		CastingCost: &Cost{Colorless: 5},
 		Effects: []*Effect{&Effect{
-			EffectType:  DrawCard,
-			EffectCount: 2,
+			EffectType: DrawCard,
+			Selector:   &Selector{Count: 2},
 		}},
 		Type: []Type{Instant},
 	},

@@ -46,9 +46,8 @@ type Effect struct {
 	Target          *Permanent
 
 	// for effects from targeted spells
-	EffectCount int // the number of times to do the effect
-	EffectType  EffectType
-	Selector    *Selector
+	EffectType EffectType
+	Selector   *Selector
 
 	// for non-targetted effects of spells, such as Snap
 	Selected []*Permanent
