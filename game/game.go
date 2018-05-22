@@ -43,6 +43,9 @@ type Game struct {
 
 	// Permanents contains all permanents in play.
 	Permanents map[PermanentId]*Permanent
+
+	// Non-mana, non-cost effect actions go on the stack and can be responded to before they resolve
+	Stack []*Action
 }
 
 //go:generate stringer -type=CardName
@@ -72,6 +75,7 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId:      OnThePlay,
 		NextPermanentId: PermanentId(1),
 		Permanents:      make(map[PermanentId]*Permanent),
+		Stack:           []*Effect{},
 	}
 
 	players[0].game = g
@@ -91,6 +95,24 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
+
+	if len(g.Stack) > 0 {
+		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
+		topAction := g.Stack[len(g.Stack)-1]
+		if topAction.Owner == g.Priority() {
+			actions = append(actions, &Action{
+				Type: OfferToResolveNextOnStack,
+			})
+		} else {
+			actions = append(actions, &Action{
+				Type: ResolveNextOnStack,
+			})
+		}
+
+		return actions
+	}
+
 	switch g.Phase {
 	case Main1:
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
@@ -184,6 +206,11 @@ func (g *Game) Lands() []*Permanent {
 }
 
 func (g *Game) nextPhase() {
+	g.Stack = []*Action{}
+	for _, p := range g.Players {
+		p.EndPhase()
+	}
+
 	switch g.Phase {
 	case Main1:
 		g.Phase = DeclareAttackers
@@ -214,6 +241,19 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 
+	if action.Type == OfferToResolveNextOnStack {
+		g.PriorityId = g.PriorityId.OpponentId()
+	} else if action.Type == ResolveNextOnStack {
+		g.PriorityId = g.PriorityId.OpponentId()
+		stackAction := g.Stack[len(g.Stack)-1]
+		if stackAction.Type == Play {
+			stackAction.Owner.Play(stackAction)
+		} else if stackAction.Type == Activate {
+			stackAction.Owner.ActivateAbility(stackAction)
+		}
+		return
+	}
+
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -234,9 +274,11 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Priority().Play(action)
+			g.Stack = append(g.Stack, action)
+			// g.Priority().Play(action)
 		} else if action.Type == Activate {
-			g.Priority().ActivateAbility(action)
+			g.Stack = append(g.Stack, action)
+			// g.Priority().ActivateAbility(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}

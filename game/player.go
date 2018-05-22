@@ -37,14 +37,10 @@ func NewPlayer(deck *Deck, id PlayerId) *Player {
 
 func (p *Player) Draw() {
 	card := p.Deck.Draw()
-	p.AddToHand(card)
-}
-
-func (p *Player) AddToHand(c CardName) {
-	if c == NoCard {
+	if card == NoCard {
 		return
 	}
-	p.Hand = append(p.Hand, c)
+	p.Hand = append(p.Hand, card)
 }
 
 func (p *Player) AvailableMana() int {
@@ -136,7 +132,7 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 	p.Board = newBoard
 }
 
-// Returns possible actions when we can activate cards on he board.
+// Returns possible actions when we can activate cards on the board.
 func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	permNames := make(map[CardName]bool)
 	answer := []*Action{}
@@ -151,7 +147,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 		}
 		permNames[perm.Name] = true
 
-		// TODO make actions unique, like don't allow two untaped Forests to both be cost targets
+		// TODO make actions unique, like don't allow two untapped Forests to both be cost targets
 		if perm.ActivatedAbility != nil {
 			effect := perm.ActivatedAbility
 			landsForCost := []*Permanent{}
@@ -170,10 +166,12 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 						costEffect.SelectedForCost = land
 						answer = append(answer,
 							&Action{
-								Type:   Activate,
-								Source: perm,
 								Cost:   &Cost{Effect: costEffect},
-								Target: c})
+								Owner:  p,
+								Source: perm,
+								Target: c,
+								Type:   Activate,
+							})
 					}
 				}
 			}
@@ -242,10 +240,11 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 								selected = append(selected, p.game.Lands()[index])
 							}
 							answer = append(answer, &Action{
-								Type:     Play,
 								Card:     card,
-								Target:   targetCreature,
+								Owner:    p,
 								Selected: selected,
+								Target:   targetCreature,
+								Type:     Play,
 							})
 						}
 					}
@@ -264,10 +263,11 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		for _, target := range p.game.Creatures() {
 			if p.IsLegalTarget(card, target) {
 				answer = append(answer, &Action{
-					Type:       Play,
 					Card:       card,
-					WithKicker: true,
+					Owner:      p,
 					Target:     target,
+					Type:       Play,
+					WithKicker: true,
 				})
 			}
 		}
@@ -277,9 +277,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		for _, target := range p.game.Creatures() {
 			if p.IsLegalTarget(card, target) {
 				answer = append(answer, &Action{
-					Type:          Play,
 					Card:          card,
+					Owner:         p,
 					Target:        target,
+					Type:          Play,
 					WithPhyrexian: true,
 				})
 			}
@@ -298,9 +299,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						selected = append(selected, islands[index])
 					}
 					answer = append(answer, &Action{
-						Type:          Play,
 						Card:          card,
+						Owner:         p,
 						Selected:      selected,
+						Type:          Play,
 						WithAlternate: true,
 					})
 				}

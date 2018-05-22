@@ -8,6 +8,7 @@ type Action struct {
 	Type          ActionType
 	Card          *Card
 	Cost          *Cost
+	Owner         *Player
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent
@@ -29,6 +30,8 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
+	OfferToResolveNextOnStack
+	ResolveNextOnStack
 )
 
 func (a *Action) targetPronoun(p *Player) string {
