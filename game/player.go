@@ -393,15 +393,15 @@ func (p *Player) Play(action *Action) {
 func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
 		for _, e := range c.Effects {
-			target.TemporaryEffects = append(target.TemporaryEffects, NewEffect(a, e))
+			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForAction(a, e))
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
 			if target == nil {
-				p.ResolveEffect(NewEffect(a, e), nil)
+				p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
 			} else {
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // this is usually 0
-				p.ResolveEffect(NewEffect(a, e), nil)
+				p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
 			}
 		}
 	}
@@ -550,36 +550,13 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.newPermanent(e.Summon.Card(), p)
 		return
 	} else if e.EffectType == ReturnToHand {
-		if e.Selector == nil {
+		fmt.Println("effect is ", e)
+		if e.Target == nil { // quirion ranger, gush?
 			p.RemoveFromBoard(perm)
 			p.Hand = append(p.Hand, perm.Card.Name)
 		} else {
-			if e.Selector.Subtype != NoSubtype {
-				count := Max(e.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == e.Selector.Subtype {
-							p.RemoveFromBoard(l)
-							p.Hand = append(p.Hand, l.Card.Name)
-							count--
-							break
-						}
-					}
-					if count == 0 {
-						break
-					}
-				}
-			} else if e.Selector.Type == Creature {
-				count := Max(e.Selector.Count, 1)
-				for _, c := range p.game.Creatures() {
-					p.RemoveFromBoard(c)
-					c.Owner.Hand = append(c.Owner.Hand, c.Card.Name)
-					count--
-					if count == 0 {
-						break
-					}
-				}
-			}
+			p.RemoveFromBoard(e.Target)
+			p.Hand = append(p.Hand, e.Target.Card.Name)
 		}
 		return
 	} else if e.EffectType == Untap {

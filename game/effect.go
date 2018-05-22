@@ -61,7 +61,7 @@ const (
 	Untap
 )
 
-func NewEffect(action *Action, effect *Effect) *Effect {
+func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
 	newEffect := effect
 	if action.WithKicker {
 		newEffect.Kicker = action.Card.Kicker
