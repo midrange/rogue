@@ -250,9 +250,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 					}
 				} else {
 					answer = append(answer, &Action{
-						Type:   Play,
 						Card:   card,
+						Owner:  p,
 						Target: targetCreature,
+						Type:   Play,
 					})
 				}
 
@@ -309,7 +310,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 			}
 		}
 
-		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
+		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true, Owner: p})
 	}
 
 	return answer
@@ -401,24 +402,25 @@ func combinations(iterable []int, r int) [][]int {
 func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
 	if card.IsLand() {
 		if p.LandPlayedThisTurn == 0 {
-			answer = append(answer, &Action{Type: Play, Card: card})
+			answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
 		}
 	} else if !card.IsInstant() {
 		if p.CanPayCost(card.CastingCost) {
 			if card.IsCreature() {
-				answer = append(answer, &Action{Type: Play, Card: card})
+				answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
+						Owner:  p,
 						Target: target,
 					})
 				}
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
 		}
 	}
 	return answer

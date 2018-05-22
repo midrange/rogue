@@ -75,7 +75,7 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId:      OnThePlay,
 		NextPermanentId: PermanentId(1),
 		Permanents:      make(map[PermanentId]*Permanent),
-		Stack:           []*Effect{},
+		Stack:           []*Action{},
 	}
 
 	players[0].game = g
@@ -206,7 +206,6 @@ func (g *Game) Lands() []*Permanent {
 }
 
 func (g *Game) nextPhase() {
-	g.Stack = []*Action{}
 	for _, p := range g.Players {
 		p.EndPhase()
 	}
@@ -243,6 +242,7 @@ func (g *Game) TakeAction(action *Action) {
 
 	if action.Type == OfferToResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
+		return
 	} else if action.Type == ResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackAction := g.Stack[len(g.Stack)-1]
@@ -251,6 +251,7 @@ func (g *Game) TakeAction(action *Action) {
 		} else if stackAction.Type == Activate {
 			stackAction.Owner.ActivateAbility(stackAction)
 		}
+		g.Stack = g.Stack[:len(g.Stack)-1]
 		return
 	}
 
@@ -400,6 +401,8 @@ func (g *Game) playLand() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsLand() {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -412,6 +415,8 @@ func (g *Game) playCreature() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature() {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -424,6 +429,8 @@ func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -446,6 +453,8 @@ func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature() && a.WithPhyrexian {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -458,6 +467,8 @@ func (g *Game) playInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant() && a.Type == Play {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -470,6 +481,8 @@ func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant() && a.WithKicker {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -482,6 +495,8 @@ func (g *Game) playSorcery() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsSorcery() && a.Type == Play {
 			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: ResolveNextOnStack})
 			return
 		}
 	}
@@ -515,6 +530,8 @@ func (g *Game) playManaAbilityAction() {
 func (g *Game) playActivatedAbility() {
 	for _, a := range g.Priority().ActivatedAbilityActions(true, false) {
 		g.TakeAction(a)
+		g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+		g.TakeAction(&Action{Type: ResolveNextOnStack})
 		return
 	}
 	g.Print()
