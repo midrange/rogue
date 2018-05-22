@@ -1,8 +1,6 @@
 The goal of the Rogue project is to build an AI to play Magic: The Gathering at a better-than-human level.
 
-The initial goal is to develop similar functionality as https://github.com/andrewljohnson/CardAI while making it run faster.
-
-## Running Hello World
+## Running the Program
 
 If you are a developer, clone this repo into your `$GOPATH` in the `github.com/midrange/rogue` directory.
 
@@ -30,3 +28,8 @@ go get golang.org/x/tools/cmd/stringer
 ```
 
 and run `go generate ./...` when you change any enums.
+
+## Notes
+
+Originally started in Python, but switched to Go for speed: https://github.com/andrewljohnson/CardAI while making it run faster.
+

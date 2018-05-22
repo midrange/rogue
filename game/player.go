@@ -376,7 +376,7 @@ func (p *Player) Play(action *Action) {
 		p.CastSpell(card, action.Target, action)
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
-		// Non-instant cards turn into a permanent
+		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p)
 
 		if card.IsLand() {
