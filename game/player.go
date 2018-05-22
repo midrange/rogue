@@ -679,7 +679,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			effectedPermanent = perm
 		}
 		if effectedPermanent == nil {
-			fmt.Println(e)
 			for _, selected := range e.Selected {
 				p.RemoveFromBoard(selected)
 				p.Hand = append(p.Hand, selected.Card.Name)
@@ -750,7 +749,6 @@ func (p *Player) PayCost(c *Cost) bool {
 
 	// costs like Gush
 	if c.Effect != nil {
-		fmt.Println("resolving cost effect")
 		p.ResolveEffect(c.Effect, nil)
 	}
 	return false
