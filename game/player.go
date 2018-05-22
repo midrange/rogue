@@ -196,35 +196,13 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		card := name.Card()
 
 		if allowSorcerySpeed {
-			if card.IsLand() {
-				if p.LandPlayedThisTurn == 0 {
-					answer = append(answer, &Action{Type: Play, Card: card})
-				}
-			} else if !card.IsInstant() {
-				if p.CanPayCost(card.CastingCost) {
-					if card.IsCreature() {
-						answer = append(answer, &Action{Type: Play, Card: card})
-					} else if card.IsEnchantment() && p.HasLegalTarget(card) {
-						if forHuman {
-							answer = append(answer, &Action{
-								Type: ChooseTargetAndMana,
-								Card: card,
-							})
-						} else {
-							for _, target := range p.game.Creatures() {
-								answer = append(answer, &Action{
-									Type:   Play,
-									Card:   card,
-									Target: target,
-								})
-							}
-						}
-					}
-				}
-				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
-				}
+			if forHuman && card.IsEnchantment() && p.HasLegalTarget(card) {
+				answer = append(answer, &Action{
+					Type: ChooseTargetAndMana,
+					Card: card,
+				})
 			}
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
 		if card.IsInstant() && (p.HasLegalTarget(card) || card.HasCreatureTargets() == false) {
@@ -239,7 +217,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 					})
 				}
 			} else {
-				answer = p.appendActionsForInstantTargettingCreature(answer, card)
+				answer = p.appendActionsForInstant(answer, card)
 			}
 		}
 
@@ -316,7 +294,7 @@ func makeRange(min, max int) []int {
 	return a
 }
 
-func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, card *Card) []*Action {
+func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action {
 	if p.CanPayCost(card.CastingCost) {
 		// TODO - add player targets - this assumes all instants target creatures for now
 		for _, targetCreature := range p.game.Creatures() {
@@ -399,6 +377,32 @@ func (p *Player) appendActionsForInstantTargettingCreature(answer []*Action, car
 		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
 	}
 
+	return answer
+}
+
+func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
+	if card.IsLand() {
+		if p.LandPlayedThisTurn == 0 {
+			answer = append(answer, &Action{Type: Play, Card: card})
+		}
+	} else if !card.IsInstant() {
+		if p.CanPayCost(card.CastingCost) {
+			if card.IsCreature() {
+				answer = append(answer, &Action{Type: Play, Card: card})
+			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
+				for _, target := range p.game.Creatures() {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: target,
+					})
+				}
+			}
+		}
+		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+		}
+	}
 	return answer
 }
 
