@@ -6,23 +6,23 @@ import ()
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	ActivatedAbility      *Effect
-	AddsTemporaryEffect   bool
-	AlternateCastingCost  *Cost
-	Bloodthirst           int
-	CastingCost           *Cost
-	Effects               []*Effect
-	EntersGraveyardEffect *Effect
-	EntersTheBattlefieldEffect      *Effect
-	Flying                bool
-	GroundEvader          bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof              bool
-	Kicker                *Effect
-	Lifelink              bool
-	Morbid                *Effect
-	Name                  CardName
-	PhyrexianCastingCost  *Cost
-	Powermenace           bool // only blockable by >= power (like Skarrgan Pitskulk)
+	ActivatedAbility           *Effect
+	AddsTemporaryEffect        bool
+	AlternateCastingCost       *Cost
+	Bloodthirst                int
+	CastingCost                *Cost
+	Effects                    []*Effect
+	EntersGraveyardEffect      *Effect
+	EntersTheBattlefieldEffect *Effect
+	Flying                     bool
+	GroundEvader               bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof                   bool
+	Kicker                     *Effect
+	Lifelink                   bool
+	Morbid                     *Effect
+	Name                       CardName
+	PhyrexianCastingCost       *Cost
+	Powermenace                bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
 	Subtype   []Subtype
@@ -67,6 +67,7 @@ const (
 	Rancor
 	SilhanaLedgewalker
 	SkarrganPitskulk
+	Snap
 	VaultSkirge
 	VinesOfVastwood
 )
@@ -179,17 +180,6 @@ var Cards = map[CardName]*Card{
 			EffectCount: 2,
 		}},
 		Type: []Type{Instant},
-	},
-
-	/*
-		No card text.
-		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=4300
-	*/
-	GrizzlyBears: &Card{
-		BasePower:     2,
-		BaseToughness: 2,
-		CastingCost:   &Cost{Colorless: 2},
-		Type:          []Type{Creature},
 	},
 
 	/*

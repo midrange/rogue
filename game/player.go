@@ -400,7 +400,8 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 			if target == nil {
 				p.ResolveEffect(NewEffect(a, e), nil)
 			} else {
-				target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
+				target.Plus1Plus1Counters += e.Plus1Plus1Counters // this is usually 0
+				p.ResolveEffect(NewEffect(a, e), nil)
 			}
 		}
 	}
@@ -554,10 +555,10 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			p.Hand = append(p.Hand, perm.Card.Name)
 		} else {
 			if e.Selector.Subtype != NoSubtype {
-				count := Max(c.Effect.Selector.Count, 1)
+				count := Max(e.Selector.Count, 1)
 				for _, l := range p.Lands() {
 					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
+						if st == e.Selector.Subtype {
 							p.RemoveFromBoard(l)
 							p.Hand = append(p.Hand, l.Card.Name)
 							count--
@@ -569,7 +570,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					}
 				}
 			} else if e.Selector.Type == Creature {
-				count := Max(c.Effect.Selector.Count, 1)
+				count := Max(e.Selector.Count, 1)
 				for _, c := range p.game.Creatures() {
 					p.RemoveFromBoard(c)
 					c.Owner.Hand = append(c.Owner.Hand, c.Card.Name)
@@ -586,10 +587,10 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			perm.Tapped = false
 		} else {
 			if e.Selector.Subtype != NoSubtype {
-				count := Max(c.Effect.Selector.Count, 1)
+				count := Max(e.Selector.Count, 1)
 				for _, l := range p.Lands() {
 					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
+						if st == e.Selector.Subtype {
 							l.Tapped = false
 							count--
 							break
@@ -600,7 +601,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					}
 				}
 			} else if e.Selector.Type == Creature {
-				count := Max(c.Effect.Selector.Count, 1)
+				count := Max(e.Selector.Count, 1)
 				for _, c := range p.game.Creatures() {
 					c.Tapped = false
 					if count == 0 {

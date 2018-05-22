@@ -463,3 +463,28 @@ func TestGush(t *testing.T) {
 		t.Fatal("expected the hand size to be 9 after Gush: draw 7, island, draw, island, play gush, draw 2")
 	}
 }
+
+func TestSnap(t *testing.T) {
+	snapSkirge := NewEmptyDeck()
+	snapSkirge.Add(1, Snap)
+	snapSkirge.Add(1, VaultSkirge)
+	snapSkirge.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(snapSkirge, allForests)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+	g.playInstant()
+
+	if len(g.Priority().Hand) != 5 {
+		t.Fatal("expected the hand size to be 5 after Snap: draw 7, island, skirge, draw, island, snap")
+	}
+}

@@ -64,7 +64,7 @@ const (
 func NewEffect(action *Action, effect *Effect) *Effect {
 	newEffect := effect
 	if action.WithKicker {
-		newEffect.Kicker = card.Kicker
+		newEffect.Kicker = action.Card.Kicker
 	}
 	newEffect.Source = action.Source
 	newEffect.Target = action.Target
