@@ -226,74 +226,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	return answer
 }
 
-func selectableLandCount(card *Card) int {
-	count := 0
-	for _, e := range card.Effects {
-		if e.Selector != nil && e.Selector.Type == Land {
-			count += e.Selector.Count
-		}
-	}
-	return count
-}
-
-// https://play.golang.org/p/JEgfXR2zSH
-// returns a list of indexes of lands
-func combinations(iterable []int, r int) [][]int {
-	resultList := [][]int{}
-	pool := iterable
-	n := len(pool)
-
-	if r > n {
-		return resultList
-	}
-
-	indices := make([]int, r)
-	for i := range indices {
-		indices[i] = i
-	}
-
-	result := make([]int, r)
-	for i, el := range indices {
-		result[i] = pool[el]
-	}
-
-	resCopy := make([]int, r)
-	copy(resCopy, result)
-	resultList = append(resultList, resCopy)
-
-	for {
-		i := r - 1
-		for ; i >= 0 && indices[i] == i+n-r; i -= 1 {
-		}
-
-		if i < 0 {
-			return resultList
-		}
-
-		indices[i] += 1
-		for j := i + 1; j < r; j += 1 {
-			indices[j] = indices[j-1] + 1
-		}
-
-		for ; i < len(indices); i += 1 {
-			result[i] = pool[indices[i]]
-		}
-		newResCopy := make([]int, r)
-		copy(newResCopy, result)
-		resultList = append(resultList, newResCopy)
-	}
-	return resultList
-
-}
-
-func makeRange(min, max int) []int {
-	a := make([]int, max-min+1)
-	for i := range a {
-		a[i] = min + i
-	}
-	return a
-}
-
+// Appends actions to answer for an instant card.
 func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action {
 	if p.CanPayCost(card.CastingCost) {
 		// TODO - add player targets - this assumes all instants target creatures for now
@@ -380,6 +313,89 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 	return answer
 }
 
+// Returns a list of lands of the given subtype.
+func (p *Player) landsOfSubtype(subtype Subtype) []*Permanent {
+	lands := []*Permanent{}
+	for _, l := range p.Lands() {
+		for _, st := range l.Subtype {
+			if st == subtype {
+				lands = append(lands, l)
+				break
+			}
+		}
+	}
+	return lands
+}
+
+// Returns a count of lands the card effects would select.
+func selectableLandCount(card *Card) int {
+	count := 0
+	for _, e := range card.Effects {
+		if e.Selector != nil && e.Selector.Type == Land {
+			count += e.Selector.Count
+		}
+	}
+	return count
+}
+
+// Returns an array of ints from min to max.
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
+}
+
+// Returns a list of lists of indexes of lands, based on https://play.golang.org/p/JEgfXR2zSH
+func combinations(iterable []int, r int) [][]int {
+	resultList := [][]int{}
+	pool := iterable
+	n := len(pool)
+
+	if r > n {
+		return resultList
+	}
+
+	indices := make([]int, r)
+	for i := range indices {
+		indices[i] = i
+	}
+
+	result := make([]int, r)
+	for i, el := range indices {
+		result[i] = pool[el]
+	}
+
+	resCopy := make([]int, r)
+	copy(resCopy, result)
+	resultList = append(resultList, resCopy)
+
+	for {
+		i := r - 1
+		for ; i >= 0 && indices[i] == i+n-r; i -= 1 {
+		}
+
+		if i < 0 {
+			return resultList
+		}
+
+		indices[i] += 1
+		for j := i + 1; j < r; j += 1 {
+			indices[j] = indices[j-1] + 1
+		}
+
+		for ; i < len(indices); i += 1 {
+			result[i] = pool[indices[i]]
+		}
+		newResCopy := make([]int, r)
+		copy(newResCopy, result)
+		resultList = append(resultList, newResCopy)
+	}
+	return resultList
+}
+
+// Appends actions to answer if card is a land, creature, or enchantment.
 func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
 	if card.IsLand() {
 		if p.LandPlayedThisTurn == 0 {
@@ -478,12 +494,12 @@ func (p *Player) Play(action *Action) {
 
 	if !card.IsLand() {
 		if action.WithKicker {
-			p.PayCost(card.Kicker.Cost)
+			p.PayCost(card.Kicker.Cost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else if action.WithAlternate {
 			card.AlternateCastingCost.Effect = UpdatedEffectForAction(action, card.AlternateCastingCost.Effect)
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
-			p.PayCost(card.PhyrexianCastingCost)
+			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else {
 			p.PayCost(card.CastingCost)
 		}
@@ -519,7 +535,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 		for _, e := range c.Effects {
 			p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
 			if target != nil {
-				target.Plus1Plus1Counters += e.Plus1Plus1Counters
+				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
 			}
 		}
 	}
@@ -704,20 +720,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	}
 }
 
-func (p *Player) landsOfSubtype(subtype Subtype) []*Permanent {
-	lands := []*Permanent{}
-	for _, l := range p.Lands() {
-		for _, st := range l.Subtype {
-			if st == subtype {
-				lands = append(lands, l)
-				break
-			}
-		}
-	}
-	return lands
-}
-
-// CanPayCost returns whether the player has the resources (life, mana, etc) to pay Cost.
+// Returns whether the player has the resources (life, mana, etc) to pay Cost.
 func (p *Player) CanPayCost(c *Cost) bool {
 	if c.Effect == nil {
 		return p.Life >= c.Life && p.AvailableMana() >= c.Colorless
@@ -732,7 +735,7 @@ func (p *Player) CanPayCost(c *Cost) bool {
 	return false
 }
 
-// PayCost spends the resources for a Cost
+// PayCost spends the resources for a Cost.
 func (p *Player) PayCost(c *Cost) bool {
 
 	// regular mana costs
