@@ -183,7 +183,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{}
 
 	for _, name := range p.Hand {
 		// Don't re-check playing duplicate cards
@@ -479,7 +479,7 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) ResolveSpell(action *Action) {
+func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 	card := action.Card
 	newHand := []CardName{}
 	found := false
@@ -492,6 +492,7 @@ func (p *Player) ResolveSpell(action *Action) {
 	}
 	if !found {
 		log.Printf("could not play card %+v from hand %+v", card, p.Hand)
+		p.game.Print()
 		panic("XXX")
 	}
 	p.Hand = newHand
@@ -507,6 +508,13 @@ func (p *Player) ResolveSpell(action *Action) {
 		} else {
 			p.PayCost(card.CastingCost)
 		}
+	}
+}
+
+func (p *Player) ResolveSpell(action *Action) {
+	card := action.Card
+
+	if !card.IsLand() {
 		for _, permanent := range p.Board {
 			permanent.RespondToSpell()
 		}
@@ -527,7 +535,6 @@ func (p *Player) ResolveSpell(action *Action) {
 			action.Target.Auras = append(action.Target.Auras, perm)
 		}
 	}
-
 }
 
 func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
@@ -546,6 +553,9 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && target != nil {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
+}
+
+func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 }
 
 func (p *Player) ResolveActivatedAbility(a *Action) {
@@ -776,6 +786,7 @@ func (p *Player) SpendMana(amount int) {
 		}
 	}
 	if amount > 0 {
+		p.game.Print()
 		panic("could not spend mana")
 	}
 }

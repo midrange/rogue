@@ -115,12 +115,14 @@ func (g *Game) Actions(forHuman bool) []*Action {
 
 	switch g.Phase {
 	case Main1:
+		actions = append(actions, &Action{Type: Pass})
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		actions = append(actions, &Action{Type: DeclareAttack})
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
-		actions = g.Priority().PlayActions(true, forHuman)
+		actions = append(actions, &Action{Type: Pass})
+		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
@@ -276,8 +278,10 @@ func (g *Game) TakeAction(action *Action) {
 	case Main2:
 		if action.Type == Play {
 			g.Stack = append(g.Stack, action)
+			g.Priority().PayCostsAndPutSpellOnStack(action)
 		} else if action.Type == Activate {
 			g.Stack = append(g.Stack, action)
+			g.Priority().PayCostsAndPutAbilityOnStack(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
