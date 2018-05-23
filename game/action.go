@@ -5,14 +5,15 @@ import (
 )
 
 type Action struct {
-	Type          ActionType
+	Type ActionType
+
 	Card          *Card
 	Cost          *Cost
 	Owner         *Player
-	Source        *Permanent // for targeted effects
-	With          *Permanent // for attacking
-	Target        *Permanent
 	Selected      []*Permanent // for non-targetted effects, such as in Snap
+	Source        *Permanent   // for targeted effects
+	Target        *Permanent
+	With          *Permanent // for attacking
 	WithAlternate bool
 	WithKicker    bool
 	WithPhyrexian bool
