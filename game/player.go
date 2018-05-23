@@ -563,6 +563,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 }
 
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
+	a.Source.PayForActivatedAbility(a.Cost, a.Target)
 }
 
 func (p *Player) ResolveActivatedAbility(a *Action) {

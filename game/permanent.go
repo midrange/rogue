@@ -46,6 +46,7 @@ func (p *Permanent) String() string {
 
 const CARD_HEIGHT = 5
 const CARD_WIDTH = 11
+
 func (c *Permanent) AsciiImage(showBack bool) [CARD_HEIGHT][CARD_WIDTH]string {
 	const cardWidth = CARD_WIDTH
 	const cardHeight = CARD_HEIGHT
@@ -250,7 +251,7 @@ func (c *Permanent) DidDealDamage(damage int) {
 	}
 }
 
-func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
+func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
@@ -260,6 +261,12 @@ func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
 	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
 		selectedForCost.Owner.RemoveFromBoard(selectedForCost)
 		selectedForCost.Owner.Hand = append(selectedForCost.Owner.Hand, selectedForCost.Card.Name)
+	}
+}
+
+func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
+	if c.ActivatedAbility == nil {
+		panic("tried to activate a permanent without an ability")
 	}
 	if c.ActivatedAbility.EffectType == Untap {
 		target.Tapped = false
