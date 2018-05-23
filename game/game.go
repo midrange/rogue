@@ -344,6 +344,20 @@ func (g *Game) TakeAction(action *Action) {
 	}
 }
 
+// Removes targetSpell from the stack, as in when Counterspelled.
+func (g *Game) RemoveSpellFromStack(targetSpell *Action) {
+	newStack := []*Action{}
+	for _, spellAction := range g.Stack {
+		if spellAction != targetSpell {
+			newStack = append(newStack, spellAction)
+		}
+	}
+	if len(newStack) == len(g.Stack) {
+		fmt.Println("This should be fine, it means a Counterspell's target was countered.")
+	}
+	g.Stack = newStack
+}
+
 func (g *Game) IsOver() bool {
 	return g.Attacker().Lost() || g.Defender().Lost()
 }
@@ -580,14 +594,4 @@ func (g *Game) playActivatedAbility() {
 	}
 	g.Print()
 	panic("playActivatedAbility failed")
-}
-
-func (g *Game) RemoveSpellFromStack(targetSpell *Action) {
-	newStack := []*Action{}
-	for _, spellAction := range g.Stack {
-		if spellAction != targetSpell {
-			newStack = append(newStack, spellAction)
-		}
-	}
-	g.Stack = newStack
 }
