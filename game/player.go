@@ -328,8 +328,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		selectableLandCount := card.AlternateCastingCost.Effect.Selector.Count
 		islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
 		if len(islands) == selectableLandCount {
+			// just one action, all lands used for AlternateCastingCost
 			answer = p.addActionsForSelectedLands(card, answer, islands)
 		} else {
+			// multiple actions, different combos of lands for AlternateCastingCost
 			for i := 1; i <= len(islands)-1; i++ {
 				comb := combinations(makeRange(0, i), selectableLandCount)
 				for _, c := range comb {
@@ -795,9 +797,11 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
 	} else if e.EffectType == ManaSink {
-		// put game in ChooseToPayCost state
+		/*
+			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
+			as the next action
+		*/
 		p.game.ChoiceEffect = e
-		// put priority on SpellTarget's owner
 		p.game.PriorityId = p.game.Priority().Opponent().Id
 	} else {
 		panic("tried to resolve unknown effect")
