@@ -490,3 +490,34 @@ func TestSnap(t *testing.T) {
 		}
 	}
 }
+
+func TestCounterspell(t *testing.T) {
+	skirge := NewEmptyDeck()
+	skirge.Add(1, VaultSkirge)
+	skirge.Add(59, Island)
+
+	counter := NewEmptyDeck()
+	counter.Add(1, Counterspell)
+	counter.Add(59, Island)
+
+	g := NewGame(counter, skirge)
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.putCreatureOnStackAndPass()
+
+	if len(g.Stack) != 1 {
+		t.Fatal("expected there to be Vault Skirge on the stack")
+	}
+	g.playInstant()
+	if len(g.Stack) != 0 {
+		t.Fatal("expected there to be no spells on the stack after Counterspell")
+	}
+}

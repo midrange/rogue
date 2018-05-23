@@ -43,6 +43,7 @@ type Effect struct {
 	Source *Permanent
 
 	SelectedForCost *Permanent
+	SpellTarget     *Action
 	Target          *Permanent
 
 	// for effects from targeted spells
@@ -58,6 +59,7 @@ type EffectType int
 
 const (
 	AddMana EffectType = iota
+	Countermagic
 	DrawCard
 	ReturnToHand
 	Untap
@@ -68,8 +70,9 @@ func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
 	if action.WithKicker {
 		newEffect.Kicker = action.Card.Kicker
 	}
-	newEffect.Source = action.Source
-	newEffect.Target = action.Target
 	newEffect.Selected = action.Selected
+	newEffect.Source = action.Source
+	newEffect.SpellTarget = action.SpellTarget
+	newEffect.Target = action.Target
 	return newEffect
 }

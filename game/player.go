@@ -227,36 +227,47 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 // Appends actions to answer for an instant card.
 func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action {
 	if p.CanPayCost(card.CastingCost) {
-		// TODO - add player targets - this assumes all instants target creatures for now
-		for _, targetCreature := range p.game.Creatures() {
-			if p.IsLegalTarget(card, targetCreature) {
-				selectableLandCount := selectableLandCount(card)
-				if selectableLandCount > 0 { // snap
-					for i := 1; i <= len(p.game.Lands())-1; i++ {
-						comb := combinations(makeRange(0, i), selectableLandCount)
-						for _, c := range comb {
-							selected := []*Permanent{}
-							for _, index := range c {
-								selected = append(selected, p.game.Lands()[index])
+		// TODO - add player targets - this assumes all instants target creatures or spells
+		if card.Selector != nil && card.Selector.Type == Spell {
+			for _, spellAction := range p.game.Stack {
+				answer = append(answer, &Action{
+					Type:        Play,
+					Card:        card,
+					Owner:       p,
+					SpellTarget: spellAction,
+				})
+			}
+		} else {
+			for _, targetCreature := range p.game.Creatures() {
+				if p.IsLegalTarget(card, targetCreature) {
+					selectableLandCount := selectableLandCount(card)
+					if selectableLandCount > 0 { // snap
+						for i := 1; i <= len(p.game.Lands())-1; i++ {
+							comb := combinations(makeRange(0, i), selectableLandCount)
+							for _, c := range comb {
+								selected := []*Permanent{}
+								for _, index := range c {
+									selected = append(selected, p.game.Lands()[index])
+								}
+								answer = append(answer, &Action{
+									Type:     Play,
+									Card:     card,
+									Owner:    p,
+									Selected: selected,
+									Target:   targetCreature,
+								})
 							}
-							answer = append(answer, &Action{
-								Type:     Play,
-								Card:     card,
-								Owner:    p,
-								Selected: selected,
-								Target:   targetCreature,
-							})
 						}
+					} else {
+						answer = append(answer, &Action{
+							Type:   Play,
+							Card:   card,
+							Owner:  p,
+							Target: targetCreature,
+						})
 					}
-				} else {
-					answer = append(answer, &Action{
-						Type:   Play,
-						Card:   card,
-						Owner:  p,
-						Target: targetCreature,
-					})
-				}
 
+				}
 			}
 		}
 	}
@@ -736,6 +747,15 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 		for i := 0; i < drawCount; i++ {
 			p.Draw()
+		}
+	} else if e.EffectType == Countermagic {
+		targetSpell := e.SpellTarget
+		newStack := []*Action{}
+		for _, spellAction := range p.game.Stack {
+			if spellAction != targetSpell {
+				newStack = append(newStack, spellAction)
+			}
+			p.game.Stack = newStack
 		}
 	} else {
 		panic("tried to resolve unknown effect")

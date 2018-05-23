@@ -51,6 +51,7 @@ const (
 	NoCard CardName = iota
 
 	BurningTreeEmissary
+	Counterspell
 	EldraziSpawnToken
 	ElephantGuide
 	ElephantToken
@@ -85,6 +86,21 @@ var Cards = map[CardName]*Card{
 		CastingCost:                &Cost{Colorless: 2},
 		EntersTheBattlefieldEffect: &Effect{Colorless: 2, EffectType: AddMana},
 		Type: []Type{Creature},
+	},
+
+	/*
+		Counter target spell.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=202437
+	*/
+	Counterspell: &Card{
+		CastingCost: &Cost{Colorless: 2},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Countermagic,
+			},
+		},
+		Selector: &Selector{Type: Spell},
+		Type:     []Type{Instant},
 	},
 
 	/*

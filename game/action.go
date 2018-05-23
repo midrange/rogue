@@ -12,6 +12,7 @@ type Action struct {
 	Owner         *Player
 	Selected      []*Permanent // for non-targetted effects, such as in Snap
 	Source        *Permanent   // for targeted effects
+	SpellTarget   *Action
 	Target        *Permanent
 	With          *Permanent // for attacking
 	WithAlternate bool

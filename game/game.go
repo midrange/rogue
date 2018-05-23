@@ -414,6 +414,19 @@ func (g *Game) playLand() {
 	panic("playLand failed")
 }
 
+// putCreatureOnStack casts the first creature it sees in the hand
+func (g *Game) putCreatureOnStackAndPass() {
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.IsCreature() {
+			g.TakeAction(a)
+			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			return
+		}
+	}
+	g.Print()
+	panic("playCreature failed")
+}
+
 // playCreature plays the first creature it sees in the hand
 func (g *Game) playCreature() {
 	for _, a := range g.Priority().PlayActions(true, false) {
