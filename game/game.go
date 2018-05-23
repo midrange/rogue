@@ -47,6 +47,10 @@ type Game struct {
 	// Non-mana, non-cost effect actions go on the stack and can be responded to before they resolve
 	Stack []*Action
 
+	/*
+		The effect the Priority Player must decide on
+		Currently, the only ChoiceEffect is how to pay for Daze
+	*/
 	ChoiceEffect *Effect
 }
 
@@ -98,6 +102,7 @@ func (g *Game) Priority() *Player {
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
 
+	// Currently, the only ChoiceEffect that can be set is how to pay for Daze
 	if g.ChoiceEffect != nil {
 		return g.Priority().WaysToChoose(g.ChoiceEffect)
 	}

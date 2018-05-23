@@ -323,70 +323,51 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		}
 	}
 
+	// So far, Gush and Daze
 	if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
 		selectableLandCount := card.AlternateCastingCost.Effect.Selector.Count
-		if selectableLandCount > 0 { // gush or daze
-			islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
-			if len(islands) == selectableLandCount {
-				if card.HasSpellTargets() { // daze
-					for _, spellAction := range p.game.Stack {
-						answer = append(answer, &Action{
-							Type:          Play,
-							Card:          card,
-							Owner:         p,
-							Selected:      islands,
-							SpellTarget:   spellAction,
-							WithAlternate: true,
-						})
+		islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
+		if len(islands) == selectableLandCount {
+			answer = p.addActionsForSelectedLands(card, answer, islands)
+		} else {
+			for i := 1; i <= len(islands)-1; i++ {
+				comb := combinations(makeRange(0, i), selectableLandCount)
+				for _, c := range comb {
+					selected := []*Permanent{}
+					for _, index := range c {
+						selected = append(selected, islands[index])
 					}
-				} else { // gush
-					answer = append(answer, &Action{
-						Type:          Play,
-						Card:          card,
-						Owner:         p,
-						Selected:      islands,
-						WithAlternate: true,
-					})
-				}
-			} else {
-				for i := 1; i <= len(islands)-1; i++ {
-					comb := combinations(makeRange(0, i), selectableLandCount)
-					for _, c := range comb {
-						selected := []*Permanent{}
-						for _, index := range c {
-							selected = append(selected, islands[index])
-						}
-						if card.HasSpellTargets() {
-							for _, spellAction := range p.game.Stack {
-								answer = append(answer, &Action{
-									Type:          Play,
-									Card:          card,
-									Owner:         p,
-									Selected:      selected,
-									SpellTarget:   spellAction,
-									WithAlternate: true,
-								})
-							}
-						} else { // gush
-							answer = append(answer, &Action{
-								Type:          Play,
-								Card:          card,
-								Owner:         p,
-								Selected:      selected,
-								WithAlternate: true,
-							})
-
-						}
-
-					}
+					answer = p.addActionsForSelectedLands(card, answer, selected)
 				}
 
 			}
 		}
-
-		// answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true, Owner: p})
 	}
+	return answer
+}
 
+// Appends new Actions to answer for selectedLands, used for Gush and Daze
+func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, selectedLands []*Permanent) []*Action {
+	if card.HasSpellTargets() { // daze
+		for _, spellAction := range p.game.Stack {
+			answer = append(answer, &Action{
+				Type:          Play,
+				Card:          card,
+				Owner:         p,
+				Selected:      selectedLands,
+				SpellTarget:   spellAction,
+				WithAlternate: true,
+			})
+		}
+	} else { // gush
+		answer = append(answer, &Action{
+			Type:          Play,
+			Card:          card,
+			Owner:         p,
+			Selected:      selectedLands,
+			WithAlternate: true,
+		})
+	}
 	return answer
 }
 
