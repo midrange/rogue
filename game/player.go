@@ -166,11 +166,11 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 						costEffect.SelectedForCost = land
 						answer = append(answer,
 							&Action{
+								Type:   Activate,
 								Cost:   &Cost{Effect: costEffect},
 								Owner:  p,
 								Source: perm,
 								Target: c,
-								Type:   Activate,
 							})
 					}
 				}
