@@ -34,6 +34,8 @@ const (
 	Activate
 	OfferToResolveNextOnStack
 	ResolveNextOnStack
+	DeclineChoiceAction
+	DecideOnChoiceAction
 )
 
 func (a *Action) targetPronoun(p *Player) string {

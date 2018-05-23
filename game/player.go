@@ -180,6 +180,30 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 	return answer
 }
 
+// So far, this only deals with a player choosing how to pay for Daze
+func (p *Player) WaysToChoose(effect *Effect) []*Action {
+	answer := []*Action{}
+
+	for _, land := range p.Lands() {
+		if !land.Tapped {
+			answer = append(answer, &Action{
+				Type:     DecideOnChoiceAction,
+				Selected: []*Permanent{land},
+			})
+		}
+	}
+	if p.ColorlessManaPool > 0 {
+		answer = append(answer, &Action{
+			Type: DecideOnChoiceAction,
+		})
+	}
+
+	answer = append(answer, &Action{
+		Type: DeclineChoiceAction,
+	})
+	return answer
+}
+
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
@@ -301,27 +325,66 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 
 	if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
 		selectableLandCount := card.AlternateCastingCost.Effect.Selector.Count
-		if selectableLandCount > 0 { // gush
+		if selectableLandCount > 0 { // gush or daze
 			islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
-			for i := 1; i <= len(islands)-1; i++ {
-				comb := combinations(makeRange(0, i), selectableLandCount)
-				for _, c := range comb {
-					selected := []*Permanent{}
-					for _, index := range c {
-						selected = append(selected, islands[index])
+			if len(islands) == selectableLandCount {
+				if card.HasSpellTargets() { // daze
+					for _, spellAction := range p.game.Stack {
+						answer = append(answer, &Action{
+							Type:          Play,
+							Card:          card,
+							Owner:         p,
+							Selected:      islands,
+							SpellTarget:   spellAction,
+							WithAlternate: true,
+						})
 					}
+				} else { // gush
 					answer = append(answer, &Action{
 						Type:          Play,
 						Card:          card,
 						Owner:         p,
-						Selected:      selected,
+						Selected:      islands,
 						WithAlternate: true,
 					})
 				}
+			} else {
+				for i := 1; i <= len(islands)-1; i++ {
+					comb := combinations(makeRange(0, i), selectableLandCount)
+					for _, c := range comb {
+						selected := []*Permanent{}
+						for _, index := range c {
+							selected = append(selected, islands[index])
+						}
+						if card.HasSpellTargets() {
+							for _, spellAction := range p.game.Stack {
+								answer = append(answer, &Action{
+									Type:          Play,
+									Card:          card,
+									Owner:         p,
+									Selected:      selected,
+									SpellTarget:   spellAction,
+									WithAlternate: true,
+								})
+							}
+						} else { // gush
+							answer = append(answer, &Action{
+								Type:          Play,
+								Card:          card,
+								Owner:         p,
+								Selected:      selected,
+								WithAlternate: true,
+							})
+
+						}
+
+					}
+				}
+
 			}
 		}
 
-		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true, Owner: p})
+		// answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true, Owner: p})
 	}
 
 	return answer
@@ -749,14 +812,12 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			p.Draw()
 		}
 	} else if e.EffectType == Countermagic {
-		targetSpell := e.SpellTarget
-		newStack := []*Action{}
-		for _, spellAction := range p.game.Stack {
-			if spellAction != targetSpell {
-				newStack = append(newStack, spellAction)
-			}
-			p.game.Stack = newStack
-		}
+		p.game.RemoveSpellFromStack(e.SpellTarget)
+	} else if e.EffectType == ManaSink {
+		// put game in ChooseToPayCost state
+		p.game.ChoiceEffect = e
+		// put priority on SpellTarget's owner
+		p.game.PriorityId = p.game.Priority().Opponent().Id
 	} else {
 		panic("tried to resolve unknown effect")
 	}

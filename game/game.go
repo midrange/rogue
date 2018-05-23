@@ -46,6 +46,8 @@ type Game struct {
 
 	// Non-mana, non-cost effect actions go on the stack and can be responded to before they resolve
 	Stack []*Action
+
+	ChoiceEffect *Effect
 }
 
 //go:generate stringer -type=CardName
@@ -95,6 +97,10 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
+
+	if g.ChoiceEffect != nil {
+		return g.Priority().WaysToChoose(g.ChoiceEffect)
+	}
 
 	if len(g.Stack) > 0 {
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -242,10 +248,34 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 
+	// when Daze isn't paid, the spell it targetted gets countered
+	if action.Type == DeclineChoiceAction {
+		g.RemoveSpellFromStack(g.ChoiceEffect.SpellTarget)
+		g.PriorityId = g.PriorityId.OpponentId()
+		g.ChoiceEffect = nil
+		return
+	}
+
+	// Daze gets paid
+	if action.Type == DecideOnChoiceAction {
+		if action.Selected == nil {
+			g.Priority().ColorlessManaPool--
+		} else {
+			for _, land := range action.Selected {
+				land.Tapped = true
+			}
+		}
+		g.PriorityId = g.PriorityId.OpponentId()
+		g.ChoiceEffect = nil
+		return
+	}
+
 	if action.Type == OfferToResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
 		return
-	} else if action.Type == ResolveNextOnStack {
+	}
+
+	if action.Type == ResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackAction := g.Stack[len(g.Stack)-1]
 		if stackAction.Type == Play {
@@ -545,4 +575,14 @@ func (g *Game) playActivatedAbility() {
 	}
 	g.Print()
 	panic("playActivatedAbility failed")
+}
+
+func (g *Game) RemoveSpellFromStack(targetSpell *Action) {
+	newStack := []*Action{}
+	for _, spellAction := range g.Stack {
+		if spellAction != targetSpell {
+			newStack = append(newStack, spellAction)
+		}
+	}
+	g.Stack = newStack
 }
