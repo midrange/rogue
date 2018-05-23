@@ -240,20 +240,20 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 								selected = append(selected, p.game.Lands()[index])
 							}
 							answer = append(answer, &Action{
+								Type:     Play,
 								Card:     card,
 								Owner:    p,
 								Selected: selected,
 								Target:   targetCreature,
-								Type:     Play,
 							})
 						}
 					}
 				} else {
 					answer = append(answer, &Action{
+						Type:   Play,
 						Card:   card,
 						Owner:  p,
 						Target: targetCreature,
-						Type:   Play,
 					})
 				}
 
@@ -264,10 +264,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		for _, target := range p.game.Creatures() {
 			if p.IsLegalTarget(card, target) {
 				answer = append(answer, &Action{
+					Type:       Play,
 					Card:       card,
 					Owner:      p,
 					Target:     target,
-					Type:       Play,
 					WithKicker: true,
 				})
 			}
@@ -278,10 +278,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		for _, target := range p.game.Creatures() {
 			if p.IsLegalTarget(card, target) {
 				answer = append(answer, &Action{
+					Type:          Play,
 					Card:          card,
 					Owner:         p,
 					Target:        target,
-					Type:          Play,
 					WithPhyrexian: true,
 				})
 			}
@@ -300,10 +300,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						selected = append(selected, islands[index])
 					}
 					answer = append(answer, &Action{
+						Type:          Play,
 						Card:          card,
 						Owner:         p,
 						Selected:      selected,
-						Type:          Play,
 						WithAlternate: true,
 					})
 				}
@@ -469,8 +469,8 @@ func (p *Player) BlockActions() []*Action {
 				if perm.CanBlock(attacker) {
 					answer = append(answer, &Action{
 						Type:   Block,
-						With:   perm,
 						Target: attacker,
+						With:   perm,
 					})
 				}
 			}
