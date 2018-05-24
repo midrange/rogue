@@ -237,15 +237,22 @@ func (c *Permanent) HandleEnterTheBattlefield(action *Action) {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 
+	if action == nil {
+		return
+	}
+
 	// TODO handle generically, this just handles ETB effects that target spells
 	if action.EntersTheBattleFieldSpellTarget != nil {
-			stack := c.Owner.Game.Stack
-			stack = append(stack, &Action{
-				Type:        EntersTheBattlefieldEffect,
-				SpellTarget: action.EntersTheBattleFieldSpellTarget,
-				Card:        c.Card,
-			})
-		}
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &Action{
+			Type:        EntersTheBattlefieldEffect,
+			SpellTarget: action.EntersTheBattleFieldSpellTarget,
+			Card:        c.Card,
+		})
+	} else if action.Card.EntersTheBattlefieldEffect != nil {
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &Action{
+			Type: EntersTheBattlefieldEffect,
+			Card: c.Card,
+		})
 	}
 }
 

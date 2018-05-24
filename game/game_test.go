@@ -588,7 +588,7 @@ func TestDazePaid(t *testing.T) {
 	}
 }
 
-func TestSpellstutterSprite(t *testing.T) {
+func TestSpellstutterSpriteSucceeds(t *testing.T) {
 	sprite := NewEmptyDeck()
 	sprite.Add(1, SpellstutterSprite)
 	sprite.Add(1, NettleSentinel)
@@ -618,13 +618,76 @@ func TestSpellstutterSprite(t *testing.T) {
 	}
 	g.putCreatureOnStackAndPass()
 
-	if len(g.Stack) != 3 {
+	if len(g.Stack) != 2 {
 		t.Fatal("expected two creatures on the stack")
 	}
 
 	g.TakeAction(&Action{Type: ResolveNextOnStack})
 
+	if len(g.Stack) != 2 {
+		t.Fatal("expected creature and spellstutter on stack")
+	}
+
+	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+	g.TakeAction(&Action{Type: ResolveNextOnStack})
+
 	if len(g.Stack) != 0 {
-		t.Fatal("expected 0 creatures on the stack")
+		t.Fatal("expected 0 creatures on the stack ", g.Stack)
+	}
+}
+
+func TestSpellstutterSpriteFails(t *testing.T) {
+	sprite := NewEmptyDeck()
+	sprite.Add(1, VaultSkirge)
+	sprite.Add(1, SpellstutterSprite)
+	sprite.Add(58, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(sprite, allForests)
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+
+	g.Print()
+
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.Name == VaultSkirge {
+			g.TakeAction(a)
+			break
+		}
+	}
+	g.putCreatureOnStackAndPass()
+
+	if len(g.Stack) != 2 {
+		t.Fatal("expected two creatures on the stack")
+	}
+
+	g.TakeAction(&Action{Type: ResolveNextOnStack})
+
+	if len(g.Stack) != 2 {
+		t.Fatal("expected creature and spellstutter on stack")
+	}
+
+	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+	g.TakeAction(&Action{Type: ResolveNextOnStack})
+
+	if len(g.Stack) != 1 {
+		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
 	}
 }

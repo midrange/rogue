@@ -8,7 +8,7 @@ type Action struct {
 	Type ActionType
 
 	Card                            *Card
-	EntersTheBattleFieldSpellTarget *Action
+	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
 	Cost                            *Cost
 	Owner                           *Player
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap

@@ -253,7 +253,6 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
-
 	/*
 	   when Daze isn't paid, the spell it targetted gets countered
 
@@ -294,17 +293,22 @@ func (g *Game) TakeAction(action *Action) {
 	if action.Type == ResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackAction := g.Stack[len(g.Stack)-1]
+		g.Stack = g.Stack[:len(g.Stack)-1]
 		if stackAction.Type == Play {
 			stackAction.Owner.ResolveSpell(stackAction)
 		} else if stackAction.Type == Activate {
 			stackAction.Owner.ResolveActivatedAbility(stackAction)
-		}
-		g.Stack = g.Stack[:len(g.Stack)-1]
-		return
-	}
+		} else if stackAction.Type == EntersTheBattlefieldEffect {
+			for _, perm := range g.Priority().Board {
+				if perm.Card == stackAction.Card {
+					effect := UpdatedEffectForAction(stackAction, stackAction.Card.EntersTheBattlefieldEffect)
+					g.Priority().ResolveEffect(effect, perm)
+					break
+				}
+			}
 
-	if action.Type == EntersTheBattlefieldEffect {
-		g.Priority().ResolveEffect(action.Card.EntersTheBattlefieldEffect, action.Card)
+		}
+		return
 	}
 
 	if action.Type == Pass {
@@ -388,7 +392,7 @@ func (g *Game) newPermanent(card *Card, owner *Player, action *Action) *Permanen
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
 	owner.Board = append(owner.Board, perm)
-	perm.HandleEnterTheBattlefield()
+	perm.HandleEnterTheBattlefield(action)
 	return perm
 }
 
@@ -505,6 +509,10 @@ func (g *Game) TakeActionAndResolve(action *Action) {
 	g.TakeAction(action)
 	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
 	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	if action.Card != nil && action.Card.EntersTheBattlefieldEffect != nil {
+		g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+		g.TakeAction(&Action{Type: ResolveNextOnStack})
+	}
 }
 
 // playAura plays the first aura it sees in the hand on its own creature

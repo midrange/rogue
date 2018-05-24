@@ -579,7 +579,7 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 }
 
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
-	p.game.Stack = append(g.Stack, action)
+	p.game.Stack = append(p.game.Stack, action)
 	p.RemoveCardForActionFromHand(action)
 
 	card := action.Card
@@ -644,7 +644,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 }
 
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
-	p.game.Stack = append(g.Stack, action)
+	p.game.Stack = append(p.game.Stack, a)
 	a.Source.PayForActivatedAbility(a.Cost, a.Target)
 }
 
@@ -789,10 +789,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					controlCount++
 				}
 			}
-			fmt.Println(e)
-			fmt.Println(e.SpellTarget)
-			fmt.Println(e.SpellTarget.Card)
-			fmt.Println(e.SpellTarget.Card.CastingCost)
 			if controlCount < e.SpellTarget.Card.CastingCost.Colorless {
 				return
 			}
