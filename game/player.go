@@ -482,7 +482,11 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 						panic("unhandled EntersTheBattlefieldEffect.Selector.Type")
 					}
 				} else {
-					answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+					answer = append(answer, &Action{
+						Type:  Play,
+						Card:  card,
+						Owner: p,
+					})
 				}
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
@@ -596,7 +600,7 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p)
+	p.game.newPermanent(card, p, action)
 	p.LandPlayedThisTurn++
 }
 
@@ -613,7 +617,7 @@ func (p *Player) ResolveSpell(action *Action) {
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p)
+		perm := p.game.newPermanent(card, p, action)
 
 		if card.IsEnchantCreature() {
 			action.Target.Auras = append(action.Target.Auras, perm)
@@ -800,7 +804,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 	}
 	if e.Summon != NoCard {
-		p.game.newPermanent(e.Summon.Card(), p)
+		p.game.newPermanent(e.Summon.Card(), p, nil)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
 		effectedPermanent := e.Target

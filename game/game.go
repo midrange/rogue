@@ -378,7 +378,7 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, owner *Player) *Permanent {
+func (g *Game) newPermanent(card *Card, owner *Player, action *Action) *Permanent {
 	perm := &Permanent{
 		Card:       card,
 		Owner:      owner,
