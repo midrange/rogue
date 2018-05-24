@@ -243,6 +243,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
+		if card.Flash {
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
+		}
+
 	}
 
 	return answer
@@ -755,9 +759,28 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			if !controlsOne {
 				return
 			}
-		} else {
+		}
+
+		if e.Condition.ConvertedManaCostLTE != NoSubtype {
+			controlCount := 0
+			for _, boardPerm := range p.Board {
+				if boardPerm.HasSubtype(Faerie) {
+					controlCount++
+				}
+			}
+			fmt.Println(e)
+			fmt.Println(e.SpellTarget)
+			fmt.Println(e.SpellTarget.Card)
+			fmt.Println(e.SpellTarget.Card.CastingCost)
+			if controlCount < e.SpellTarget.Card.CastingCost.Colorless {
+				return
+			}
+		}
+		if e.Condition.ControlAnother == NoCard &&
+			e.Condition.ConvertedManaCostLTE == NoSubtype {
 			panic("unhandled Condition in ResolveEffect")
 		}
+
 	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)

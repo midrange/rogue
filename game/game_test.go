@@ -587,3 +587,44 @@ func TestDazePaid(t *testing.T) {
 		t.Fatal("expected there to be 2 in play after Daze")
 	}
 }
+
+func TestSpellstutterSprite(t *testing.T) {
+	sprite := NewEmptyDeck()
+	sprite.Add(1, SpellstutterSprite)
+	sprite.Add(1, NettleSentinel)
+	sprite.Add(58, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(sprite, allForests)
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.Name == NettleSentinel {
+			g.TakeAction(a)
+		}
+	}
+	g.putCreatureOnStackAndPass()
+
+	if len(g.Stack) != 3 {
+		t.Fatal("expected two creatures on the stack")
+	}
+
+	g.TakeAction(&Action{Type: ResolveNextOnStack})
+
+	if len(g.Stack) != 0 {
+		t.Fatal("expected 0 creatures on the stack")
+	}
+}

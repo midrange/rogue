@@ -237,6 +237,10 @@ func (c *Permanent) HandleComingIntoPlay() {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 	if c.EntersTheBattlefieldEffect != nil {
+		// g.Stack = append(g.Stack, action)
+
+		// EntersTheBattlefieldEffect needs to be an action?
+
 		c.Owner.ResolveEffect(c.EntersTheBattlefieldEffect, c)
 	}
 }

@@ -42,6 +42,7 @@ const (
 	LandMountain
 	LandPlains
 	LandSwamp
+	Faerie
 )
 
 //go:generate stringer -type=Type

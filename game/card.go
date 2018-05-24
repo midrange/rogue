@@ -14,6 +14,7 @@ type Card struct {
 	Effects                    []*Effect
 	EntersGraveyardEffect      *Effect
 	EntersTheBattlefieldEffect *Effect
+	Flash                      bool
 	Flying                     bool
 	GroundEvader               bool // only blockable by fliers (like Silhana Ledgewalker)
 	Hexproof                   bool
@@ -70,6 +71,7 @@ const (
 	SilhanaLedgewalker
 	SkarrganPitskulk
 	Snap
+	SpellstutterSprite
 	VaultSkirge
 	VinesOfVastwood
 )
@@ -173,8 +175,9 @@ var Cards = map[CardName]*Card{
 		BaseToughness:              1,
 		CastingCost:                &Cost{Colorless: 1},
 		EntersTheBattlefieldEffect: &Effect{Condition: &Condition{ControlAnother: FaerieMiscreant}, EffectType: DrawCard},
-		Flying: true,
-		Type:   []Type{Creature},
+		Flying:  true,
+		Subtype: []Subtype{Faerie},
+		Type:    []Type{Creature},
 	},
 
 	/*
@@ -377,6 +380,25 @@ var Cards = map[CardName]*Card{
 			},
 		},
 		Type: []Type{Instant},
+	},
+
+	/*
+		Flash
+		Flying
+		When Spellstutter Sprite enters the battlefield, counter target spell with converted mana
+		cost X or less, where X is the number of Faeries you control.
+	*/
+	SpellstutterSprite: &Card{
+		BasePower:     1,
+		BaseToughness: 1,
+		CastingCost:   &Cost{Colorless: 2},
+		EntersTheBattlefieldEffect: &Effect{
+			EffectType: Countermagic,
+			Condition:  &Condition{ConvertedManaCostLTE: Faerie}},
+		Flash:   true,
+		Flying:  true,
+		Subtype: []Subtype{Faerie},
+		Type:    []Type{Creature},
 	},
 
 	/*
