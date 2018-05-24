@@ -105,7 +105,11 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	// Currently, the only ChoiceEffect that can be set is how to pay for Daze
 	// TODO maybe some other data stucture beside ChoiceEffect - a pointer to the action on stack instead?
 	if g.ChoiceEffect != nil {
-		return g.Priority().WaysToChoose(g.ChoiceEffect)
+		if g.ChoiceEffect.EffectType == ManaSink {
+			return g.Priority().WaysToChoose(g.ChoiceEffect)
+		} else { // Ponder
+			return g.Priority().WaysToArrange(g.ChoiceEffect)
+		}
 	}
 
 	if len(g.Stack) > 0 {
@@ -266,6 +270,15 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 
+	if action.Type == DecideOnPonder {
+
+		// do whichever arrangement
+		//   for card in action.cards - return them to deck
+		// set ChoiceEffect to be shuffle, then draw
+		//
+		return
+	}
+
 	/*
 	   Daze gets paid
 
@@ -280,6 +293,7 @@ func (g *Game) TakeAction(action *Action) {
 				land.Tapped = true
 			}
 		}
+
 		g.PriorityId = g.PriorityId.OpponentId()
 		g.ChoiceEffect = nil
 		return

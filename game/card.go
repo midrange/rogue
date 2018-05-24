@@ -292,6 +292,30 @@ var Cards = map[CardName]*Card{
 	},
 
 	/*
+		Look at the top three cards of your library, then put them back in any order.
+		You may shuffle your library.
+		Draw a card.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=ponder
+	*/
+	Ponder: &Card{
+		CastingCost: &Cost{Colorless: 1},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: LookArrange,
+				Selector:   &Selector{Count: 3},
+			},
+			&Effect{
+				EffectType: ShuffleOption,
+			},
+			&Effect{
+				EffectType: DrawCard,
+				Selector:   &Selector{Count: 2},
+			},
+		},
+		Type: []Type{Instant},
+	},
+
+	/*
 		Creature — Elf
 		Return a Forest you control to its owner's hand: Untap target creature.
 		Activate this ability only once each turn.

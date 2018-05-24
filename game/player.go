@@ -204,6 +204,18 @@ func (p *Player) WaysToChoose(effect *Effect) []*Action {
 	return answer
 }
 
+func (p *Player) WaysToArrange(effect *Effect) []*Action {
+	// return all ways to return ponder
+	// 123, 132, 213, 231, 312, 321
+
+	cards := []*Card{}
+	for i := 0; i < Min(e.Selector.Count, len(p.Deck.Cards)); i++ {
+		cards = append(cards, p.Deck.Draw())
+	}
+
+	// DecideOnPonder per ponder arrangement
+}
+
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
@@ -843,6 +855,12 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		*/
 		p.game.ChoiceEffect = e
 		p.game.PriorityId = p.game.Priority().Opponent().Id
+	} else if e.EffectType == LookArrangeShuffleDraw {
+		p.game.ChoiceEffect = e
+		p.game.PriorityId = p.game.Priority().Opponent().Id
+		// view top 3
+		// choose which card to put back 3 times
+		// choose shuffle or no
 	} else {
 		panic("tried to resolve unknown effect")
 	}

@@ -64,6 +64,7 @@ const (
 	ManaSink
 	ReturnToHand
 	Untap
+	LookArrangeShuffleDraw
 )
 
 func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {

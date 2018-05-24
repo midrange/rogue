@@ -38,6 +38,7 @@ const (
 	DeclineChoiceAction
 	DecideOnChoiceAction
 	EntersTheBattlefieldEffect
+	DecideOnPonder
 )
 
 func (a *Action) targetPronoun(p *Player) string {
