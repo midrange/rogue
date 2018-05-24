@@ -303,6 +303,10 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 
+	if action.Type == EntersTheBattlefieldEffect {
+		g.Priority().ResolveEffect(action.Card.EntersTheBattlefieldEffect, action.Card)
+	}
+
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -326,11 +330,9 @@ func (g *Game) TakeAction(action *Action) {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
 			} else {
-				g.Stack = append(g.Stack, action)
 				g.Priority().PayCostsAndPutSpellOnStack(action)
 			}
 		} else if action.Type == Activate {
-			g.Stack = append(g.Stack, action)
 			g.Priority().PayCostsAndPutAbilityOnStack(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
@@ -386,7 +388,7 @@ func (g *Game) newPermanent(card *Card, owner *Player) *Permanent {
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
 	owner.Board = append(owner.Board, perm)
-	perm.HandleComingIntoPlay()
+	perm.HandleEnterTheBattlefield()
 	return perm
 }
 

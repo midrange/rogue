@@ -387,6 +387,7 @@ var Cards = map[CardName]*Card{
 		Flying
 		When Spellstutter Sprite enters the battlefield, counter target spell with converted mana
 		cost X or less, where X is the number of Faeries you control.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=139429
 	*/
 	SpellstutterSprite: &Card{
 		BasePower:     1,
@@ -394,7 +395,9 @@ var Cards = map[CardName]*Card{
 		CastingCost:   &Cost{Colorless: 2},
 		EntersTheBattlefieldEffect: &Effect{
 			EffectType: Countermagic,
-			Condition:  &Condition{ConvertedManaCostLTE: Faerie}},
+			Condition:  &Condition{ConvertedManaCostLTE: Faerie},
+			Selector:   &Selector{Type: Spell},
+		},
 		Flash:   true,
 		Flying:  true,
 		Subtype: []Subtype{Faerie},
@@ -535,6 +538,15 @@ func (c *Card) HasSpellTargets() bool {
 			if e.Selector.Type == Spell {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+func (c *Card) HasEntersTheBattlefieldTargets() bool {
+	if c.EntersTheBattlefieldEffect != nil {
+		if c.EntersTheBattlefieldEffect.Selector != nil {
+			return true
 		}
 	}
 	return false

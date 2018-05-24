@@ -7,17 +7,18 @@ import (
 type Action struct {
 	Type ActionType
 
-	Card          *Card
-	Cost          *Cost
-	Owner         *Player
-	Selected      []*Permanent // for non-targetted effects, such as in Snap
-	Source        *Permanent   // for targeted effects
-	SpellTarget   *Action
-	Target        *Permanent
-	With          *Permanent // for attacking
-	WithAlternate bool
-	WithKicker    bool
-	WithPhyrexian bool
+	Card                            *Card
+	EntersTheBattleFieldSpellTarget *Action
+	Cost                            *Cost
+	Owner                           *Player
+	Selected                        []*Permanent // for non-targetted effects, such as in Snap
+	Source                          *Permanent   // for targeted effects
+	SpellTarget                     *Action
+	Target                          *Permanent
+	With                            *Permanent // for attacking
+	WithAlternate                   bool
+	WithKicker                      bool
+	WithPhyrexian                   bool
 }
 
 //go:generate stringer -type=ActionType
@@ -36,6 +37,7 @@ const (
 	ResolveNextOnStack
 	DeclineChoiceAction
 	DecideOnChoiceAction
+	EntersTheBattlefieldEffect
 )
 
 func (a *Action) targetPronoun(p *Player) string {

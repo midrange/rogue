@@ -468,7 +468,22 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 	} else if !card.IsInstant() {
 		if p.CanPayCost(card.CastingCost) {
 			if card.IsCreature() {
-				answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+				if card.HasEntersTheBattlefieldTargets() {
+					if card.EntersTheBattlefieldEffect.Selector.Type == Spell {
+						for _, spellTarget := range p.game.Stack {
+							answer = append(answer, &Action{
+								Type: Play,
+								Card: card,
+								EntersTheBattleFieldSpellTarget: spellTarget,
+								Owner: p,
+							})
+						}
+					} else {
+						panic("unhandled EntersTheBattlefieldEffect.Selector.Type")
+					}
+				} else {
+					answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+				}
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
 					answer = append(answer, &Action{
@@ -560,6 +575,7 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 }
 
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
+	p.game.Stack = append(g.Stack, action)
 	p.RemoveCardForActionFromHand(action)
 
 	card := action.Card
@@ -624,6 +640,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 }
 
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
+	p.game.Stack = append(g.Stack, action)
 	a.Source.PayForActivatedAbility(a.Cost, a.Target)
 }
 
