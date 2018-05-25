@@ -180,7 +180,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 	return answer
 }
 
-// So far, this only deals with a player choosing how to pay for Daze
+// So far, this only deals with a player choosing how to pay for Daze.
 func (p *Player) WaysToChoose(effect *Effect) []*Action {
 	answer := []*Action{}
 
@@ -204,9 +204,11 @@ func (p *Player) WaysToChoose(effect *Effect) []*Action {
 	return answer
 }
 
+/*
+	Return actions for all ways to do a Ponder like effect.
+	For Ponder, Actions includes 6 permutations returning 3 cards to deck, and shuffling.
+*/
 func (p *Player) WaysToArrange(effect *Effect) []*Action {
-	// Return action for all ways to Ponder.
-	// All permutations of card return (6), or shuffle.
 
 	cards := []CardName{}
 	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
@@ -902,16 +904,15 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
-	} else if e.EffectType == ManaSink {
+	} else if e.EffectType == ManaSink || e.EffectType == LookArrangeShuffleDraw {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
 			as the next action
 		*/
 		p.game.ChoiceEffect = e
-		p.game.PriorityId = p.game.Priority().Opponent().Id
-	} else if e.EffectType == LookArrangeShuffleDraw {
-		// next action the player will decide on Ponder
-		p.game.ChoiceEffect = e
+		if e.EffectType == ManaSink {
+			p.game.PriorityId = p.game.Priority().Opponent().Id
+		}
 	} else {
 		panic("tried to resolve unknown effect")
 	}
