@@ -287,12 +287,14 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 
-	if action.Type == Scry {
+	if action.Type == DecideOnScry {
 		for index, cardList := range action.ScryCards {
-			if index == 0 {
-				g.Priority().Deck.AddToTop(1, card)
-			} else {
-				g.Priority().Deck.Add(1, card)
+			for _, card := range cardList {
+				if index == 0 {
+					g.Priority().Deck.AddToTop(1, card)
+				} else {
+					g.Priority().Deck.Add(1, card)
+				}
 			}
 		}
 		g.Priority().Draw()

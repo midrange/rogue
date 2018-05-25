@@ -42,7 +42,7 @@ const (
 	EntersTheBattlefieldEffect
 	DecideOnPonder
 	ShuffleOnPonder
-	Scry
+	DecideOnScry
 )
 
 func (a *Action) targetPronoun(p *Player) string {

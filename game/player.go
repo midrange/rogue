@@ -278,8 +278,8 @@ func (p *Player) WaysToScry(effect *Effect) []*Action {
 
 	perms := permutations(cards)
 	slicedPerms := [][][]CardName{}
-	for perm := range perms {
-		for index, CardName := range perm {
+	for _, perm := range perms {
+		for index, _ := range perm {
 			top := perm[:index]
 			bottom := perm[index:]
 			slicedPerms = append(slicedPerms, [][]CardName{top, bottom})
@@ -289,7 +289,7 @@ func (p *Player) WaysToScry(effect *Effect) []*Action {
 	answer := []*Action{}
 	for _, slicedPermutation := range slicedPerms {
 		answer = append(answer, &Action{
-			Type:      Scry,
+			Type:      DecideOnScry,
 			ScryCards: slicedPermutation,
 			Owner:     p,
 		})
@@ -937,7 +937,9 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
-	} else if e.EffectType == ManaSink || e.EffectType == LookArrangeShuffleDraw {
+	} else if e.EffectType == ManaSink ||
+		e.EffectType == LookArrangeShuffleDraw ||
+		e.EffectType == Scry {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
 			as the next action
