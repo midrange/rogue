@@ -63,7 +63,18 @@ const (
 	Spell
 )
 
+//go:generate stringer -type=AttackStatus
+type AttackStatus int
+
+const (
+	NotInCombat AttackStatus = iota
+	Attacking
+	Blocked
+	Blocking
+)
+
 type Selector struct {
+	AttackStatus AttackStatus
 	Count        int
 	ControlledBy PlayerSelector
 	Supertype    Supertype

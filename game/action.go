@@ -21,6 +21,7 @@ type Action struct {
 	With                            *Permanent // for attacking
 	WithAlternate                   bool
 	WithKicker                      bool
+	WithNinjitsu                    bool
 	WithPhyrexian                   bool
 }
 

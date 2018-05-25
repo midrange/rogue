@@ -223,9 +223,23 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
+		if card.Ninjitsu != nil && g.game.Phase == CombatDamage {
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
+		}
+
 	}
 
 	return answer
+}
+
+func removePermanent(attackers []*Permanent, attacker *Permanent) []*Permanent {
+	reducedAttackers := []*Permanent{}
+	for _, a := range attackers {
+		if a != attacker {
+			reducedAttackers = append(reducedAttackers, a)
+		}
+	}
+	return reducedAttackers
 }
 
 // Appends actions to answer for an instant card.
@@ -481,9 +495,35 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				})
 			}
 		}
+
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
 			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
 		}
+
+		if card.Ninjitsu != nil && p.CanPayCost(card.Ninjitsu) && p.game.Phase == CombatDamage {
+			attackers := []*Permanent{}
+			for _, perm := range p.Board {
+				if perm.Attacking {
+					attackers = append(attackers, perm)
+				}
+			}
+
+			for _, perm := range p.Opponent().Board {
+				if perm.Blocking != nil {
+					attackers = removePermanent(attackers, perm.Blocking)
+				}
+			}
+			for _, a := range attackers {
+				answer = append(answer, &Action{
+					Type:         Play,
+					Card:         card,
+					Owner:        p,
+					Selected:     a,
+					WithNinjitsu: true,
+				})
+			}
+		}
+
 	}
 	return answer
 }
@@ -865,6 +905,8 @@ func (p *Player) CanPayCost(c *Cost) bool {
 				count := Max(c.Effect.Selector.Count, 1)
 				return len(p.landsOfSubtype(c.Effect.Selector.Subtype)) >= count
 			}
+
+			// TODO HANDLE NINJITSU
 		}
 	}
 	return false
