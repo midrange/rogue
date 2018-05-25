@@ -544,7 +544,8 @@ func TestDazeNotPaid(t *testing.T) {
 	}
 	g.playInstant()
 	g.TakeAction(&Action{
-		Type: DeclineChoiceAction,
+		Type:        MakeChoice,
+		AfterEffect: &Effect{EffectType: Countermagic, SpellTarget: g.ChoiceEffect.SpellTarget},
 	})
 	if len(g.Stack) != 0 {
 		t.Fatal("expected there to be no spells on the stack after Daze")
@@ -575,10 +576,13 @@ func TestDazePaid(t *testing.T) {
 		t.Fatal("expected there to be Vault Skirge on the stack")
 	}
 	g.playInstant()
-	g.TakeAction(&Action{
-		Type:     DecideOnChoiceAction,
-		Selected: []*Permanent{g.Priority().Lands()[0]},
-	})
+
+	// pay for Daze
+	for _, a := range g.Priority().PlayActions(true, false) {
+		g.TakeAction(a)
+		break
+	}
+
 	g.TakeAction(&Action{Type: ResolveNextOnStack})
 	if len(g.Creatures()) != 1 {
 		t.Fatal("expected there to be Vault Skirge in play after Daze was paid")

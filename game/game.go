@@ -102,18 +102,10 @@ func (g *Game) Priority() *Player {
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
 
-	// Currently, the only ChoiceEffect that can be set is how to pay for Daze
 	// TODO maybe some other data stucture beside ChoiceEffect - a pointer to the action on stack instead?
+	// Currently handles Daze, Scry effects, and Ponder
 	if g.ChoiceEffect != nil {
-		if g.ChoiceEffect.EffectType == ManaSink {
-			return g.Priority().WaysToChoose(g.ChoiceEffect)
-		} else if g.ChoiceEffect.EffectType == TopScry {
-			return g.Priority().WaysToArrange(g.ChoiceEffect)
-		} else if g.ChoiceEffect.EffectType == Scry {
-			return g.Priority().WaysToScry(g.ChoiceEffect)
-		} else {
-			panic("unhandled ChoiceEffect")
-		}
+		return g.Priority().OptionsForChoiceEffect(g.ChoiceEffect)
 	}
 
 	if len(g.Stack) > 0 {
@@ -262,62 +254,18 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 	/*
-	   when Daze isn't paid, the spell it targetted gets countered
-
 	   TODO this could be more abstract... instead of raw calling RemoveSpellFromStack,
 	   it could execute an arbitrary Action/Effect
 	*/
-	if action.Type == DeclineChoiceAction {
-		g.RemoveSpellFromStack(g.ChoiceEffect.SpellTarget)
-		g.PriorityId = g.PriorityId.OpponentId()
+
+	if action.Type == MakeChoice {
+		if action.ShouldSwitchPriority {
+			g.PriorityId = g.PriorityId.OpponentId()
+		}
+		g.Priority().ResolveEffect(action.AfterEffect, nil)
 		g.ChoiceEffect = nil
 		return
-	}
 
-	if action.Type == ShuffleOnPonder ||
-		action.Type == DecideOnPonder {
-		for _, card := range action.Cards {
-			g.Priority().Deck.AddToTop(1, card)
-		}
-		if action.Type == ShuffleOnPonder {
-			g.Priority().Deck.Shuffle()
-		}
-		g.ChoiceEffect = nil
-		return
-	}
-
-	if action.Type == DecideOnScry {
-		for index, cardList := range action.ScryCards {
-			for _, card := range cardList {
-				if index == 0 {
-					g.Priority().Deck.AddToTop(1, card)
-				} else {
-					g.Priority().Deck.Add(1, card)
-				}
-			}
-		}
-		g.ChoiceEffect = nil
-		return
-	}
-
-	/*
-	   Daze gets paid
-
-	   TODO this data structure could change when introducing other choices to resolve -
-	   e.g. Fact or Fiction
-	*/
-	if action.Type == DecideOnChoiceAction {
-		if action.Selected == nil {
-			g.Priority().ColorlessManaPool--
-		} else {
-			for _, land := range action.Selected {
-				land.Tapped = true
-			}
-		}
-
-		g.PriorityId = g.PriorityId.OpponentId()
-		g.ChoiceEffect = nil
-		return
 	}
 
 	if action.Type == OfferToResolveNextOnStack {
