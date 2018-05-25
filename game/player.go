@@ -912,6 +912,7 @@ func (p *Player) SpendMana(amount int) {
 	}
 }
 
+// Returns possible Actions for choices like Daze, Ponder, and Scry.
 func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 	if choiceEffect.EffectType == ManaSink {
 		return p.waysToChoose(choiceEffect)
@@ -924,7 +925,7 @@ func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 	}
 }
 
-// So far, this only deals with a player choosing how to pay for Daze.
+// Returns possible Actions to pay for Daze or not.
 func (p *Player) waysToChoose(effect *Effect) []*Action {
 	answer := []*Action{}
 

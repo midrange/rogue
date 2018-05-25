@@ -7,7 +7,8 @@ import (
 type Action struct {
 	Type ActionType
 
-	AfterEffect                     *Effect // a faux effect that resolves after a choice-based action
+	// a faux effect that resolves after a choice-based action, such as returning Scry cards and drawing
+	AfterEffect                     *Effect
 	Card                            *Card
 	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
 	Cost                            *Cost
