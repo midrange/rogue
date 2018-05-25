@@ -67,6 +67,7 @@ const (
 	NestInvader
 	NettleSentinel
 	Ponder
+	Preordain
 	QuirionRanger
 	Rancor
 	SilhanaLedgewalker
@@ -304,6 +305,22 @@ var Cards = map[CardName]*Card{
 			&Effect{
 				EffectType: LookArrangeShuffleDraw,
 				Selector:   &Selector{Count: 3},
+			},
+		},
+		Type: []Type{Sorcery},
+	},
+
+	/*
+		Scry 2, then draw a card. (To scry 2, look at the top two cards of your library,
+		then put any number of them on the bottom of your library and the rest on top in any order.)
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=preordain
+	*/
+	Preordain: &Card{
+		CastingCost: &Cost{Colorless: 1},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Scry,
+				Selector:   &Selector{Count: 2},
 			},
 		},
 		Type: []Type{Sorcery},

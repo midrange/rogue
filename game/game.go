@@ -109,6 +109,8 @@ func (g *Game) Actions(forHuman bool) []*Action {
 			return g.Priority().WaysToChoose(g.ChoiceEffect)
 		} else if g.ChoiceEffect.EffectType == LookArrangeShuffleDraw {
 			return g.Priority().WaysToArrange(g.ChoiceEffect)
+		} else if g.ChoiceEffect.EffectType == Scry {
+			return g.Priority().WaysToScry(g.ChoiceEffect)
 		} else {
 			panic("unhandled ChoiceEffect")
 		}
@@ -275,10 +277,23 @@ func (g *Game) TakeAction(action *Action) {
 	if action.Type == ShuffleOnPonder ||
 		action.Type == DecideOnPonder {
 		for _, card := range action.Cards {
-			g.Priority().Deck.Add(1, card)
+			g.Priority().Deck.AddToTop(1, card)
 		}
 		if action.Type == ShuffleOnPonder {
 			g.Priority().Deck.Shuffle()
+		}
+		g.Priority().Draw()
+		g.ChoiceEffect = nil
+		return
+	}
+
+	if action.Type == Scry {
+		for index, cardList := range action.ScryCards {
+			if index == 0 {
+				g.Priority().Deck.AddToTop(1, card)
+			} else {
+				g.Priority().Deck.Add(1, card)
+			}
 		}
 		g.Priority().Draw()
 		g.ChoiceEffect = nil

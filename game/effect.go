@@ -61,10 +61,11 @@ const (
 	AddMana EffectType = iota
 	Countermagic
 	DrawCard
+	LookArrangeShuffleDraw
 	ManaSink
 	ReturnToHand
+	Scry
 	Untap
-	LookArrangeShuffleDraw
 )
 
 func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {

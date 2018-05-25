@@ -709,6 +709,27 @@ func TestPonder(t *testing.T) {
 	g.TakeAction(g.Actions(false)[0])
 
 	if len(g.Priority().Hand) != 6 {
-		panic("expected 6 cvards in hand after Ponder")
+		panic("expected 6 cards in hand after Ponder")
+	}
+}
+
+func TestPreordain(t *testing.T) {
+	preordain := NewEmptyDeck()
+	preordain.Add(1, Preordain)
+	preordain.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(preordain, allForests)
+	g.playLand()
+
+	g.playSorcery()
+
+	// Scrye action
+	g.TakeAction(g.Actions(false)[0])
+
+	if len(g.Priority().Hand) != 6 {
+		panic("expected 6 cards in hand after Preordain")
 	}
 }

@@ -266,6 +266,39 @@ func permutations(arr []CardName) [][]CardName {
 	return res
 }
 
+/*
+	Return actions for all ways to do a Scry effect.
+*/
+func (p *Player) WaysToScry(effect *Effect) []*Action {
+
+	cards := []CardName{}
+	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
+		cards = append(cards, p.Deck.Draw())
+	}
+
+	perms := permutations(cards)
+	slicedPerms := [][][]CardName{}
+	for perm := range perms {
+		for index, CardName := range perm {
+			top := perm[:index]
+			bottom := perm[index:]
+			slicedPerms = append(slicedPerms, [][]CardName{top, bottom})
+		}
+	}
+
+	answer := []*Action{}
+	for _, slicedPermutation := range slicedPerms {
+		answer = append(answer, &Action{
+			Type:      Scry,
+			ScryCards: slicedPermutation,
+			Owner:     p,
+		})
+
+	}
+
+	return answer
+}
+
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)

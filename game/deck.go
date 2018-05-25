@@ -66,3 +66,10 @@ func (d *Deck) Add(n int, name CardName) {
 		d.Cards = append(d.Cards, name)
 	}
 }
+
+// Adds cards to the deck, on top
+func (d *Deck) AddToTop(n int, name CardName) {
+	for i := 0; i < n; i++ {
+		d.Cards = append([]CardName{name}, d.Cards...)
+	}
+}
