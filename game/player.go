@@ -651,7 +651,6 @@ func (p *Player) ResolveSpell(action *Action) {
 			perm.Attacking = true
 			perm.Tapped = true
 		}
-		p.game.Print()
 
 		if card.IsEnchantCreature() {
 			action.Target.Auras = append(action.Target.Auras, perm)
