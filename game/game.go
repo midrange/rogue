@@ -275,12 +275,14 @@ func (g *Game) TakeAction(action *Action) {
 	if action.Type == ShuffleOnPonder ||
 		action.Type == DecideOnPonder {
 		for _, card := range action.Cards {
-			g.Priority().Deck.Cards.append(card)
+			g.Priority().Deck.Add(1, card)
 		}
 		if action.Type == ShuffleOnPonder {
 			g.Priority().Deck.Shuffle()
 		}
 		g.Priority().Draw()
+		g.ChoiceEffect = nil
+		return
 	}
 
 	/*

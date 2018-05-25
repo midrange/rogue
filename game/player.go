@@ -208,12 +208,12 @@ func (p *Player) WaysToArrange(effect *Effect) []*Action {
 	// Return action for all ways to Ponder.
 	// All permutations of card return (6), or shuffle.
 
-	cards := []*Card{}
-	for i := 0; i < Min(e.Selector.Count, len(p.Deck.Cards)); i++ {
+	cards := []CardName{}
+	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
 		cards = append(cards, p.Deck.Draw())
 	}
 
-	perms = permutations(cards)
+	perms := permutations(cards)
 
 	answer := []*Action{}
 	for _, permutation := range perms {
@@ -225,7 +225,6 @@ func (p *Player) WaysToArrange(effect *Effect) []*Action {
 
 	}
 
-	// ponder without Cards prop indidcates shuffle
 	answer = append(answer, &Action{
 		Type:  ShuffleOnPonder,
 		Owner: p,
@@ -237,13 +236,13 @@ func (p *Player) WaysToArrange(effect *Effect) []*Action {
 
 // Heap's algorithm
 // https://stackoverflow.com/questions/30226438/generate-all-permutations-in-go
-func permutations(arr []Card) [][]Card {
-	var helper func([]Card, int)
-	res := [][]Card{}
+func permutations(arr []CardName) [][]CardName {
+	var helper func([]CardName, int)
+	res := [][]CardName{}
 
-	helper = func(arr []Card, n int) {
+	helper = func(arr []CardName, n int) {
 		if n == 1 {
-			tmp := make([]Card, len(arr))
+			tmp := make([]CardName, len(arr))
 			copy(tmp, arr)
 			res = append(res, tmp)
 		} else {
@@ -558,6 +557,12 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 						Target: target,
 					})
 				}
+			} else if card.IsSorcery() {
+				answer = append(answer, &Action{
+					Type:  Play,
+					Card:  card,
+					Owner: p,
+				})
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
@@ -907,7 +912,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == LookArrangeShuffleDraw {
 		// next action the player will decide on Ponder
 		p.game.ChoiceEffect = e
-		p.game.PriorityId = p.game.Priority().Opponent().Id
 	} else {
 		panic("tried to resolve unknown effect")
 	}

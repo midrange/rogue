@@ -66,6 +66,7 @@ const (
 	MutagenicGrowth
 	NestInvader
 	NettleSentinel
+	Ponder
 	QuirionRanger
 	Rancor
 	SilhanaLedgewalker
@@ -305,7 +306,7 @@ var Cards = map[CardName]*Card{
 				Selector:   &Selector{Count: 3},
 			},
 		},
-		Type: []Type{Instant},
+		Type: []Type{Sorcery},
 	},
 
 	/*

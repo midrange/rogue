@@ -8,8 +8,8 @@ type Action struct {
 	Type ActionType
 
 	Card                            *Card
-	Cards                           []*Card // list of cards to return to deck with Ponder
-	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
+	Cards                           []CardName // list of cardnames to return to deck with Ponder
+	EntersTheBattleFieldSpellTarget *Action    // the spell target Card's coming into play effect
 	Cost                            *Cost
 	Owner                           *Player
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
@@ -39,7 +39,8 @@ const (
 	DeclineChoiceAction
 	DecideOnChoiceAction
 	EntersTheBattlefieldEffect
-	Shuffle
+	DecideOnPonder
+	ShuffleOnPonder
 )
 
 func (a *Action) targetPronoun(p *Player) string {
