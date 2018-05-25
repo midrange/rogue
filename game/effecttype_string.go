@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _EffectType_name = "AddManaCountermagicDrawCardLookArrangeShuffleDrawManaSinkReturnToHandScryUntap"
+const _EffectType_name = "AddManaCountermagicDrawCardManaSinkReturnToHandScryTopScryUntap"
 
-var _EffectType_index = [...]uint8{0, 7, 19, 27, 49, 57, 69, 73, 78}
+var _EffectType_index = [...]uint8{0, 7, 19, 27, 35, 47, 51, 58, 63}
 
 func (i EffectType) String() string {
 	if i < 0 || i >= EffectType(len(_EffectType_index)-1) {

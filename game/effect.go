@@ -52,6 +52,13 @@ type Effect struct {
 
 	// for non-targetted effects of spells, such as Snap
 	Selected []*Permanent
+
+	/*
+		another Effect that happens after this one resolves,
+		for example drawing a card after a scry
+	*/
+
+	AfterResolutionEffect *Effect
 }
 
 //go:generate stringer -type=EffectType
@@ -61,10 +68,10 @@ const (
 	AddMana EffectType = iota
 	Countermagic
 	DrawCard
-	LookArrangeShuffleDraw
 	ManaSink
 	ReturnToHand
 	Scry
+	TopScry
 	Untap
 )
 

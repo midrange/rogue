@@ -938,7 +938,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
 	} else if e.EffectType == ManaSink ||
-		e.EffectType == LookArrangeShuffleDraw ||
+		e.EffectType == TopScry ||
 		e.EffectType == Scry {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction

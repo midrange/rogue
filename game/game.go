@@ -107,7 +107,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	if g.ChoiceEffect != nil {
 		if g.ChoiceEffect.EffectType == ManaSink {
 			return g.Priority().WaysToChoose(g.ChoiceEffect)
-		} else if g.ChoiceEffect.EffectType == LookArrangeShuffleDraw {
+		} else if g.ChoiceEffect.EffectType == TopScry {
 			return g.Priority().WaysToArrange(g.ChoiceEffect)
 		} else if g.ChoiceEffect.EffectType == Scry {
 			return g.Priority().WaysToScry(g.ChoiceEffect)
@@ -282,7 +282,6 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type == ShuffleOnPonder {
 			g.Priority().Deck.Shuffle()
 		}
-		g.Priority().Draw()
 		g.ChoiceEffect = nil
 		return
 	}
@@ -297,7 +296,6 @@ func (g *Game) TakeAction(action *Action) {
 				}
 			}
 		}
-		g.Priority().Draw()
 		g.ChoiceEffect = nil
 		return
 	}
