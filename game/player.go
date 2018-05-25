@@ -500,20 +500,8 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
 		}
 
-		if card.Ninjitsu != nil && p.CanPayCost(card.Ninjitsu) && p.game.Phase == CombatDamage {
-			attackers := []*Permanent{}
-			for _, perm := range p.Board {
-				if perm.Attacking {
-					attackers = append(attackers, perm)
-				}
-			}
-
-			for _, perm := range p.Opponent().Board {
-				if perm.Blocking != nil {
-					attackers = removePermanent(attackers, perm.Blocking)
-				}
-			}
-			for _, a := range attackers {
+		if card.Ninjitsu != nil && p.game.Phase == CombatDamage {
+			for _, a := range p.unblockedAtackers() {
 				answer = append(answer, &Action{
 					Type:         Play,
 					Card:         card,
@@ -526,6 +514,22 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 
 	}
 	return answer
+}
+
+func (p *Player) unblockedAtackers() []*Permanent {
+	attackers := []*Permanent{}
+	for _, perm := range p.Board {
+		if perm.Attacking {
+			attackers = append(attackers, perm)
+		}
+	}
+
+	for _, perm := range p.Opponent().Board {
+		if perm.Blocking != nil {
+			attackers = removePermanent(attackers, perm.Blocking)
+		}
+	}
+	return attackers
 }
 
 // Returns possible actions to generate mana.
@@ -897,16 +901,22 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 // Returns whether the player has the resources (life, mana, etc) to pay Cost.
 func (p *Player) CanPayCost(c *Cost) bool {
+	if p.AvailableMana() < c.Colorless {
+		return false
+	}
 	if c.Effect == nil {
-		return p.Life >= c.Life && p.AvailableMana() >= c.Colorless
+		return p.Life >= c.Life
 	} else {
 		if c.Effect.EffectType == ReturnToHand {
 			if c.Effect.Selector.Subtype != NoSubtype {
 				count := Max(c.Effect.Selector.Count, 1)
 				return len(p.landsOfSubtype(c.Effect.Selector.Subtype)) >= count
 			}
-
-			// TODO HANDLE NINJITSU
+			s := c.Effect.Selector
+			// handles Ninja of the Deep Hours Ninjitsu, may need to be generalized
+			if s.Type == Creature && s.ControlledBy == SamePlayer && s.AttackStatus == Unblocked {
+				return len(p.unblockedAtackers()) > 0
+			}
 		}
 	}
 	return false
