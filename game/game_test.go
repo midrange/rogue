@@ -691,3 +691,24 @@ func TestSpellstutterSpriteFails(t *testing.T) {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
 	}
 }
+
+func TestPonder(t *testing.T) {
+	ponder := NewEmptyDeck()
+	ponder.Add(1, Ponder)
+	ponder.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(ponder, allForests)
+	g.playLand()
+
+	g.playSorcery()
+
+	// DecideOnPonder action
+	g.TakeAction(g.Actions(false)[0])
+
+	if len(g.Priority().Hand) != 6 {
+		panic("expected 6 cvards in hand after Ponder")
+	}
+}

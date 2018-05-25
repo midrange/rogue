@@ -180,7 +180,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 	return answer
 }
 
-// So far, this only deals with a player choosing how to pay for Daze
+// So far, this only deals with a player choosing how to pay for Daze.
 func (p *Player) WaysToChoose(effect *Effect) []*Action {
 	answer := []*Action{}
 
@@ -202,6 +202,68 @@ func (p *Player) WaysToChoose(effect *Effect) []*Action {
 		Type: DeclineChoiceAction,
 	})
 	return answer
+}
+
+/*
+	Return actions for all ways to do a Ponder like effect.
+	For Ponder, Actions includes 6 permutations returning 3 cards to deck, and shuffling.
+*/
+func (p *Player) WaysToArrange(effect *Effect) []*Action {
+
+	cards := []CardName{}
+	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
+		cards = append(cards, p.Deck.Draw())
+	}
+
+	perms := permutations(cards)
+
+	answer := []*Action{}
+	for _, permutation := range perms {
+		answer = append(answer, &Action{
+			Type:  DecideOnPonder,
+			Cards: permutation,
+			Owner: p,
+		})
+
+	}
+
+	answer = append(answer, &Action{
+		Type:  ShuffleOnPonder,
+		Owner: p,
+		Cards: cards,
+	})
+
+	return answer
+}
+
+// Heap's algorithm
+// https://stackoverflow.com/questions/30226438/generate-all-permutations-in-go
+func permutations(arr []CardName) [][]CardName {
+	var helper func([]CardName, int)
+	res := [][]CardName{}
+
+	helper = func(arr []CardName, n int) {
+		if n == 1 {
+			tmp := make([]CardName, len(arr))
+			copy(tmp, arr)
+			res = append(res, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(arr, len(arr))
+	return res
 }
 
 // Returns possible actions when we can play a card from hand, including passing.
@@ -497,6 +559,12 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 						Target: target,
 					})
 				}
+			} else if card.IsSorcery() {
+				answer = append(answer, &Action{
+					Type:  Play,
+					Card:  card,
+					Owner: p,
+				})
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
@@ -836,13 +904,15 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
-	} else if e.EffectType == ManaSink {
+	} else if e.EffectType == ManaSink || e.EffectType == LookArrangeShuffleDraw {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
 			as the next action
 		*/
 		p.game.ChoiceEffect = e
-		p.game.PriorityId = p.game.Priority().Opponent().Id
+		if e.EffectType == ManaSink {
+			p.game.PriorityId = p.game.Priority().Opponent().Id
+		}
 	} else {
 		panic("tried to resolve unknown effect")
 	}

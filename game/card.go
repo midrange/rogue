@@ -66,6 +66,7 @@ const (
 	MutagenicGrowth
 	NestInvader
 	NettleSentinel
+	Ponder
 	QuirionRanger
 	Rancor
 	SilhanaLedgewalker
@@ -289,6 +290,23 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 2,
 		CastingCost:   &Cost{Colorless: 1},
 		Type:          []Type{Creature},
+	},
+
+	/*
+		Look at the top three cards of your library, then put them back in any order.
+		You may shuffle your library.
+		Draw a card.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=ponder
+	*/
+	Ponder: &Card{
+		CastingCost: &Cost{Colorless: 1},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: LookArrangeShuffleDraw,
+				Selector:   &Selector{Count: 3},
+			},
+		},
+		Type: []Type{Sorcery},
 	},
 
 	/*
