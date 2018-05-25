@@ -205,15 +205,64 @@ func (p *Player) WaysToChoose(effect *Effect) []*Action {
 }
 
 func (p *Player) WaysToArrange(effect *Effect) []*Action {
-	// return all ways to return ponder
-	// 123, 132, 213, 231, 312, 321
+	// Return action for all ways to Ponder.
+	// All permutations of card return (6), or shuffle.
 
 	cards := []*Card{}
 	for i := 0; i < Min(e.Selector.Count, len(p.Deck.Cards)); i++ {
 		cards = append(cards, p.Deck.Draw())
 	}
 
-	// DecideOnPonder per ponder arrangement
+	perms = permutations(cards)
+
+	answer := []*Action{}
+	for _, permutation := range perms {
+		answer = append(answer, &Action{
+			Type:  DecideOnPonder,
+			Cards: permutation,
+			Owner: p,
+		})
+
+	}
+
+	// ponder without Cards prop indidcates shuffle
+	answer = append(answer, &Action{
+		Type:  ShuffleOnPonder,
+		Owner: p,
+		Cards: cards,
+	})
+
+	return answer
+}
+
+// Heap's algorithm
+// https://stackoverflow.com/questions/30226438/generate-all-permutations-in-go
+func permutations(arr []Card) [][]Card {
+	var helper func([]Card, int)
+	res := [][]Card{}
+
+	helper = func(arr []Card, n int) {
+		if n == 1 {
+			tmp := make([]Card, len(arr))
+			copy(tmp, arr)
+			res = append(res, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(arr, len(arr))
+	return res
 }
 
 // Returns possible actions when we can play a card from hand, including passing.
@@ -856,11 +905,9 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.ChoiceEffect = e
 		p.game.PriorityId = p.game.Priority().Opponent().Id
 	} else if e.EffectType == LookArrangeShuffleDraw {
+		// next action the player will decide on Ponder
 		p.game.ChoiceEffect = e
 		p.game.PriorityId = p.game.Priority().Opponent().Id
-		// view top 3
-		// choose which card to put back 3 times
-		// choose shuffle or no
 	} else {
 		panic("tried to resolve unknown effect")
 	}

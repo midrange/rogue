@@ -301,15 +301,8 @@ var Cards = map[CardName]*Card{
 		CastingCost: &Cost{Colorless: 1},
 		Effects: []*Effect{
 			&Effect{
-				EffectType: LookArrange,
+				EffectType: LookArrangeShuffleDraw,
 				Selector:   &Selector{Count: 3},
-			},
-			&Effect{
-				EffectType: ShuffleOption,
-			},
-			&Effect{
-				EffectType: DrawCard,
-				Selector:   &Selector{Count: 2},
 			},
 		},
 		Type: []Type{Instant},

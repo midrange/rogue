@@ -107,8 +107,10 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	if g.ChoiceEffect != nil {
 		if g.ChoiceEffect.EffectType == ManaSink {
 			return g.Priority().WaysToChoose(g.ChoiceEffect)
-		} else { // Ponder
+		} else if g.ChoiceEffect.EffectType == LookArrangeShuffleDraw {
 			return g.Priority().WaysToArrange(g.ChoiceEffect)
+		} else {
+			panic("unhandled ChoiceEffect")
 		}
 	}
 
@@ -270,13 +272,15 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 
-	if action.Type == DecideOnPonder {
-
-		// do whichever arrangement
-		//   for card in action.cards - return them to deck
-		// set ChoiceEffect to be shuffle, then draw
-		//
-		return
+	if action.Type == ShuffleOnPonder ||
+		action.Type == DecideOnPonder {
+		for _, card := range action.Cards {
+			g.Priority().Deck.Cards.append(card)
+		}
+		if action.Type == ShuffleOnPonder {
+			g.Priority().Deck.Shuffle()
+		}
+		g.Priority().Draw()
 	}
 
 	/*
