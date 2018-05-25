@@ -223,7 +223,7 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
-		if card.Ninjitsu != nil && g.game.Phase == CombatDamage {
+		if card.Ninjitsu != nil && p.game.Phase == CombatDamage {
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
@@ -500,13 +500,13 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
 		}
 
-		if card.Ninjitsu != nil && p.game.Phase == CombatDamage {
+		if card.Ninjitsu != nil && p.CanPayCost(card.Ninjitsu) && p.game.Phase == CombatDamage {
 			for _, a := range p.unblockedAtackers() {
 				answer = append(answer, &Action{
 					Type:         Play,
 					Card:         card,
 					Owner:        p,
-					Selected:     a,
+					Selected:     []*Permanent{a},
 					WithNinjitsu: true,
 				})
 			}
@@ -617,6 +617,9 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
 			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
+		} else if action.WithNinjitsu {
+			card.Ninjitsu.Effect = UpdatedEffectForAction(action, card.Ninjitsu.Effect)
+			p.PayCost(card.Ninjitsu)
 		} else {
 			p.PayCost(card.CastingCost)
 		}
@@ -644,6 +647,11 @@ func (p *Player) ResolveSpell(action *Action) {
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p, action)
+		if action.WithNinjitsu {
+			perm.Attacking = true
+			perm.Tapped = true
+		}
+		p.game.Print()
 
 		if card.IsEnchantCreature() {
 			action.Target.Auras = append(action.Target.Auras, perm)

@@ -737,3 +737,39 @@ func TestPreordain(t *testing.T) {
 		panic("expected 6 cards in hand after Preordain")
 	}
 }
+
+func TestNinjaOfTheDeepWater(t *testing.T) {
+	ninja := NewEmptyDeck()
+	ninja.Add(1, NinjaOfTheDeepHours)
+	ninja.Add(1, FaerieMiscreant)
+	ninja.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(ninja, allForests)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.passTurn()
+
+	g.playLand()
+
+	g.TakeAction(&Action{Type: DeclareAttack})
+	g.attackWithEveryone()
+	g.passUntilPhase(CombatDamage)
+
+	g.playCreature()
+	g.passUntilPhase(Main2)
+
+	if g.Defender().Life != 18 {
+		panic("expected defender's life to be 18 after Ninja attack")
+	}
+
+	if len(g.Attacker().Hand) != 6 {
+		g.Print()
+		panic("expected defender's hand to have 6 cards after Ninja attack")
+	}
+}

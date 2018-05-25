@@ -309,8 +309,9 @@ var Cards = map[CardName]*Card{
 		BaseToughness:           2,
 		CastingCost:             &Cost{Colorless: 4},
 		DealsCombatDamageEffect: &Effect{EffectType: DrawCard, Selector: &Selector{Count: 1}},
-		Ninjitsu: &Cost{Colorless: 2,
-			&Effect{
+		Ninjitsu: &Cost{
+			Colorless: 2,
+			Effect: &Effect{
 				EffectType: ReturnToHand,
 				Selector: &Selector{
 					Type:         Creature,

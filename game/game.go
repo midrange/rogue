@@ -351,6 +351,15 @@ func (g *Game) TakeAction(action *Action) {
 		action.With.Blocking = action.Target
 		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
 
+	case CombatDamage:
+		if action.Type == Play {
+			g.Priority().PayCostsAndPutSpellOnStack(action)
+		} else if action.Type == Activate {
+			g.Priority().PayCostsAndPutAbilityOnStack(action)
+		} else {
+			panic("expected a play or activate during CombatDamage")
+		}
+
 	default:
 		panic("unhandled phase")
 	}
