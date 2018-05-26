@@ -871,11 +871,13 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
 	} else if e.EffectType == ManaSink ||
 		e.EffectType == TopScry ||
-		e.EffectType == Scry {
+		e.EffectType == Scry ||
+		e.EffectType == DelverScry {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
 			as the next action
 		*/
+		e.Selected = []*Permanent{perm}
 		p.game.ChoiceEffect = e
 		if e.EffectType == ManaSink {
 			p.game.PriorityId = p.game.Priority().Opponent().Id
@@ -886,20 +888,33 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		e.SelectedForCost.Tapped = true
 	} else if e.EffectType == ReturnCardsToTop || e.EffectType == Shuffle {
 		for _, card := range e.Cards {
-			p.game.Priority().Deck.AddToTop(1, card)
+			p.Deck.AddToTop(1, card)
 		}
 		if e.EffectType == Shuffle {
-			p.game.Priority().Deck.Shuffle()
+			p.Deck.Shuffle()
 		}
 	} else if e.EffectType == ReturnScryCards {
 		for index, cardList := range e.ScryCards {
 			for _, card := range cardList {
 				if index == 0 {
-					p.game.Priority().Deck.AddToTop(1, card)
+					p.Deck.AddToTop(1, card)
 				} else {
-					p.game.Priority().Deck.Add(1, card)
+					p.Deck.Add(1, card)
 				}
 			}
+		}
+	} else if e.EffectType == DelverScryReveal ||
+		e.EffectType == DelverScryNoReveal {
+		// return card
+		for _, card := range e.Cards {
+			p.Deck.AddToTop(1, card)
+		}
+		if e.EffectType == DelverScryReveal {
+			// TODO reveal when that matters
+
+			// flip
+			p.RemoveFromBoard(e.Selected[0])
+			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, nil)
 		}
 	} else {
 		panic("tried to resolve unknown effect")
@@ -979,6 +994,8 @@ func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 		return p.waysToArrange(choiceEffect)
 	} else if choiceEffect.EffectType == Scry {
 		return p.waysToScry(choiceEffect)
+	} else if choiceEffect.EffectType == DelverScry {
+		return p.waysToDelverScry(choiceEffect)
 	} else {
 		panic("unhandled ChoiceEffect")
 	}
@@ -1106,4 +1123,40 @@ func (p *Player) waysToScry(effect *Effect) []*Action {
 	}
 
 	return answer
+}
+
+/*
+	If not an instant/sorcery, draws and undraws the card and returns empty list.
+	Otherwise returns actions to reveal or not
+
+*/
+func (p *Player) waysToDelverScry(effect *Effect) []*Action {
+
+	card := p.Deck.Draw().Card()
+
+	if !(card.IsSpell()) {
+		p.Deck.AddToTop(1, card.Name)
+		return []*Action{}
+	}
+
+	return []*Action{
+		&Action{
+			Type: MakeChoice,
+			AfterEffect: &Effect{
+				EffectType: DelverScryReveal,
+				Cards:      []CardName{card.Name},
+				Selected:   effect.Selected,
+			},
+			Owner: p,
+		},
+		&Action{
+			Type: MakeChoice,
+			AfterEffect: &Effect{
+				EffectType: DelverScryNoReveal,
+				Cards:      []CardName{card.Name},
+				Selected:   effect.Selected,
+			},
+			Owner: p,
+		},
+	}
 }

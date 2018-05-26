@@ -773,3 +773,28 @@ func TestNinjaOfTheDeepWater(t *testing.T) {
 		panic("expected defender's hand to have 6 cards after Ninja attack")
 	}
 }
+
+func TestDelverFlips(t *testing.T) {
+	delver := NewEmptyDeck()
+	delver.Add(1, DelverOfSecrets)
+	delver.Add(6, Island)
+	delver.Add(1, Ponder)
+	delver.Add(52, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(delver, allForests)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.passUntilPhase(Draw)
+	g.TakeAction(g.Actions(false)[0])
+
+	if g.Attacker().Creatures()[0].Name != InsectileAberration {
+		panic("expected Delver to transform")
+	}
+
+}
