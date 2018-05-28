@@ -11,7 +11,7 @@ type Action struct {
 	Source        *Permanent // for targeted effects
 	With          *Permanent // for attacking
 	Target        *Permanent
-	Selected      []*Permanent // for non-targetted effects, such as in Snap
+	Selected      []*Permanent // for non-targeted effects, such as in Snap
 	WithAlternate bool
 	WithKicker    bool
 	WithPhyrexian bool
