@@ -11,7 +11,7 @@ type Card struct {
 	AlternateCastingCost       *Cost
 	Bloodthirst                int
 	CastingCost                *Cost
-	Effect                     *Effect
+	Effects                    []*Effect
 	EntersGraveyardEffect      *Effect
 	EntersTheBattlefieldEffect *Effect
 	Flying                     bool
@@ -67,6 +67,7 @@ const (
 	Rancor
 	SilhanaLedgewalker
 	SkarrganPitskulk
+	Snap
 	VaultSkirge
 	VinesOfVastwood
 )
@@ -171,10 +172,10 @@ var Cards = map[CardName]*Card{
 			},
 		},
 		CastingCost: &Cost{Colorless: 5},
-		Effect: &Effect{
-			EffectType:  DrawCard,
-			EffectCount: 2,
-		},
+		Effects: []*Effect{&Effect{
+			EffectType: DrawCard,
+			Selector:   &Selector{Count: 2},
+		}},
 		Type: []Type{Instant},
 	},
 
@@ -184,9 +185,9 @@ var Cards = map[CardName]*Card{
 		this turn.
 	*/
 	HungerOfTheHowlpack: &Card{
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Plus1Plus1Counters: 1,
-		},
+		}},
 		CastingCost: &Cost{Colorless: 1},
 		Morbid: &Effect{
 			Plus1Plus1Counters: 2,
@@ -213,10 +214,10 @@ var Cards = map[CardName]*Card{
 	MutagenicGrowth: &Card{
 		AddsTemporaryEffect: true,
 		CastingCost:         &Cost{Colorless: 1},
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Power:     2,
 			Toughness: 2,
-		},
+		}},
 		PhyrexianCastingCost: &Cost{Life: 2},
 		Type:                 []Type{Instant},
 	},
@@ -258,7 +259,7 @@ var Cards = map[CardName]*Card{
 			Cost: &Cost{
 				Effect: &Effect{
 					EffectType: ReturnToHand,
-					Selector:   &Selector{Subtype: LandForest, ControlledBy: SamePlayer},
+					Selector:   &Selector{Subtype: LandForest, ControlledBy: SamePlayer, Targeted: false},
 				},
 			},
 			EffectType: Untap,
@@ -320,6 +321,25 @@ var Cards = map[CardName]*Card{
 	},
 
 	/*
+		Return target creature to its owner's hand. Untap up to two lands.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=snap
+	*/
+	Snap: &Card{
+		CastingCost: &Cost{Colorless: 2},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Untap,
+				Selector:   &Selector{Type: Land, Count: 2, Targeted: false},
+			},
+			&Effect{
+				EffectType: ReturnToHand,
+				Selector:   &Selector{Type: Creature, Targeted: true},
+			},
+		},
+		Type: []Type{Instant},
+	},
+
+	/*
 
 		Artifact Creature — Imp
 		(Phyrexian Black can be paid with either Black or 2 life.)
@@ -352,9 +372,9 @@ var Cards = map[CardName]*Card{
 			Power:     4,
 			Toughness: 4,
 		},
-		Effect: &Effect{
+		Effects: []*Effect{&Effect{
 			Untargetable: true,
-		},
+		}},
 		Type: []Type{Instant},
 	},
 }
@@ -431,6 +451,17 @@ func (c *Card) HasSubtype(subtype Subtype) bool {
 	for _, st := range c.Subtype {
 		if st == subtype {
 			return true
+		}
+	}
+	return false
+}
+
+func (c *Card) HasCreatureTargets() bool {
+	for _, e := range c.Effects {
+		if e.Selector != nil {
+			if e.Selector.Type == Creature {
+				return true
+			}
 		}
 	}
 	return false

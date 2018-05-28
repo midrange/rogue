@@ -1,7 +1,6 @@
 package game
 
 import (
-	"log"
 	"testing"
 )
 
@@ -37,12 +36,8 @@ func TestTwoBearsFighting(t *testing.T) {
 		deckWithTopAndForests(GrizzlyBears),
 		deckWithTopAndForests(GrizzlyBears))
 
-	log.Printf("starting first turn")
-
 	g.playLand()
 	g.passTurn()
-
-	log.Printf("finished first turn")
 
 	g.playLand()
 	g.passTurn()
@@ -159,7 +154,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	}
 }
 
-func TestSilhanaCantBeTargetted(t *testing.T) {
+func TestSilhanaCantBeTargeted(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(VinesOfVastwood))
 
 	g.playLand()
@@ -461,5 +456,37 @@ func TestGush(t *testing.T) {
 
 	if len(g.Priority().Hand) != 9 {
 		t.Fatal("expected the hand size to be 9 after Gush: draw 7, island, draw, island, play gush, draw 2")
+	}
+}
+
+func TestSnap(t *testing.T) {
+	snapSkirge := NewEmptyDeck()
+	snapSkirge.Add(1, Snap)
+	snapSkirge.Add(1, VaultSkirge)
+	snapSkirge.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(snapSkirge, allForests)
+
+	g.playLand()
+	g.playCreature()
+	g.passTurn()
+
+	g.playLand()
+	g.passTurn()
+
+	g.playLand()
+	g.playInstant()
+
+	if len(g.Priority().Hand) != 5 {
+		t.Fatal("expected the hand size to be 5 after Snap: draw 7, island, skirge, draw, island, snap")
+	}
+
+	for _, land := range g.Priority().Lands() {
+		if land.Tapped {
+			t.Fatal("expected all player's lands to be untapped from snap")
+		}
 	}
 }

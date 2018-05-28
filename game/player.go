@@ -88,7 +88,7 @@ func (p *Player) EndPhase() {
 func (p *Player) EndTurn() {
 	for _, perm := range p.Board {
 		perm.Damage = 0
-		perm.Effects = []*Effect{}
+		perm.TemporaryEffects = []*Effect{}
 		perm.ActivatedThisTurn = false
 	}
 	p.LandPlayedThisTurn = 0
@@ -117,7 +117,7 @@ func (p *Player) SendToGraveyard(perm *Permanent) {
 		p.CreatureDied = true
 	}
 
-	perm.Effects = []*Effect{}
+	perm.TemporaryEffects = []*Effect{}
 	for _, aura := range perm.Auras {
 		if aura.EnchantedPermanentDiesEffect != nil {
 			p.ResolveEffect(aura.EnchantedPermanentDiesEffect, aura)
@@ -196,94 +196,229 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		card := name.Card()
 
 		if allowSorcerySpeed {
-			if card.IsLand() {
-				if p.LandPlayedThisTurn == 0 {
-					answer = append(answer, &Action{Type: Play, Card: card})
-				}
-			} else if !card.IsInstant() {
-				if p.CanPayCost(card.CastingCost) {
-					if card.IsCreature() {
-						answer = append(answer, &Action{Type: Play, Card: card})
-					}
-					if card.IsEnchantment() && p.CanPayCost(card.CastingCost) && p.HasLegalTarget(card) {
-						if forHuman {
-							answer = append(answer, &Action{
-								Type: ChooseTargetAndMana,
-								Card: card,
-							})
-						} else {
-							for _, target := range p.game.Creatures() {
-								answer = append(answer, &Action{
-									Type:   Play,
-									Card:   card,
-									Target: target,
-								})
-							}
-						}
-					}
-				}
-				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-					answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
-				}
+			if forHuman && card.IsEnchantment() && p.HasLegalTarget(card) {
+				answer = append(answer, &Action{
+					Type: ChooseTargetAndMana,
+					Card: card,
+				})
 			}
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
-		if card.IsInstant() && p.HasLegalTarget(card) {
+		if card.IsInstant() && (p.HasLegalTarget(card) || card.HasCreatureTargets() == false) {
 			if forHuman {
 				if p.CanPayCost(card.CastingCost) ||
 					(card.Kicker != nil && p.CanPayCost(card.Kicker.Cost)) ||
-					(card.PhyrexianCastingCost != nil) && p.CanPayCost(card.PhyrexianCastingCost) {
+					(card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost)) ||
+					(card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost)) {
 					answer = append(answer, &Action{
 						Type: ChooseTargetAndMana,
 						Card: card,
 					})
 				}
-			} else { // TODO - add player targets - this assumes all instants target creatures for now
-				if p.CanPayCost(card.CastingCost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:   Play,
-								Card:   card,
-								Target: target,
-							})
-						}
-					}
-				}
-				if card.Kicker != nil && p.CanPayCost(card.Kicker.Cost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:       Play,
-								Card:       card,
-								WithKicker: true,
-								Target:     target,
-							})
-						}
-					}
-				}
-
-				if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-					for _, target := range p.game.Creatures() {
-						if p.IsLegalTarget(card, target) {
-							answer = append(answer, &Action{
-								Type:          Play,
-								Card:          card,
-								Target:        target,
-								WithPhyrexian: true,
-							})
-						}
-					}
-				}
-			}
-		} else if card.IsInstant() {
-			if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
-				answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
+			} else {
+				answer = p.appendActionsForInstant(answer, card)
 			}
 		}
 
 	}
 
+	return answer
+}
+
+// Appends actions to answer for an instant card.
+func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action {
+	if p.CanPayCost(card.CastingCost) {
+		// TODO - add player targets - this assumes all instants target creatures for now
+		for _, targetCreature := range p.game.Creatures() {
+			if p.IsLegalTarget(card, targetCreature) {
+				selectableLandCount := selectableLandCount(card)
+				if selectableLandCount > 0 { // snap
+					for i := 1; i <= len(p.game.Lands())-1; i++ {
+						comb := combinations(makeRange(0, i), selectableLandCount)
+						for _, c := range comb {
+							selected := []*Permanent{}
+							for _, index := range c {
+								selected = append(selected, p.game.Lands()[index])
+							}
+							answer = append(answer, &Action{
+								Type:     Play,
+								Card:     card,
+								Target:   targetCreature,
+								Selected: selected,
+							})
+						}
+					}
+				} else {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: targetCreature,
+					})
+				}
+
+			}
+		}
+	}
+	if card.Kicker != nil && p.CanPayCost(card.Kicker.Cost) {
+		for _, target := range p.game.Creatures() {
+			if p.IsLegalTarget(card, target) {
+				answer = append(answer, &Action{
+					Type:       Play,
+					Card:       card,
+					WithKicker: true,
+					Target:     target,
+				})
+			}
+		}
+	}
+
+	if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+		for _, target := range p.game.Creatures() {
+			if p.IsLegalTarget(card, target) {
+				answer = append(answer, &Action{
+					Type:          Play,
+					Card:          card,
+					Target:        target,
+					WithPhyrexian: true,
+				})
+			}
+		}
+	}
+
+	if card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost) {
+		selectableLandCount := card.AlternateCastingCost.Effect.Selector.Count
+		if selectableLandCount > 0 { // gush
+			islands := p.landsOfSubtype(card.AlternateCastingCost.Effect.Selector.Subtype)
+			for i := 1; i <= len(islands)-1; i++ {
+				comb := combinations(makeRange(0, i), selectableLandCount)
+				for _, c := range comb {
+					selected := []*Permanent{}
+					for _, index := range c {
+						selected = append(selected, islands[index])
+					}
+					answer = append(answer, &Action{
+						Type:          Play,
+						Card:          card,
+						Selected:      selected,
+						WithAlternate: true,
+					})
+				}
+			}
+		}
+
+		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
+	}
+
+	return answer
+}
+
+// Returns a list of lands of the given subtype.
+func (p *Player) landsOfSubtype(subtype Subtype) []*Permanent {
+	lands := []*Permanent{}
+	for _, l := range p.Lands() {
+		for _, st := range l.Subtype {
+			if st == subtype {
+				lands = append(lands, l)
+				break
+			}
+		}
+	}
+	return lands
+}
+
+// Returns a count of lands the card effects would select.
+func selectableLandCount(card *Card) int {
+	count := 0
+	for _, e := range card.Effects {
+		if e.Selector != nil && e.Selector.Type == Land {
+			count += e.Selector.Count
+		}
+	}
+	return count
+}
+
+// Returns an array of ints from min to max.
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
+}
+
+// Returns a list of lists of indexes of lands, based on https://play.golang.org/p/JEgfXR2zSH
+func combinations(iterable []int, r int) [][]int {
+	resultList := [][]int{}
+	pool := iterable
+	n := len(pool)
+
+	if r > n {
+		return resultList
+	}
+
+	indices := make([]int, r)
+	for i := range indices {
+		indices[i] = i
+	}
+
+	result := make([]int, r)
+	for i, el := range indices {
+		result[i] = pool[el]
+	}
+
+	resCopy := make([]int, r)
+	copy(resCopy, result)
+	resultList = append(resultList, resCopy)
+
+	for {
+		i := r - 1
+		for ; i >= 0 && indices[i] == i+n-r; i -= 1 {
+		}
+
+		if i < 0 {
+			return resultList
+		}
+
+		indices[i] += 1
+		for j := i + 1; j < r; j += 1 {
+			indices[j] = indices[j-1] + 1
+		}
+
+		for ; i < len(indices); i += 1 {
+			result[i] = pool[indices[i]]
+		}
+		newResCopy := make([]int, r)
+		copy(newResCopy, result)
+		resultList = append(resultList, newResCopy)
+	}
+	return resultList
+}
+
+// Appends actions to answer if card is a land, creature, or enchantment.
+func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
+	if card.IsLand() {
+		if p.LandPlayedThisTurn == 0 {
+			answer = append(answer, &Action{Type: Play, Card: card})
+		}
+	} else if !card.IsInstant() {
+		if p.CanPayCost(card.CastingCost) {
+			if card.IsCreature() {
+				answer = append(answer, &Action{Type: Play, Card: card})
+			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
+				for _, target := range p.game.Creatures() {
+					answer = append(answer, &Action{
+						Type:   Play,
+						Card:   card,
+						Target: target,
+					})
+				}
+			}
+		}
+		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
+			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
+		}
+	}
 	return answer
 }
 
@@ -359,11 +494,12 @@ func (p *Player) Play(action *Action) {
 
 	if !card.IsLand() {
 		if action.WithKicker {
-			p.PayCost(card.Kicker.Cost)
+			p.PayCost(card.Kicker.Cost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else if action.WithAlternate {
+			card.AlternateCastingCost.Effect = UpdatedEffectForAction(action, card.AlternateCastingCost.Effect)
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
-			p.PayCost(card.PhyrexianCastingCost)
+			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else {
 			p.PayCost(card.CastingCost)
 		}
@@ -392,12 +528,16 @@ func (p *Player) Play(action *Action) {
 
 func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	if c.AddsTemporaryEffect {
-		target.Effects = append(target.Effects, NewEffect(a))
-	} else if c.Effect != nil {
-		p.ResolveEffect(NewEffect(a), nil)
-	}
-	if c.Effect != nil && target != nil {
-		target.Plus1Plus1Counters += c.Effect.Plus1Plus1Counters
+		for _, e := range c.Effects {
+			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForAction(a, e))
+		}
+	} else if c.Effects != nil {
+		for _, e := range c.Effects {
+			p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
+			if target != nil {
+				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
+			}
+		}
 	}
 	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && target != nil {
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
@@ -502,7 +642,7 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 	if p != perm.Owner && perm.Hexproof {
 		return false
 	}
-	for _, effect := range perm.Effects {
+	for _, effect := range perm.TemporaryEffects {
 		if effect.Untargetable {
 			return false
 		}
@@ -542,17 +682,37 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p)
-		return
 	} else if e.EffectType == ReturnToHand {
-		if e.Selector == nil {
-			p.RemoveFromBoard(perm)
-			p.Hand = append(p.Hand, perm.Card.Name)
+		// target is nil for rancor, or any effect of a permanent on itself
+		effectedPermanent := e.Target
+		if effectedPermanent == nil {
+			effectedPermanent = perm
 		}
-		return
+		if effectedPermanent == nil {
+			for _, selected := range e.Selected {
+				p.RemoveFromBoard(selected)
+				p.Hand = append(p.Hand, selected.Card.Name)
+			}
+		} else {
+			p.RemoveFromBoard(effectedPermanent)
+			p.Hand = append(p.Hand, effectedPermanent.Card.Name)
+		}
+	} else if e.EffectType == Untap {
+		if e.Selector == nil { // nettle sentinel, or any effect of a permanent on itself
+			perm.Tapped = false
+		} else {
+			for _, p := range e.Selected {
+				p.Tapped = false
+			}
+		}
 	} else if e.EffectType == AddMana {
 		p.ColorlessManaPool += e.Colorless
 	} else if e.EffectType == DrawCard {
-		for i := 0; i < Max(1, e.EffectCount); i++ {
+		drawCount := 1
+		if e.Selector != nil {
+			drawCount = Max(drawCount, e.Selector.Count)
+		}
+		for i := 0; i < drawCount; i++ {
 			p.Draw()
 		}
 	} else {
@@ -560,7 +720,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	}
 }
 
-// CanPayCost returns whether the player has the resources (life, mana, etc) to pay Cost.
+// Returns whether the player has the resources (life, mana, etc) to pay Cost.
 func (p *Player) CanPayCost(c *Cost) bool {
 	if c.Effect == nil {
 		return p.Life >= c.Life && p.AvailableMana() >= c.Colorless
@@ -568,24 +728,14 @@ func (p *Player) CanPayCost(c *Cost) bool {
 		if c.Effect.EffectType == ReturnToHand {
 			if c.Effect.Selector.Subtype != NoSubtype {
 				count := Max(c.Effect.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
-							count--
-							break
-						}
-					}
-					if count == 0 {
-						return true
-					}
-				}
+				return len(p.landsOfSubtype(c.Effect.Selector.Subtype)) >= count
 			}
 		}
 	}
 	return false
 }
 
-// PayCost spends the resources for a Cost
+// PayCost spends the resources for a Cost.
 func (p *Player) PayCost(c *Cost) bool {
 
 	// regular mana costs
@@ -596,24 +746,7 @@ func (p *Player) PayCost(c *Cost) bool {
 
 	// costs like Gush
 	if c.Effect != nil {
-		if c.Effect.EffectType == ReturnToHand {
-			if c.Effect.Selector.Subtype != NoSubtype {
-				count := Max(c.Effect.Selector.Count, 1)
-				for _, l := range p.Lands() {
-					for _, st := range l.Subtype {
-						if st == c.Effect.Selector.Subtype {
-							p.RemoveFromBoard(l)
-							p.Hand = append(p.Hand, l.Card.Name)
-							count--
-							break
-						}
-					}
-					if count == 0 {
-						break
-					}
-				}
-			}
-		}
+		p.ResolveEffect(c.Effect, nil)
 	}
 	return false
 }

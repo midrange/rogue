@@ -65,6 +65,7 @@ type Selector struct {
 	ControlledBy PlayerSelector
 	Supertype    Supertype
 	Subtype      Subtype
+	Targeted     bool
 	Type         Type
 }
 

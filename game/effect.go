@@ -46,9 +46,11 @@ type Effect struct {
 	Target          *Permanent
 
 	// for effects from targeted spells
-	EffectCount int // the number of times to do the effect
-	EffectType  EffectType
-	Selector    *Selector
+	EffectType EffectType
+	Selector   *Selector
+
+	// for non-targeted effects of spells, such as Snap
+	Selected []*Permanent
 }
 
 //go:generate stringer -type=EffectType
@@ -61,13 +63,13 @@ const (
 	Untap
 )
 
-func NewEffect(action *Action) *Effect {
-	card := action.Card
-	effect := card.Effect
+func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
+	newEffect := effect
 	if action.WithKicker {
-		effect.Kicker = card.Kicker
+		newEffect.Kicker = action.Card.Kicker
 	}
-	effect.Source = action.Source
-	effect.Target = action.Target
-	return effect
+	newEffect.Source = action.Source
+	newEffect.Target = action.Target
+	newEffect.Selected = action.Selected
+	return newEffect
 }

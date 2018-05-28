@@ -19,9 +19,9 @@ type Permanent struct {
 	// Properties that are relevant for any permanent
 	ActivatedThisTurn bool
 	Auras             []*Permanent
-	Effects           []*Effect
 	Owner             *Player
 	Tapped            bool
+	TemporaryEffects  []*Effect
 	TurnPlayed        int
 
 	// Creature-specific properties
@@ -146,7 +146,7 @@ func (p *Permanent) Power() int {
 	for _, aura := range p.Auras {
 		answer += aura.BasePower
 	}
-	for _, effect := range p.Effects {
+	for _, effect := range p.TemporaryEffects {
 		answer += effect.Power
 		if effect.Kicker != nil {
 			answer += effect.Kicker.Power
@@ -160,7 +160,7 @@ func (c *Permanent) Toughness() int {
 	for _, aura := range c.Auras {
 		answer += aura.BaseToughness
 	}
-	for _, effect := range c.Effects {
+	for _, effect := range c.TemporaryEffects {
 		answer += effect.Toughness
 		if effect.Kicker != nil {
 			answer += effect.Kicker.Toughness
@@ -256,6 +256,7 @@ func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
 	}
 	c.ActivatedThisTurn = true
 	selectedForCost := cost.Effect.SelectedForCost
+
 	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
 		selectedForCost.Owner.RemoveFromBoard(selectedForCost)
 		selectedForCost.Owner.Hand = append(selectedForCost.Owner.Hand, selectedForCost.Card.Name)
