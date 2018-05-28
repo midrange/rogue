@@ -49,7 +49,7 @@ type Effect struct {
 	EffectType EffectType
 	Selector   *Selector
 
-	// for non-targetted effects of spells, such as Snap
+	// for non-targeted effects of spells, such as Snap
 	Selected []*Permanent
 }
 
