@@ -723,7 +723,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				return
 			}
 		} else {
-			panic("unhandled ConditionSpellTarget in ResolveEffect")
+			panic("unhandled Condition in ResolveEffect")
 		}
 	}
 	if e.Summon != NoCard {
