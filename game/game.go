@@ -420,7 +420,7 @@ func (g *Game) putCreatureOnStackAndPass() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature() {
 			g.TakeAction(a)
-			g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
+			g.TakeAction(&Action{Type: PassPriority})
 			return
 		}
 	}

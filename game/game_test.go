@@ -518,6 +518,7 @@ func TestCounterspell(t *testing.T) {
 	}
 	g.playInstant()
 	if len(g.Stack) != 0 {
+		g.Print()
 		t.Fatal("expected there to be no spells on the stack after Counterspell")
 	}
 }

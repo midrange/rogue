@@ -11,7 +11,7 @@ type Action struct {
 	Cost          *Cost
 	Selected      []*Permanent // for non-targeted effects, such as in Snap
 	Source        *Permanent   // for targeted effects
-	SpellTarget   *Action
+	SpellTarget   *StackObject
 	Target        *Permanent
 	With          *Permanent // for attacking
 	WithAlternate bool

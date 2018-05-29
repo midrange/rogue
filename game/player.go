@@ -232,7 +232,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:        Play,
 					Card:        card,
-					Owner:       p,
 					SpellTarget: spellAction,
 				})
 			}
@@ -504,11 +503,12 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 
 	so := &StackObject{
-		Card:     action.Card,
-		Player:   p,
-		Selected: action.Selected,
-		Target:   action.Target,
-		Type:     action.Type,
+		Card:        action.Card,
+		Player:      p,
+		Selected:    action.Selected,
+		SpellTarget: action.SpellTarget,
+		Target:      action.Target,
+		Type:        action.Type,
 	}
 	if action.WithKicker {
 		so.Kicker = action.Card.Kicker
@@ -723,7 +723,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				return
 			}
 		} else {
-			panic("unhandled Condition in ResolveEffect")
+			panic("unhandled ConditionSpellTarget in ResolveEffect")
 		}
 	}
 	if e.Summon != NoCard {
@@ -763,7 +763,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	} else if e.EffectType == Countermagic {
 		targetSpell := e.SpellTarget
-		newStack := []*Action{}
+		newStack := []*StackObject{}
 		for _, spellAction := range p.game.Stack {
 			if spellAction != targetSpell {
 				newStack = append(newStack, spellAction)
