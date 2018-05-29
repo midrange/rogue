@@ -168,7 +168,6 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 							&Action{
 								Type:   Activate,
 								Cost:   &Cost{Effect: costEffect},
-								Owner:  p,
 								Source: perm,
 								Target: c,
 							})
@@ -242,7 +241,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 							answer = append(answer, &Action{
 								Type:     Play,
 								Card:     card,
-								Owner:    p,
 								Selected: selected,
 								Target:   targetCreature,
 							})
@@ -252,7 +250,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
-						Owner:  p,
 						Target: targetCreature,
 					})
 				}
@@ -266,7 +263,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:       Play,
 					Card:       card,
-					Owner:      p,
 					Target:     target,
 					WithKicker: true,
 				})
@@ -280,7 +276,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:          Play,
 					Card:          card,
-					Owner:         p,
 					Target:        target,
 					WithPhyrexian: true,
 				})
@@ -302,7 +297,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 					answer = append(answer, &Action{
 						Type:          Play,
 						Card:          card,
-						Owner:         p,
 						Selected:      selected,
 						WithAlternate: true,
 					})
@@ -310,7 +304,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 			}
 		}
 
-		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true, Owner: p})
+		answer = append(answer, &Action{Type: Play, Card: card, WithAlternate: true})
 	}
 
 	return answer
@@ -402,25 +396,24 @@ func combinations(iterable []int, r int) [][]int {
 func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
 	if card.IsLand() {
 		if p.LandPlayedThisTurn == 0 {
-			answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+			answer = append(answer, &Action{Type: Play, Card: card})
 		}
 	} else if !card.IsInstant() {
 		if p.CanPayCost(card.CastingCost) {
 			if card.IsCreature() {
-				answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+				answer = append(answer, &Action{Type: Play, Card: card})
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
-						Owner:  p,
 						Target: target,
 					})
 				}
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
+			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 		}
 	}
 	return answer

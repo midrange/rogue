@@ -9,7 +9,6 @@ type Action struct {
 
 	Card          *Card
 	Cost          *Cost
-	Owner         *Player
 	Selected      []*Permanent // for non-targeted effects, such as in Snap
 	Source        *Permanent   // for targeted effects
 	Target        *Permanent
