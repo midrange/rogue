@@ -154,7 +154,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	}
 }
 
-func TestSilhanaCantBeTargetted(t *testing.T) {
+func TestSilhanaCantBeTargeted(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(VinesOfVastwood))
 
 	g.playLand()
@@ -518,6 +518,7 @@ func TestCounterspell(t *testing.T) {
 	}
 	g.playInstant()
 	if len(g.Stack) != 0 {
+		g.Print()
 		t.Fatal("expected there to be no spells on the stack after Counterspell")
 	}
 }
