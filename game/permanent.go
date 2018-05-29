@@ -264,11 +264,11 @@ func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
 	}
 }
 
-func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
+func (c *Permanent) ActivateAbility(stackObject *StackObject) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
 	if c.ActivatedAbility.EffectType == Untap {
-		target.Tapped = false
+		stackObject.Target.Tapped = false
 	}
 }

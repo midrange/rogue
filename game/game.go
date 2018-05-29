@@ -44,8 +44,11 @@ type Game struct {
 	// Permanents contains all permanents in play.
 	Permanents map[PermanentId]*Permanent
 
-	// Non-mana, non-cost effect actions go on the stack and can be responded to before they resolve
-	Stack []*Action
+	/*
+		Some actions go on the stack and can be responded to before they resolve
+		https://mtg.gamepedia.com/Stack#Actions
+	*/
+	Stack []*StackObject
 }
 
 //go:generate stringer -type=CardName
@@ -75,7 +78,7 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId:      OnThePlay,
 		NextPermanentId: PermanentId(1),
 		Permanents:      make(map[PermanentId]*Permanent),
-		Stack:           []*Action{},
+		Stack:           []*StackObject{},
 	}
 
 	players[0].game = g
@@ -99,8 +102,8 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	if len(g.Stack) > 0 {
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
-		topAction := g.Stack[len(g.Stack)-1]
-		if topAction.Owner == g.Priority() {
+		topStackObject := g.Stack[len(g.Stack)-1]
+		if topStackObject.Player == g.Priority() {
 			actions = append(actions, &Action{
 				Type: OfferToResolveNextOnStack,
 			})
@@ -247,11 +250,11 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	} else if action.Type == ResolveNextOnStack {
 		g.PriorityId = g.PriorityId.OpponentId()
-		stackAction := g.Stack[len(g.Stack)-1]
-		if stackAction.Type == Play {
-			stackAction.Owner.ResolveSpell(stackAction)
-		} else if stackAction.Type == Activate {
-			stackAction.Owner.ResolveActivatedAbility(stackAction)
+		stackObject := g.Stack[len(g.Stack)-1]
+		if stackObject.Type == Play {
+			stackObject.Player.ResolveSpell(stackObject)
+		} else if stackObject.Type == Activate {
+			stackObject.Player.ResolveActivatedAbility(stackObject)
 		}
 		g.Stack = g.Stack[:len(g.Stack)-1]
 		return
@@ -280,11 +283,9 @@ func (g *Game) TakeAction(action *Action) {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
 			} else {
-				g.Stack = append(g.Stack, action)
 				g.Priority().PayCostsAndPutSpellOnStack(action)
 			}
 		} else if action.Type == Activate {
-			g.Stack = append(g.Stack, action)
 			g.Priority().PayCostsAndPutAbilityOnStack(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
