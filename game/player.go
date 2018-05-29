@@ -492,7 +492,6 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				answer = append(answer, &Action{
 					Type:         Play,
 					Card:         card,
-					Owner:        p,
 					Selected:     []*Permanent{a},
 					WithNinjitsu: true,
 				})
@@ -596,11 +595,12 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 	so := &StackObject{
 		Card: action.Card,
 		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
-		Player:      p,
-		Selected:    action.Selected,
-		SpellTarget: action.SpellTarget,
-		Target:      action.Target,
-		Type:        action.Type,
+		Player:       p,
+		Selected:     action.Selected,
+		SpellTarget:  action.SpellTarget,
+		Target:       action.Target,
+		Type:         action.Type,
+		WithNinjitsu: action.WithNinjitsu,
 	}
 	if action.WithKicker {
 		so.Kicker = action.Card.Kicker
@@ -619,7 +619,7 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 		} else if action.WithPhyrexian {
 			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else if action.WithNinjitsu {
-			card.Ninjitsu.Effect = UpdatedEffectForAction(action, card.Ninjitsu.Effect)
+			card.Ninjitsu.Effect = UpdatedEffectForStackObject(so, card.Ninjitsu.Effect)
 			p.PayCost(card.Ninjitsu)
 		} else {
 			p.PayCost(card.CastingCost)
@@ -660,7 +660,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p, stackObject)
-		if action.WithNinjitsu {
+		if stackObject.WithNinjitsu {
 			perm.Attacking = true
 			perm.Tapped = true
 		}

@@ -139,7 +139,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		return append(g.Priority().BlockActions(), g.Priority().PassAction())
 	case CombatDamage:
 		if g.PriorityId == g.AttackerId() {
-			actions = append(actions, &Action{Type: OfferToResolveNextOnStack})
+			actions = append(actions, &Action{Type: PassPriority})
 		} else {
 			actions = append(actions, &Action{Type: Pass})
 		}

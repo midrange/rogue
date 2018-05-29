@@ -316,7 +316,7 @@ var Cards = map[CardName]*Card{
 				Selector: &Selector{
 					Type:         Creature,
 					ControlledBy: SamePlayer,
-					Targetted:    false,
+					Targeted:     false,
 					AttackStatus: Unblocked},
 			}},
 		Type: []Type{Creature},
