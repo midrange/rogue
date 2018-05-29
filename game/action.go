@@ -5,13 +5,14 @@ import (
 )
 
 type Action struct {
-	Type          ActionType
+	Type ActionType
+
 	Card          *Card
 	Cost          *Cost
-	Source        *Permanent // for targeted effects
-	With          *Permanent // for attacking
-	Target        *Permanent
 	Selected      []*Permanent // for non-targeted effects, such as in Snap
+	Source        *Permanent   // for targeted effects
+	Target        *Permanent
+	With          *Permanent // for attacking
 	WithAlternate bool
 	WithKicker    bool
 	WithPhyrexian bool
@@ -29,6 +30,7 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
+	PassPriority
 )
 
 func (a *Action) targetPronoun(p *Player) string {

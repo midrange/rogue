@@ -43,6 +43,12 @@ type Game struct {
 
 	// Permanents contains all permanents in play.
 	Permanents map[PermanentId]*Permanent
+
+	/*
+		Some actions go on the stack and can be responded to before they resolve
+		https://mtg.gamepedia.com/Stack#Actions
+	*/
+	Stack []*StackObject
 }
 
 //go:generate stringer -type=CardName
@@ -72,6 +78,7 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId:      OnThePlay,
 		NextPermanentId: PermanentId(1),
 		Permanents:      make(map[PermanentId]*Permanent),
+		Stack:           []*StackObject{},
 	}
 
 	players[0].game = g
@@ -91,14 +98,34 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
+
+	if len(g.Stack) > 0 {
+		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
+		topStackObject := g.Stack[len(g.Stack)-1]
+		if topStackObject.Player == g.Priority() {
+			actions = append(actions, &Action{
+				Type: PassPriority,
+			})
+		} else {
+			actions = append(actions, &Action{
+				Type: PassPriority,
+			})
+		}
+
+		return actions
+	}
+
 	switch g.Phase {
 	case Main1:
+		actions = append(actions, &Action{Type: Pass})
 		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		actions = append(actions, &Action{Type: DeclareAttack})
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
-		actions = g.Priority().PlayActions(true, forHuman)
+		actions = append(actions, &Action{Type: Pass})
+		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
@@ -184,6 +211,10 @@ func (g *Game) Lands() []*Permanent {
 }
 
 func (g *Game) nextPhase() {
+	for _, p := range g.Players {
+		p.EndPhase()
+	}
+
 	switch g.Phase {
 	case Main1:
 		g.Phase = DeclareAttackers
@@ -214,6 +245,21 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 
+	if action.Type == PassPriority && g.AttackerId() == g.PriorityId {
+		g.PriorityId = g.PriorityId.OpponentId()
+		return
+	} else if action.Type == PassPriority {
+		g.PriorityId = g.PriorityId.OpponentId()
+		stackObject := g.Stack[len(g.Stack)-1]
+		if stackObject.Type == Play {
+			stackObject.Player.ResolveSpell(stackObject)
+		} else if stackObject.Type == Activate {
+			stackObject.Player.ResolveActivatedAbility(stackObject)
+		}
+		g.Stack = g.Stack[:len(g.Stack)-1]
+		return
+	}
+
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -234,9 +280,13 @@ func (g *Game) TakeAction(action *Action) {
 		fallthrough
 	case Main2:
 		if action.Type == Play {
-			g.Priority().Play(action)
+			if action.Card.IsLand() {
+				g.Priority().PlayLand(action)
+			} else {
+				g.Priority().PayCostsAndPutSpellOnStack(action)
+			}
 		} else if action.Type == Activate {
-			g.Priority().ActivateAbility(action)
+			g.Priority().PayCostsAndPutAbilityOnStack(action)
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
@@ -369,7 +419,7 @@ func (g *Game) playLand() {
 func (g *Game) playCreature() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature() {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -377,11 +427,17 @@ func (g *Game) playCreature() {
 	panic("playCreature failed")
 }
 
+func (g *Game) TakeActionAndResolve(action *Action) {
+	g.TakeAction(action)
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
+}
+
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -403,7 +459,7 @@ func (g *Game) doBlockAction() {
 func (g *Game) playCreaturePhyrexian() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsCreature() && a.WithPhyrexian {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -415,7 +471,7 @@ func (g *Game) playCreaturePhyrexian() {
 func (g *Game) playInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant() && a.Type == Play {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -427,7 +483,7 @@ func (g *Game) playInstant() {
 func (g *Game) playKickedInstant() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsInstant() && a.WithKicker {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -439,7 +495,7 @@ func (g *Game) playKickedInstant() {
 func (g *Game) playSorcery() {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.IsSorcery() && a.Type == Play {
-			g.TakeAction(a)
+			g.TakeActionAndResolve(a)
 			return
 		}
 	}
@@ -472,7 +528,7 @@ func (g *Game) playManaAbilityAction() {
 // playActivatedAbility plays the first activated ability action
 func (g *Game) playActivatedAbility() {
 	for _, a := range g.Priority().ActivatedAbilityActions(true, false) {
-		g.TakeAction(a)
+		g.TakeActionAndResolve(a)
 		return
 	}
 	g.Print()
