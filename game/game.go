@@ -114,17 +114,9 @@ func (g *Game) Actions(forHuman bool) []*Action {
 	if len(g.Stack) > 0 {
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
-		topStackObject := g.Stack[len(g.Stack)-1]
-		if topStackObject.Player == g.Priority() {
-			actions = append(actions, &Action{
-				Type: PassPriority,
-			})
-		} else {
-			actions = append(actions, &Action{
-				Type: PassPriority,
-			})
-		}
-
+		actions = append(actions, &Action{
+			Type: PassPriority,
+		})
 		return actions
 	}
 
@@ -294,22 +286,22 @@ func (g *Game) TakeAction(action *Action) {
 	} else if action.Type == PassPriority {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackObject := g.Stack[len(g.Stack)-1]
+		g.Stack = g.Stack[:len(g.Stack)-1]
 		if stackObject.Type == Play {
 			stackObject.Player.ResolveSpell(stackObject)
 		} else if stackObject.Type == Activate {
 			stackObject.Player.ResolveActivatedAbility(stackObject)
+		} else if stackObject.Type == EntersTheBattlefieldEffect {
+			for _, perm := range g.Priority().Board {
+				if perm.Card == stackObject.Card {
+					effect := UpdatedEffectForStackObject(stackObject, stackObject.Card.EntersTheBattlefieldEffect)
+					g.Priority().ResolveEffect(effect, perm)
+					break
+				}
+			}
 		}
 		return
-} else if stackAction.Type == EntersTheBattlefieldEffect {
-for _, perm := range g.Priority().Board {
-if perm.Card == stackAction.Card {
-effect := UpdatedEffectForAction(stackAction, stackAction.Card.EntersTheBattlefieldEffect)
-g.Priority().ResolveEffect(effect, perm)
-break
-}
-}
-
-}
+	}
 	if action.Type == Pass {
 		g.nextPhase()
 		return
@@ -381,7 +373,7 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, owner *Player, action *Action) *Permanent {
+func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject) *Permanent {
 	perm := &Permanent{
 		Card:       card,
 		Owner:      owner,
@@ -391,7 +383,7 @@ func (g *Game) newPermanent(card *Card, owner *Player, action *Action) *Permanen
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
 	owner.Board = append(owner.Board, perm)
-	perm.HandleEnterTheBattlefield(action)
+	perm.HandleEnterTheBattlefield(stackObject)
 	return perm
 }
 

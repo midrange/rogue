@@ -466,7 +466,6 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 								Type: Play,
 								Card: card,
 								EntersTheBattleFieldSpellTarget: spellTarget,
-								Owner: p,
 							})
 						}
 					} else {
@@ -474,8 +473,8 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 					}
 				} else {
 					answer = append(answer, &Action{
-						Type:  Play,
-						Card:  card,
+						Type: Play,
+						Card: card,
 					})
 				}
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
@@ -570,7 +569,8 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 
 	so := &StackObject{
-		Card:        action.Card,
+		Card: action.Card,
+		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
 		Player:      p,
 		Selected:    action.Selected,
 		SpellTarget: action.SpellTarget,
@@ -614,7 +614,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p, action)
+	p.game.newPermanent(card, p, nil)
 	p.LandPlayedThisTurn++
 }
 
@@ -631,7 +631,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p, action)
+		perm := p.game.newPermanent(card, p, stackObject)
 
 		if card.IsEnchantCreature() {
 			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)

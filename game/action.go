@@ -8,7 +8,7 @@ type Action struct {
 	Type ActionType
 
 	Card                            *Card
-	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
+	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
 	Cost                            *Cost
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
 	Source                          *Permanent   // for targeted effects
@@ -32,7 +32,7 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
-    DecideOnChoiceAction
+	DecideOnChoiceAction
 	DeclineChoiceAction
 	EntersTheBattlefieldEffect
 	PassPriority

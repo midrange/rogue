@@ -622,14 +622,14 @@ func TestSpellstutterSpriteSucceeds(t *testing.T) {
 		t.Fatal("expected two creatures on the stack")
 	}
 
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 2 {
 		t.Fatal("expected creature and spellstutter on stack")
 	}
 
-	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 0 {
 		t.Fatal("expected 0 creatures on the stack ", g.Stack)
@@ -678,14 +678,14 @@ func TestSpellstutterSpriteFails(t *testing.T) {
 		t.Fatal("expected two creatures on the stack")
 	}
 
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 2 {
 		t.Fatal("expected creature and spellstutter on stack")
 	}
 
-	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 1 {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
