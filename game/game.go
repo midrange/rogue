@@ -50,7 +50,7 @@ type Game struct {
 	*/
 	ChoiceEffect *Effect
 
-    /*
+	/*
 		Some actions go on the stack and can be responded to before they resolve
 		https://mtg.gamepedia.com/Stack#Actions
 	*/
@@ -355,8 +355,8 @@ func (g *Game) TakeAction(action *Action) {
 }
 
 // Removes targetSpell from the stack, as in when Counterspelled.
-func (g *Game) RemoveSpellFromStack(targetSpell *Action) {
-	newStack := []*Action{}
+func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
+	newStack := []*StackObject{}
 	for _, spellAction := range g.Stack {
 		if spellAction != targetSpell {
 			newStack = append(newStack, spellAction)

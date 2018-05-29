@@ -348,7 +348,6 @@ func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, select
 			answer = append(answer, &Action{
 				Type:          Play,
 				Card:          card,
-				Owner:         p,
 				Selected:      selectedLands,
 				SpellTarget:   spellAction,
 				WithAlternate: true,
@@ -358,7 +357,6 @@ func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, select
 		answer = append(answer, &Action{
 			Type:          Play,
 			Card:          card,
-			Owner:         p,
 			Selected:      selectedLands,
 			WithAlternate: true,
 		})

@@ -580,7 +580,6 @@ func TestDazePaid(t *testing.T) {
 		Type:     DecideOnChoiceAction,
 		Selected: []*Permanent{g.Priority().Lands()[0]},
 	})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
 	if len(g.Creatures()) != 1 {
 		t.Fatal("expected there to be Vault Skirge in play after Daze was paid")
 	}

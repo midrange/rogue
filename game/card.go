@@ -116,7 +116,7 @@ var Cards = map[CardName]*Card{
 		AlternateCastingCost: &Cost{
 			Effect: &Effect{
 				EffectType: ReturnToHand,
-				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 1, Targetted: false},
+				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 1, Targeted: false},
 			},
 		},
 		CastingCost: &Cost{Colorless: 2},
