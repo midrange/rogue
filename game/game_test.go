@@ -154,7 +154,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	}
 }
 
-func TestSilhanaCantBeTargetted(t *testing.T) {
+func TestSilhanaCantBeTargeted(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(VinesOfVastwood))
 
 	g.playLand()
@@ -518,6 +518,7 @@ func TestCounterspell(t *testing.T) {
 	}
 	g.playInstant()
 	if len(g.Stack) != 0 {
+		g.Print()
 		t.Fatal("expected there to be no spells on the stack after Counterspell")
 	}
 }
@@ -583,7 +584,7 @@ func TestDazePaid(t *testing.T) {
 		break
 	}
 
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
 	if len(g.Creatures()) != 1 {
 		t.Fatal("expected there to be Vault Skirge in play after Daze was paid")
 	}
@@ -626,14 +627,14 @@ func TestSpellstutterSpriteSucceeds(t *testing.T) {
 		t.Fatal("expected two creatures on the stack")
 	}
 
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 2 {
 		t.Fatal("expected creature and spellstutter on stack")
 	}
 
-	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 0 {
 		t.Fatal("expected 0 creatures on the stack ", g.Stack)
@@ -682,14 +683,14 @@ func TestSpellstutterSpriteFails(t *testing.T) {
 		t.Fatal("expected two creatures on the stack")
 	}
 
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 2 {
 		t.Fatal("expected creature and spellstutter on stack")
 	}
 
-	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 1 {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
