@@ -10,10 +10,9 @@ type Action struct {
 	Card                            *Card
 	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
 	Cost                            *Cost
-	Owner                           *Player
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
 	Source                          *Permanent   // for targeted effects
-	SpellTarget                     *Action
+	SpellTarget                     *StackObject
 	Target                          *Permanent
 	With                            *Permanent // for attacking
 	WithAlternate                   bool
@@ -33,11 +32,10 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
-	OfferToResolveNextOnStack
-	ResolveNextOnStack
+    DecideOnChoiceAction
 	DeclineChoiceAction
-	DecideOnChoiceAction
 	EntersTheBattlefieldEffect
+	PassPriority
 )
 
 func (a *Action) targetPronoun(p *Player) string {

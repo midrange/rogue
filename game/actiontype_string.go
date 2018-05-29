@@ -6,7 +6,7 @@ import "strconv"
 
 const _ActionType_name = "PassPlayDeclareAttackAttackBlockUseForManaChooseTargetAndManaActivateOfferToResolveNextOnStackResolveNextOnStackDeclineChoiceActionDecideOnChoiceActionEntersTheBattlefieldEffect"
 
-var _ActionType_index = [...]uint8{0, 4, 8, 21, 27, 32, 42, 61, 69, 94, 112, 131, 151, 177}
+var _ActionType_index = [...]uint8{0, 4, 8, 21, 27, 32, 42, 61, 69, 89, 108, 120}
 
 func (i ActionType) String() string {
 	if i < 0 || i >= ActionType(len(_ActionType_index)-1) {
