@@ -47,14 +47,14 @@ type Effect struct {
 	Source *Permanent
 
 	SelectedForCost *Permanent
-	SpellTarget     *Action
+	SpellTarget     *StackObject
 	Target          *Permanent
 
 	// for effects from targeted spells
 	EffectType EffectType
 	Selector   *Selector
 
-	// for non-targetted effects of spells, such as Snap
+	// for non-targeted effects of spells, such as Snap
 	Selected []*Permanent
 }
 
@@ -77,14 +77,12 @@ const (
 	Untap
 )
 
-func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
+func UpdatedEffectForStackObject(stackObject *StackObject, effect *Effect) *Effect {
 	newEffect := effect
-	if action.WithKicker {
-		newEffect.Kicker = action.Card.Kicker
-	}
-	newEffect.Selected = action.Selected
-	newEffect.Source = action.Source
-	newEffect.SpellTarget = action.SpellTarget
-	newEffect.Target = action.Target
+	newEffect.Kicker = stackObject.Kicker
+	newEffect.Source = stackObject.Source
+	newEffect.Target = stackObject.Target
+	newEffect.Selected = stackObject.Selected
+	newEffect.SpellTarget = stackObject.SpellTarget
 	return newEffect
 }

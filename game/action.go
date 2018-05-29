@@ -10,13 +10,12 @@ type Action struct {
 	// a faux effect that resolves after a choice-based action, such as returning Scry cards and drawing
 	AfterEffect                     *Effect
 	Card                            *Card
-	EntersTheBattleFieldSpellTarget *Action // the spell target Card's coming into play effect
+	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
 	Cost                            *Cost
-	Owner                           *Player
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
+    ShouldSwitchPriority            bool // whether to switch priority after the action
 	Source                          *Permanent   // for targeted effects
-	SpellTarget                     *Action
-	ShouldSwitchPriority            bool // whether to switch priority after the action
+	SpellTarget                     *StackObject
 	Target                          *Permanent
 	With                            *Permanent // for attacking
 	WithAlternate                   bool
@@ -36,11 +35,12 @@ const (
 	Block
 	ChooseTargetAndMana
 	DeclareAttack
-	EntersTheBattlefieldEffect
 	MakeChoice
-	OfferToResolveNextOnStack
-	ResolveNextOnStack
 	UseForMana
+	DecideOnChoiceAction
+	DeclineChoiceAction
+	EntersTheBattlefieldEffect
+	PassPriority
 )
 
 func (a *Action) targetPronoun(p *Player) string {
