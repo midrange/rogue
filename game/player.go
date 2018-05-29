@@ -168,7 +168,6 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 							&Action{
 								Type:   Activate,
 								Cost:   &Cost{Effect: costEffect},
-								Owner:  p,
 								Source: perm,
 								Target: c,
 							})
@@ -237,7 +236,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:        Play,
 					Card:        card,
-					Owner:       p,
 					SpellTarget: spellAction,
 				})
 			}
@@ -256,7 +254,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 								answer = append(answer, &Action{
 									Type:     Play,
 									Card:     card,
-									Owner:    p,
 									Selected: selected,
 									Target:   targetCreature,
 								})
@@ -266,11 +263,9 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						answer = append(answer, &Action{
 							Type:   Play,
 							Card:   card,
-							Owner:  p,
 							Target: targetCreature,
 						})
 					}
-
 				}
 			}
 		}
@@ -281,7 +276,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:       Play,
 					Card:       card,
-					Owner:      p,
 					Target:     target,
 					WithKicker: true,
 				})
@@ -295,7 +289,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:          Play,
 					Card:          card,
-					Owner:         p,
 					Target:        target,
 					WithPhyrexian: true,
 				})
@@ -335,7 +328,6 @@ func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, select
 			answer = append(answer, &Action{
 				Type:          Play,
 				Card:          card,
-				Owner:         p,
 				Selected:      selectedLands,
 				SpellTarget:   spellAction,
 				WithAlternate: true,
@@ -345,7 +337,6 @@ func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, select
 		answer = append(answer, &Action{
 			Type:          Play,
 			Card:          card,
-			Owner:         p,
 			Selected:      selectedLands,
 			WithAlternate: true,
 		})
@@ -439,7 +430,7 @@ func combinations(iterable []int, r int) [][]int {
 func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuman bool) []*Action {
 	if card.IsLand() {
 		if p.LandPlayedThisTurn == 0 {
-			answer = append(answer, &Action{Type: Play, Card: card, Owner: p})
+			answer = append(answer, &Action{Type: Play, Card: card})
 		}
 	} else if !card.IsInstant() {
 		if p.CanPayCost(card.CastingCost) {
@@ -451,7 +442,6 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 								Type: Play,
 								Card: card,
 								EntersTheBattleFieldSpellTarget: spellTarget,
-								Owner: p,
 							})
 						}
 					} else {
@@ -459,9 +449,8 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 					}
 				} else {
 					answer = append(answer, &Action{
-						Type:  Play,
-						Card:  card,
-						Owner: p,
+						Type: Play,
+						Card: card,
 					})
 				}
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
@@ -469,7 +458,6 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
-						Owner:  p,
 						Target: target,
 					})
 				}
@@ -482,7 +470,7 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
-			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true, Owner: p})
+			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 		}
 	}
 	return answer
@@ -561,7 +549,21 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 }
 
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
-	p.game.Stack = append(p.game.Stack, action)
+
+	so := &StackObject{
+		Card: action.Card,
+		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
+		Player:      p,
+		Selected:    action.Selected,
+		SpellTarget: action.SpellTarget,
+		Target:      action.Target,
+		Type:        action.Type,
+	}
+	if action.WithKicker {
+		so.Kicker = action.Card.Kicker
+	}
+	p.game.Stack = append(p.game.Stack, so)
+
 	p.RemoveCardForActionFromHand(action)
 
 	card := action.Card
@@ -569,7 +571,7 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 		if action.WithKicker {
 			p.PayCost(card.Kicker.Cost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else if action.WithAlternate {
-			card.AlternateCastingCost.Effect = UpdatedEffectForAction(action, card.AlternateCastingCost.Effect)
+			card.AlternateCastingCost.Effect = UpdatedEffectForStackObject(so, card.AlternateCastingCost.Effect)
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
 			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
@@ -579,42 +581,54 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 	}
 }
 
+func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
+	so := &StackObject{
+		Player:   p,
+		Selected: a.Selected,
+		Source:   a.Source,
+		Target:   a.Target,
+		Type:     a.Type,
+	}
+	p.game.Stack = append(p.game.Stack, so)
+	a.Source.PayForActivatedAbility(a.Cost, a.Target)
+}
+
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p, action)
+	p.game.newPermanent(card, p, nil)
 	p.LandPlayedThisTurn++
 }
 
 // Resolve an action to play a spell (non-land)
-func (p *Player) ResolveSpell(action *Action) {
-	card := action.Card
+func (p *Player) ResolveSpell(stackObject *StackObject) {
+	card := stackObject.Card
 
 	for _, permanent := range p.Board {
 		permanent.RespondToSpell()
 	}
 
 	if card.IsSpell() {
-		p.CastSpell(card, action.Target, action)
+		p.CastSpell(card, stackObject.Target, stackObject)
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p, action)
+		perm := p.game.newPermanent(card, p, stackObject)
 
 		if card.IsEnchantCreature() {
-			action.Target.Auras = append(action.Target.Auras, perm)
+			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)
 		}
 	}
 }
 
-func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
+func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject) {
 	if c.AddsTemporaryEffect {
 		for _, e := range c.Effects {
-			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForAction(a, e))
+			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForStackObject(stackObject, e))
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
-			p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
+			p.ResolveEffect(UpdatedEffectForStackObject(stackObject, e), nil)
 			if target != nil {
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
 			}
@@ -625,13 +639,8 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	}
 }
 
-func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
-	p.game.Stack = append(p.game.Stack, a)
-	a.Source.PayForActivatedAbility(a.Cost, a.Target)
-}
-
-func (p *Player) ResolveActivatedAbility(a *Action) {
-	a.Source.ActivateAbility(a.Cost, a.Target)
+func (p *Player) ResolveActivatedAbility(stackObject *StackObject) {
+	stackObject.Source.ActivateAbility(stackObject)
 }
 
 func (p *Player) AddMana(colorless int) {

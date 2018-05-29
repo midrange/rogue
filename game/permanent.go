@@ -229,7 +229,7 @@ func (c *Permanent) CanBlock(attacker *Permanent) bool {
 	return true
 }
 
-func (c *Permanent) HandleEnterTheBattlefield(action *Action) {
+func (c *Permanent) HandleEnterTheBattlefield(stackObject *StackObject) {
 	if c.Owner == nil {
 		panic("permanent has unset owner")
 	}
@@ -237,21 +237,21 @@ func (c *Permanent) HandleEnterTheBattlefield(action *Action) {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 
-	if action == nil {
+	if stackObject == nil {
 		return
 	}
 
 	// TODO handle generically, this just handles ETB effects that target spells
-	if action.EntersTheBattleFieldSpellTarget != nil {
-		c.Owner.game.Stack = append(c.Owner.game.Stack, &Action{
+	if stackObject.EntersTheBattleFieldSpellTarget != nil {
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
 			Type:        EntersTheBattlefieldEffect,
-			SpellTarget: action.EntersTheBattleFieldSpellTarget,
-			Card:        c.Card,
+			SpellTarget: stackObject.EntersTheBattleFieldSpellTarget,
+			Card:        stackObject.Card,
 		})
-	} else if action.Card.EntersTheBattlefieldEffect != nil {
-		c.Owner.game.Stack = append(c.Owner.game.Stack, &Action{
+	} else if stackObject.Card.EntersTheBattlefieldEffect != nil {
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
 			Type: EntersTheBattlefieldEffect,
-			Card: c.Card,
+			Card: stackObject.Card,
 		})
 	}
 }
@@ -279,11 +279,11 @@ func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
 	}
 }
 
-func (c *Permanent) ActivateAbility(cost *Cost, target *Permanent) {
+func (c *Permanent) ActivateAbility(stackObject *StackObject) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
 	if c.ActivatedAbility.EffectType == Untap {
-		target.Tapped = false
+		stackObject.Target.Tapped = false
 	}
 }
