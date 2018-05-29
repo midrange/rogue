@@ -184,7 +184,7 @@ var Cards = map[CardName]*Card{
 		AlternateCastingCost: &Cost{
 			Effect: &Effect{
 				EffectType: ReturnToHand,
-				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 2, Targetted: false},
+				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 2},
 			},
 		},
 		CastingCost: &Cost{Colorless: 5},
@@ -275,7 +275,7 @@ var Cards = map[CardName]*Card{
 			Cost: &Cost{
 				Effect: &Effect{
 					EffectType: ReturnToHand,
-					Selector:   &Selector{Subtype: LandForest, ControlledBy: SamePlayer, Targetted: false},
+					Selector:   &Selector{Subtype: LandForest, ControlledBy: SamePlayer, Targeted: false},
 				},
 			},
 			EffectType: Untap,
@@ -345,11 +345,11 @@ var Cards = map[CardName]*Card{
 		Effects: []*Effect{
 			&Effect{
 				EffectType: Untap,
-				Selector:   &Selector{Type: Land, Count: 2, Targetted: false},
+				Selector:   &Selector{Type: Land, Count: 2, Targeted: false},
 			},
 			&Effect{
 				EffectType: ReturnToHand,
-				Selector:   &Selector{Type: Creature, Targetted: true},
+				Selector:   &Selector{Type: Creature, Targeted: true},
 			},
 		},
 		Type: []Type{Instant},

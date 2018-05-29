@@ -154,7 +154,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	}
 }
 
-func TestSilhanaCantBeTargetted(t *testing.T) {
+func TestSilhanaCantBeTargeted(t *testing.T) {
 	g := NewGame(deckWithTopAndForests(SilhanaLedgewalker), deckWithTopAndForests(VinesOfVastwood))
 
 	g.playLand()

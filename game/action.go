@@ -9,8 +9,7 @@ type Action struct {
 
 	Card          *Card
 	Cost          *Cost
-	Owner         *Player
-	Selected      []*Permanent // for non-targetted effects, such as in Snap
+	Selected      []*Permanent // for non-targeted effects, such as in Snap
 	Source        *Permanent   // for targeted effects
 	SpellTarget   *Action
 	Target        *Permanent
@@ -32,8 +31,7 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
-	OfferToResolveNextOnStack
-	ResolveNextOnStack
+	PassPriority
 )
 
 func (a *Action) targetPronoun(p *Player) string {
