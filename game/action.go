@@ -31,8 +31,7 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
-	OfferToResolveNextOnStack
-	ResolveNextOnStack
+	PassPriority
 )
 
 func (a *Action) targetPronoun(p *Player) string {

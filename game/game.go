@@ -105,11 +105,11 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		topStackObject := g.Stack[len(g.Stack)-1]
 		if topStackObject.Player == g.Priority() {
 			actions = append(actions, &Action{
-				Type: OfferToResolveNextOnStack,
+				Type: PassPriority,
 			})
 		} else {
 			actions = append(actions, &Action{
-				Type: ResolveNextOnStack,
+				Type: PassPriority,
 			})
 		}
 
@@ -245,10 +245,10 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 
-	if action.Type == OfferToResolveNextOnStack {
+	if action.Type == PassPriority && g.AttackerId() == g.PriorityId {
 		g.PriorityId = g.PriorityId.OpponentId()
 		return
-	} else if action.Type == ResolveNextOnStack {
+	} else if action.Type == PassPriority {
 		g.PriorityId = g.PriorityId.OpponentId()
 		stackObject := g.Stack[len(g.Stack)-1]
 		if stackObject.Type == Play {
@@ -429,8 +429,8 @@ func (g *Game) playCreature() {
 
 func (g *Game) TakeActionAndResolve(action *Action) {
 	g.TakeAction(action)
-	g.TakeAction(&Action{Type: OfferToResolveNextOnStack})
-	g.TakeAction(&Action{Type: ResolveNextOnStack})
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
 }
 
 // playAura plays the first aura it sees in the hand on its own creature
