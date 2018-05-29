@@ -37,14 +37,10 @@ func NewPlayer(deck *Deck, id PlayerId) *Player {
 
 func (p *Player) Draw() {
 	card := p.Deck.Draw()
-	p.AddToHand(card)
-}
-
-func (p *Player) AddToHand(c CardName) {
-	if c == NoCard {
+	if card == NoCard {
 		return
 	}
-	p.Hand = append(p.Hand, c)
+	p.Hand = append(p.Hand, card)
 }
 
 func (p *Player) AvailableMana() int {
@@ -136,7 +132,7 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 	p.Board = newBoard
 }
 
-// Returns possible actions when we can activate cards on he board.
+// Returns possible actions when we can activate cards on the board.
 func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	permNames := make(map[CardName]bool)
 	answer := []*Action{}
@@ -151,7 +147,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 		}
 		permNames[perm.Name] = true
 
-		// TODO make actions unique, like don't allow two untaped Forests to both be cost targets
+		// TODO make actions unique, like don't allow two untapped Forests to both be cost targets
 		if perm.ActivatedAbility != nil {
 			effect := perm.ActivatedAbility
 			landsForCost := []*Permanent{}
@@ -171,9 +167,10 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 						answer = append(answer,
 							&Action{
 								Type:   Activate,
-								Source: perm,
 								Cost:   &Cost{Effect: costEffect},
-								Target: c})
+								Source: perm,
+								Target: c,
+							})
 					}
 				}
 			}
@@ -185,7 +182,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
-	answer := []*Action{&Action{Type: Pass}}
+	answer := []*Action{}
 
 	for _, name := range p.Hand {
 		// Don't re-check playing duplicate cards
@@ -244,8 +241,8 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 							answer = append(answer, &Action{
 								Type:     Play,
 								Card:     card,
-								Target:   targetCreature,
 								Selected: selected,
+								Target:   targetCreature,
 							})
 						}
 					}
@@ -266,8 +263,8 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:       Play,
 					Card:       card,
-					WithKicker: true,
 					Target:     target,
+					WithKicker: true,
 				})
 			}
 		}
@@ -465,8 +462,8 @@ func (p *Player) BlockActions() []*Action {
 				if perm.CanBlock(attacker) {
 					answer = append(answer, &Action{
 						Type:   Block,
-						With:   perm,
 						Target: attacker,
+						With:   perm,
 					})
 				}
 			}
@@ -475,7 +472,7 @@ func (p *Player) BlockActions() []*Action {
 	return answer
 }
 
-func (p *Player) Play(action *Action) {
+func (p *Player) RemoveCardForActionFromHand(action *Action) {
 	card := action.Card
 	newHand := []CardName{}
 	found := false
@@ -488,52 +485,91 @@ func (p *Player) Play(action *Action) {
 	}
 	if !found {
 		log.Printf("could not play card %+v from hand %+v", card, p.Hand)
+		p.game.Print()
 		panic("XXX")
 	}
 	p.Hand = newHand
+}
 
+func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
+
+	so := &StackObject{
+		Card:     action.Card,
+		Player:   p,
+		Selected: action.Selected,
+		Target:   action.Target,
+		Type:     action.Type,
+	}
+	if action.WithKicker {
+		so.Kicker = action.Card.Kicker
+	}
+	p.game.Stack = append(p.game.Stack, so)
+
+	p.RemoveCardForActionFromHand(action)
+
+	card := action.Card
 	if !card.IsLand() {
 		if action.WithKicker {
 			p.PayCost(card.Kicker.Cost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else if action.WithAlternate {
-			card.AlternateCastingCost.Effect = UpdatedEffectForAction(action, card.AlternateCastingCost.Effect)
+			card.AlternateCastingCost.Effect = UpdatedEffectForStackObject(so, card.AlternateCastingCost.Effect)
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
 			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
 		} else {
 			p.PayCost(card.CastingCost)
 		}
-		for _, permanent := range p.Board {
-			permanent.RespondToSpell()
-		}
+	}
+}
+
+func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
+	so := &StackObject{
+		Player:   p,
+		Selected: a.Selected,
+		Source:   a.Source,
+		Target:   a.Target,
+		Type:     a.Type,
+	}
+	p.game.Stack = append(p.game.Stack, so)
+	a.Source.PayForActivatedAbility(a.Cost, a.Target)
+}
+
+func (p *Player) PlayLand(action *Action) {
+	p.RemoveCardForActionFromHand(action)
+	card := action.Card
+	p.game.newPermanent(card, p)
+	p.LandPlayedThisTurn++
+}
+
+// Resolve an action to play a spell (non-land)
+func (p *Player) ResolveSpell(stackObject *StackObject) {
+	card := stackObject.Card
+
+	for _, permanent := range p.Board {
+		permanent.RespondToSpell()
 	}
 
 	if card.IsSpell() {
-		p.CastSpell(card, action.Target, action)
+		p.CastSpell(card, stackObject.Target, stackObject)
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p)
 
-		if card.IsLand() {
-			p.LandPlayedThisTurn++
-		}
-
 		if card.IsEnchantCreature() {
-			action.Target.Auras = append(action.Target.Auras, perm)
+			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)
 		}
 	}
-
 }
 
-func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
+func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject) {
 	if c.AddsTemporaryEffect {
 		for _, e := range c.Effects {
-			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForAction(a, e))
+			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForStackObject(stackObject, e))
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
-			p.ResolveEffect(UpdatedEffectForAction(a, e), nil)
+			p.ResolveEffect(UpdatedEffectForStackObject(stackObject, e), nil)
 			if target != nil {
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
 			}
@@ -544,8 +580,8 @@ func (p *Player) CastSpell(c *Card, target *Permanent, a *Action) {
 	}
 }
 
-func (p *Player) ActivateAbility(a *Action) {
-	a.Source.ActivateAbility(a.Cost, a.Target)
+func (p *Player) ResolveActivatedAbility(stackObject *StackObject) {
+	stackObject.Source.ActivateAbility(stackObject)
 }
 
 func (p *Player) AddMana(colorless int) {
@@ -772,6 +808,7 @@ func (p *Player) SpendMana(amount int) {
 		}
 	}
 	if amount > 0 {
+		p.game.Print()
 		panic("could not spend mana")
 	}
 }

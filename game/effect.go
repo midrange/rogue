@@ -63,13 +63,11 @@ const (
 	Untap
 )
 
-func UpdatedEffectForAction(action *Action, effect *Effect) *Effect {
+func UpdatedEffectForStackObject(stackObject *StackObject, effect *Effect) *Effect {
 	newEffect := effect
-	if action.WithKicker {
-		newEffect.Kicker = action.Card.Kicker
-	}
-	newEffect.Source = action.Source
-	newEffect.Target = action.Target
-	newEffect.Selected = action.Selected
+	newEffect.Kicker = stackObject.Kicker
+	newEffect.Source = stackObject.Source
+	newEffect.Target = stackObject.Target
+	newEffect.Selected = stackObject.Selected
 	return newEffect
 }
