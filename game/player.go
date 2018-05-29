@@ -1152,7 +1152,6 @@ func (p *Player) waysToDelverScry(effect *Effect) []*Action {
 				Cards:      []CardName{card.Name},
 				Selected:   effect.Selected,
 			},
-			Owner: p,
 		},
 		&Action{
 			Type: MakeChoice,
@@ -1161,7 +1160,6 @@ func (p *Player) waysToDelverScry(effect *Effect) []*Action {
 				Cards:      []CardName{card.Name},
 				Selected:   effect.Selected,
 			},
-			Owner: p,
 		},
 	}
 }
