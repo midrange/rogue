@@ -584,7 +584,7 @@ func TestDazePaid(t *testing.T) {
 		break
 	}
 
-	g.TakeAction(&Action{Type: PassPrioirity})
+	g.TakeAction(&Action{Type: PassPriority})
 	if len(g.Creatures()) != 1 {
 		t.Fatal("expected there to be Vault Skirge in play after Daze was paid")
 	}

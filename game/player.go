@@ -463,9 +463,8 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				}
 			} else if card.IsSorcery() {
 				answer = append(answer, &Action{
-					Type:  Play,
-					Card:  card,
-					Owner: p,
+					Type: Play,
+					Card: card,
 				})
 			}
 		}
@@ -981,7 +980,6 @@ func (p *Player) waysToArrange(effect *Effect) []*Action {
 		answer = append(answer, &Action{
 			Type:        MakeChoice,
 			AfterEffect: &Effect{EffectType: ReturnCardsToTop, Cards: permutation},
-			Owner:       p,
 		})
 
 	}
@@ -989,7 +987,6 @@ func (p *Player) waysToArrange(effect *Effect) []*Action {
 	answer = append(answer, &Action{
 		Type:        MakeChoice,
 		AfterEffect: &Effect{EffectType: Shuffle, Cards: cards},
-		Owner:       p,
 	})
 
 	return answer
@@ -1050,7 +1047,6 @@ func (p *Player) waysToScry(effect *Effect) []*Action {
 		answer = append(answer, &Action{
 			Type:        MakeChoice,
 			AfterEffect: &Effect{EffectType: ReturnScryCards, ScryCards: slicedPermutation},
-			Owner:       p,
 		})
 
 	}
