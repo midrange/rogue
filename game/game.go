@@ -66,7 +66,10 @@ type Phase int
 // rules. Here it is just treated as another Phase.
 
 const (
-	Main1 Phase = iota
+	UntapStep Phase = iota
+	Upkeep
+	Draw
+	Main1
 	DeclareAttackers
 	DeclareBlockers
 	CombatDamage
@@ -230,6 +233,19 @@ func (g *Game) nextPhase() {
 	}
 
 	switch g.Phase {
+	case UntapStep:
+		g.Attacker().Untap()
+		g.Phase = Upkeep
+	case Upkeep:
+		for _, c := range g.Attacker().Board {
+			if c.BeginningOfYourUpkeepEffect != nil {
+				g.Attacker().ResolveEffect(c.BeginningOfYourUpkeepEffect, c)
+			}
+		}
+		g.Phase = Draw
+	case Draw:
+		g.Priority().Draw()
+		g.Phase = Main1
 	case Main1:
 		g.Phase = DeclareAttackers
 	case DeclareAttackers:
@@ -248,11 +264,10 @@ func (g *Game) nextPhase() {
 		for _, p := range g.Players {
 			p.EndTurn()
 		}
-		g.Phase = Main1
+		g.Phase = UntapStep
 		g.Turn++
-		g.Priority().Untap()
 		g.PriorityId = g.PriorityId.OpponentId()
-		g.Priority().Draw()
+
 	}
 }
 
@@ -455,12 +470,13 @@ func (g *Game) passUntilPhase(p Phase) {
 	}
 }
 
-// passTurn makes both players pass until it is the next turn, or until the game is over
+// passTurn makes both players pass until it is the next turn's main phase, or until the game is over
 func (g *Game) passTurn() {
 	turn := g.Turn
 	for g.Turn == turn && !g.IsOver() {
 		g.pass()
 	}
+	g.passUntilPhase(Main1)
 }
 
 // playLand plays the first land it sees in the hand
