@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _Subtype_name = "NoSubtypeLandForestLandIslandLandMountainLandPlainsLandSwamp"
+const _Subtype_name = "NoSubtypeLandForestLandIslandLandMountainLandPlainsLandSwampFaerie"
 
-var _Subtype_index = [...]uint8{0, 9, 19, 29, 41, 51, 60}
+var _Subtype_index = [...]uint8{0, 9, 19, 29, 41, 51, 60, 66}
 
 func (i Subtype) String() string {
 	if i < 0 || i >= Subtype(len(_Subtype_index)-1) {

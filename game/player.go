@@ -242,6 +242,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 		}
 
+		if card.Flash {
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
+		}
+
 	}
 
 	return answer
@@ -455,7 +459,24 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 	} else if !card.IsInstant() {
 		if p.CanPayCost(card.CastingCost) {
 			if card.IsCreature() {
-				answer = append(answer, &Action{Type: Play, Card: card})
+				if card.HasEntersTheBattlefieldTargets() {
+					if card.EntersTheBattlefieldEffect.Selector.Type == Spell {
+						for _, spellTarget := range p.game.Stack {
+							answer = append(answer, &Action{
+								Type: Play,
+								Card: card,
+								EntersTheBattleFieldSpellTarget: spellTarget,
+							})
+						}
+					} else {
+						panic("unhandled EntersTheBattlefieldEffect.Selector.Type")
+					}
+				} else {
+					answer = append(answer, &Action{
+						Type: Play,
+						Card: card,
+					})
+				}
 			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
 					answer = append(answer, &Action{
@@ -548,7 +569,8 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 
 	so := &StackObject{
-		Card:        action.Card,
+		Card: action.Card,
+		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
 		Player:      p,
 		Selected:    action.Selected,
 		SpellTarget: action.SpellTarget,
@@ -592,7 +614,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p)
+	p.game.newPermanent(card, p, nil)
 	p.LandPlayedThisTurn++
 }
 
@@ -609,7 +631,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p)
+		perm := p.game.newPermanent(card, p, stackObject)
 
 		if card.IsEnchantCreature() {
 			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)
@@ -767,12 +789,27 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			if !controlsOne {
 				return
 			}
-		} else {
+		}
+
+		if e.Condition.ConvertedManaCostLTE != NoSubtype {
+			controlCount := 0
+			for _, boardPerm := range p.Board {
+				if boardPerm.HasSubtype(Faerie) {
+					controlCount++
+				}
+			}
+			if controlCount < e.SpellTarget.Card.CastingCost.Colorless {
+				return
+			}
+		}
+		if e.Condition.ControlAnother == NoCard &&
+			e.Condition.ConvertedManaCostLTE == NoSubtype {
 			panic("unhandled Condition in ResolveEffect")
 		}
+
 	}
 	if e.Summon != NoCard {
-		p.game.newPermanent(e.Summon.Card(), p)
+		p.game.newPermanent(e.Summon.Card(), p, nil)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
 		effectedPermanent := e.Target

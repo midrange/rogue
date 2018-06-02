@@ -1,6 +1,5 @@
 /*
-	A Condition currently accommodates just InPlay for a given CardName,
-	so we can do Faerie Miscreant.
+	A Condition currently accommodates Faerie Miscreant and Spellstutter Sprite.
 */
 
 package game
@@ -10,7 +9,8 @@ import (
 )
 
 type Condition struct {
-	ControlAnother CardName
+	ControlAnother       CardName
+	ConvertedManaCostLTE Subtype
 }
 
 func (c *Condition) String() string {

@@ -229,15 +229,30 @@ func (c *Permanent) CanBlock(attacker *Permanent) bool {
 	return true
 }
 
-func (c *Permanent) HandleComingIntoPlay() {
+func (c *Permanent) HandleEnterTheBattlefield(stackObject *StackObject) {
 	if c.Owner == nil {
 		panic("permanent has unset owner")
 	}
 	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
-	if c.EntersTheBattlefieldEffect != nil {
-		c.Owner.ResolveEffect(c.EntersTheBattlefieldEffect, c)
+
+	if stackObject == nil {
+		return
+	}
+
+	// TODO handle generically, this just handles ETB effects that target spells
+	if stackObject.EntersTheBattleFieldSpellTarget != nil {
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
+			Type:        EntersTheBattlefieldEffect,
+			SpellTarget: stackObject.EntersTheBattleFieldSpellTarget,
+			Card:        stackObject.Card,
+		})
+	} else if stackObject.Card.EntersTheBattlefieldEffect != nil {
+		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
+			Type: EntersTheBattlefieldEffect,
+			Card: stackObject.Card,
+		})
 	}
 }
 
