@@ -45,6 +45,12 @@ type Game struct {
 	Permanents map[PermanentId]*Permanent
 
 	/*
+		The effect the Priority Player must decide on
+		Currently, the only ChoiceEffect is how to pay for Daze
+	*/
+	ChoiceEffect *Effect
+
+	/*
 		Some actions go on the stack and can be responded to before they resolve
 		https://mtg.gamepedia.com/Stack#Actions
 	*/
@@ -98,6 +104,12 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
+
+	// Currently, the only ChoiceEffect that can be set is how to pay for Daze
+	// TODO maybe some other data structure beside ChoiceEffect - a pointer to the action on stack instead?
+	if g.ChoiceEffect != nil {
+		return g.Priority().WaysToChoose(g.ChoiceEffect)
+	}
 
 	if len(g.Stack) > 0 {
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -245,6 +257,38 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 
+	/*
+	   when Daze isn't paid, the spell it targetted gets countered
+
+	   TODO this could be more abstract... instead of raw calling RemoveSpellFromStack,
+	   it could execute an arbitrary Action/Effect
+	*/
+	if action.Type == DeclineChoice {
+		g.RemoveSpellFromStack(g.ChoiceEffect.SpellTarget)
+		g.PriorityId = g.PriorityId.OpponentId()
+		g.ChoiceEffect = nil
+		return
+	}
+
+	/*
+	   Daze gets paid
+
+	   TODO this data structure could change when introducing other choices to resolve -
+	   e.g. Fact or Fiction
+	*/
+	if action.Type == DecideOnChoice {
+		if action.Selected == nil {
+			g.Priority().ColorlessManaPool--
+		} else {
+			for _, land := range action.Selected {
+				land.Tapped = true
+			}
+		}
+		g.PriorityId = g.PriorityId.OpponentId()
+		g.ChoiceEffect = nil
+		return
+	}
+
 	if action.Type == PassPriority && g.AttackerId() == g.PriorityId {
 		g.PriorityId = g.PriorityId.OpponentId()
 		return
@@ -308,6 +352,20 @@ func (g *Game) TakeAction(action *Action) {
 	default:
 		panic("unhandled phase")
 	}
+}
+
+// Removes targetSpell from the stack, as in when Counterspelled.
+func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
+	newStack := []*StackObject{}
+	for _, spellAction := range g.Stack {
+		if spellAction != targetSpell {
+			newStack = append(newStack, spellAction)
+		}
+	}
+	if len(newStack) == len(g.Stack) {
+		fmt.Println("This should be fine, it means a Counterspell's target was countered.")
+	}
+	g.Stack = newStack
 }
 
 func (g *Game) IsOver() bool {
@@ -413,6 +471,19 @@ func (g *Game) playLand() {
 	}
 	g.Print()
 	panic("playLand failed")
+}
+
+// putCreatureOnStack casts the first creature it sees in the hand
+func (g *Game) putCreatureOnStackAndPass() {
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.IsCreature() {
+			g.TakeAction(a)
+			g.TakeAction(&Action{Type: PassPriority})
+			return
+		}
+	}
+	g.Print()
+	panic("playCreature failed")
 }
 
 // playCreature plays the first creature it sees in the hand

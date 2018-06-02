@@ -49,6 +49,7 @@ type Type int
 
 // Some card types appear only on cards used in variants such as Planechase and Archenemy.
 // Phenomenon, Vanguards, Schemes
+// the Type Spell denotes all other Types except Land
 const (
 	Artifact Type = iota
 	Creature
@@ -58,6 +59,7 @@ const (
 	Planeswalker
 	Sorcery
 	Tribal
+	Spell
 )
 
 type Selector struct {

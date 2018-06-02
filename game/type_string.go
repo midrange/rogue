@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _Type_name = "ArtifactCreatureEnchantmentInstantLandPlaneswalkerSorceryTribal"
+const _Type_name = "ArtifactCreatureEnchantmentInstantLandPlaneswalkerSorceryTribalSpell"
 
-var _Type_index = [...]uint8{0, 8, 16, 27, 34, 38, 50, 57, 63}
+var _Type_index = [...]uint8{0, 8, 16, 27, 34, 38, 50, 57, 63, 68}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

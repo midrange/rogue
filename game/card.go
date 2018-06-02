@@ -51,6 +51,8 @@ const (
 	NoCard CardName = iota
 
 	BurningTreeEmissary
+	Counterspell
+	Daze
 	EldraziSpawnToken
 	ElephantGuide
 	ElephantToken
@@ -85,6 +87,44 @@ var Cards = map[CardName]*Card{
 		CastingCost:                &Cost{Colorless: 2},
 		EntersTheBattlefieldEffect: &Effect{Colorless: 2, EffectType: AddMana},
 		Type: []Type{Creature},
+	},
+
+	/*
+		Counter target spell.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=202437
+	*/
+	Counterspell: &Card{
+		CastingCost: &Cost{Colorless: 2},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Countermagic,
+			},
+		},
+		Selector: &Selector{Type: Spell},
+		Type:     []Type{Instant},
+	},
+
+	/*
+		You may return an Island you control to its owner's hand rather than pay
+		this spell's mana cost.
+
+		Counter target spell unless its controller pays 1.
+
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=21284
+	*/
+	Daze: &Card{
+		AlternateCastingCost: &Cost{
+			Effect: &Effect{
+				EffectType: ReturnToHand,
+				Selector:   &Selector{Subtype: LandIsland, ControlledBy: SamePlayer, Count: 1, Targeted: false},
+			},
+		},
+		CastingCost: &Cost{Colorless: 2},
+		Effects: []*Effect{&Effect{
+			EffectType: ManaSink,
+			Selector:   &Selector{Type: Spell, Count: 1},
+		}},
+		Type: []Type{Instant},
 	},
 
 	/*
@@ -460,6 +500,17 @@ func (c *Card) HasCreatureTargets() bool {
 	for _, e := range c.Effects {
 		if e.Selector != nil {
 			if e.Selector.Type == Creature {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (c *Card) HasSpellTargets() bool {
+	for _, e := range c.Effects {
+		if e.Selector != nil {
+			if e.Selector.Type == Spell {
 				return true
 			}
 		}

@@ -43,6 +43,7 @@ type Effect struct {
 	Source *Permanent
 
 	SelectedForCost *Permanent
+	SpellTarget     *StackObject
 	Target          *Permanent
 
 	// for effects from targeted spells
@@ -58,7 +59,9 @@ type EffectType int
 
 const (
 	AddMana EffectType = iota
+	Countermagic
 	DrawCard
+	ManaSink
 	ReturnToHand
 	Untap
 )
@@ -69,5 +72,6 @@ func UpdatedEffectForStackObject(stackObject *StackObject, effect *Effect) *Effe
 	newEffect.Source = stackObject.Source
 	newEffect.Target = stackObject.Target
 	newEffect.Selected = stackObject.Selected
+	newEffect.SpellTarget = stackObject.SpellTarget
 	return newEffect
 }

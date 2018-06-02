@@ -11,6 +11,7 @@ type Action struct {
 	Cost          *Cost
 	Selected      []*Permanent // for non-targeted effects, such as in Snap
 	Source        *Permanent   // for targeted effects
+	SpellTarget   *StackObject
 	Target        *Permanent
 	With          *Permanent // for attacking
 	WithAlternate bool
@@ -30,6 +31,8 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
+	DecideOnChoice
+	DeclineChoice
 	PassPriority
 )
 
