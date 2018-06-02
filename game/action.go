@@ -7,16 +7,17 @@ import (
 type Action struct {
 	Type ActionType
 
-	Card          *Card
-	Cost          *Cost
-	Selected      []*Permanent // for non-targeted effects, such as in Snap
-	Source        *Permanent   // for targeted effects
-	SpellTarget   *StackObject
-	Target        *Permanent
-	With          *Permanent // for attacking
-	WithAlternate bool
-	WithKicker    bool
-	WithPhyrexian bool
+	Card                            *Card
+	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
+	Cost                            *Cost
+	Selected                        []*Permanent // for non-targetted effects, such as in Snap
+	Source                          *Permanent   // for targeted effects
+	SpellTarget                     *StackObject
+	Target                          *Permanent
+	With                            *Permanent // for attacking
+	WithAlternate                   bool
+	WithKicker                      bool
+	WithPhyrexian                   bool
 }
 
 //go:generate stringer -type=ActionType
@@ -33,6 +34,7 @@ const (
 	Activate
 	DecideOnChoice
 	DeclineChoice
+    EntersTheBattlefieldEffect
 	PassPriority
 )
 
