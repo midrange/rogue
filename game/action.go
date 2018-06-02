@@ -31,6 +31,8 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
+	DecideOnChoice
+	DeclineChoice
 	PassPriority
 )
 

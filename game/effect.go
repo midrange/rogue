@@ -61,6 +61,7 @@ const (
 	AddMana EffectType = iota
 	Countermagic
 	DrawCard
+	ManaSink
 	ReturnToHand
 	Untap
 )
