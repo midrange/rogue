@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _ActionType_name = "PassPlayDeclareAttackAttackBlockUseForManaChooseTargetAndManaActivateDecideOnChoiceDeclineChoicePassPriority"
+const _ActionType_name = "PassPlayActivateAttackBlockChooseTargetAndManaDeclareAttackDecideOnChoiceDeclineChoiceEntersTheBattlefieldEffectMakeChoicePassPriorityUseForMana"
 
-var _ActionType_index = [...]uint8{0, 4, 8, 21, 27, 32, 42, 61, 69, 83, 96, 108}
+var _ActionType_index = [...]uint8{0, 4, 8, 16, 22, 27, 46, 59, 73, 86, 112, 122, 134, 144}
 
 func (i ActionType) String() string {
 	if i < 0 || i >= ActionType(len(_ActionType_index)-1) {
