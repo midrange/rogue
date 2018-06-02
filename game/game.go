@@ -69,6 +69,7 @@ const (
 	Main1 Phase = iota
 	DeclareAttackers
 	DeclareBlockers
+	CombatDamage
 	Main2
 )
 
@@ -136,6 +137,15 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())
 	case DeclareBlockers:
 		return append(g.Priority().BlockActions(), g.Priority().PassAction())
+	case CombatDamage:
+		if g.PriorityId == g.AttackerId() {
+			actions = append(actions, &Action{Type: PassPriority})
+		} else {
+			actions = append(actions, &Action{Type: Pass})
+		}
+		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
+		return append(actions, g.Priority().ManaActions()...)
 	default:
 		panic("unhandled phase")
 	}
@@ -226,11 +236,13 @@ func (g *Game) nextPhase() {
 		g.Phase = DeclareBlockers
 		g.PriorityId = g.DefenderId()
 	case DeclareBlockers:
+		g.Phase = CombatDamage
+		g.PriorityId = g.AttackerId()
+	case CombatDamage:
 		g.HandleCombatDamage()
 		g.Attacker().EndCombat()
 		g.Defender().EndCombat()
 		g.Phase = Main2
-		g.PriorityId = g.AttackerId()
 	case Main2:
 		// End the turn
 		for _, p := range g.Players {
@@ -329,6 +341,15 @@ func (g *Game) TakeAction(action *Action) {
 		}
 		action.With.Blocking = action.Target
 		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
+
+	case CombatDamage:
+		if action.Type == Play {
+			g.Priority().PayCostsAndPutSpellOnStack(action)
+		} else if action.Type == Activate {
+			g.Priority().PayCostsAndPutAbilityOnStack(action)
+		} else {
+			panic("expected a play or activate during CombatDamage")
+		}
 
 	default:
 		panic("unhandled phase")

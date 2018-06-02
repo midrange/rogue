@@ -222,9 +222,23 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
+		if card.Ninjitsu != nil && p.game.Phase == CombatDamage {
+			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
+		}
+
 	}
 
 	return answer
+}
+
+func removePermanent(attackers []*Permanent, attacker *Permanent) []*Permanent {
+	reducedAttackers := []*Permanent{}
+	for _, a := range attackers {
+		if a != attacker {
+			reducedAttackers = append(reducedAttackers, a)
+		}
+	}
+	return reducedAttackers
 }
 
 // Appends actions to answer for an instant card.
@@ -468,11 +482,40 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				})
 			}
 		}
+
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
 			answer = append(answer, &Action{Type: Play, Card: card, WithPhyrexian: true})
 		}
+
+		if card.Ninjitsu != nil && p.CanPayCost(card.Ninjitsu) && p.game.Phase == CombatDamage {
+			for _, a := range p.unblockedAtackers() {
+				answer = append(answer, &Action{
+					Type:         Play,
+					Card:         card,
+					Selected:     []*Permanent{a},
+					WithNinjitsu: true,
+				})
+			}
+		}
+
 	}
 	return answer
+}
+
+func (p *Player) unblockedAtackers() []*Permanent {
+	attackers := []*Permanent{}
+	for _, perm := range p.Board {
+		if perm.Attacking {
+			attackers = append(attackers, perm)
+		}
+	}
+
+	for _, perm := range p.Opponent().Board {
+		if perm.Blocking != nil {
+			attackers = removePermanent(attackers, perm.Blocking)
+		}
+	}
+	return attackers
 }
 
 // Returns possible actions to generate mana.
@@ -552,11 +595,12 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 	so := &StackObject{
 		Card: action.Card,
 		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
-		Player:      p,
-		Selected:    action.Selected,
-		SpellTarget: action.SpellTarget,
-		Target:      action.Target,
-		Type:        action.Type,
+		Player:       p,
+		Selected:     action.Selected,
+		SpellTarget:  action.SpellTarget,
+		Target:       action.Target,
+		Type:         action.Type,
+		WithNinjitsu: action.WithNinjitsu,
 	}
 	if action.WithKicker {
 		so.Kicker = action.Card.Kicker
@@ -574,6 +618,9 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 			p.PayCost(card.AlternateCastingCost)
 		} else if action.WithPhyrexian {
 			p.PayCost(card.PhyrexianCastingCost) // TODO use UpdatedEffectForAction when cardpool expands
+		} else if action.WithNinjitsu {
+			card.Ninjitsu.Effect = UpdatedEffectForStackObject(so, card.Ninjitsu.Effect)
+			p.PayCost(card.Ninjitsu)
 		} else {
 			p.PayCost(card.CastingCost)
 		}
@@ -613,6 +660,10 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
 		perm := p.game.newPermanent(card, p, stackObject)
+		if stackObject.WithNinjitsu {
+			perm.Attacking = true
+			perm.Tapped = true
+		}
 
 		if card.IsEnchantCreature() {
 			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)
@@ -865,13 +916,21 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 // Returns whether the player has the resources (life, mana, etc) to pay Cost.
 func (p *Player) CanPayCost(c *Cost) bool {
+	if p.AvailableMana() < c.Colorless {
+		return false
+	}
 	if c.Effect == nil {
-		return p.Life >= c.Life && p.AvailableMana() >= c.Colorless
+		return p.Life >= c.Life
 	} else {
 		if c.Effect.EffectType == ReturnToHand {
 			if c.Effect.Selector.Subtype != NoSubtype {
 				count := Max(c.Effect.Selector.Count, 1)
 				return len(p.landsOfSubtype(c.Effect.Selector.Subtype)) >= count
+			}
+			s := c.Effect.Selector
+			// handles Ninja of the Deep Hours Ninjitsu, may need to be generalized
+			if s.Type == Creature && s.ControlledBy == SamePlayer && s.AttackStatus == Unblocked {
+				return len(p.unblockedAtackers()) > 0
 			}
 		}
 	}
