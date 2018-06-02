@@ -11,6 +11,7 @@ type Card struct {
 	AlternateCastingCost       *Cost
 	Bloodthirst                int
 	CastingCost                *Cost
+	DealsCombatDamageEffect    *Effect
 	Effects                    []*Effect
 	EntersGraveyardEffect      *Effect
 	EntersTheBattlefieldEffect *Effect
@@ -22,8 +23,10 @@ type Card struct {
 	Lifelink                   bool
 	Morbid                     *Effect
 	Name                       CardName
-	PhyrexianCastingCost       *Cost
-	Powermenace                bool // only blockable by >= power (like Skarrgan Pitskulk)
+	Ninjitsu                   *Cost
+
+	PhyrexianCastingCost *Cost
+	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
 
 	// http://mtg.wikia.com/wiki/Card_Types
 	Subtype   []Subtype
@@ -66,6 +69,7 @@ const (
 	MutagenicGrowth
 	NestInvader
 	NettleSentinel
+	NinjaOfTheDeepHours
 	Ponder
 	Preordain
 	QuirionRanger
@@ -285,12 +289,37 @@ var Cards = map[CardName]*Card{
 	/*
 		Nettle Sentinel doesn't untap during your untap step.
 		Whenever you cast a green spell, you may untap Nettle Sentinel.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=442171
 	*/
 	NettleSentinel: &Card{
 		BasePower:     2,
 		BaseToughness: 2,
 		CastingCost:   &Cost{Colorless: 1},
 		Type:          []Type{Creature},
+	},
+
+	/*
+		Ninjutsu 1Blue (1Blue, Return an unblocked attacker you control to hand: Put this card onto
+		the battlefield from your hand tapped and attacking.)
+		Whenever Ninja of the Deep Hours deals combat damage to a player, you may draw a card.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=74587
+	*/
+	NinjaOfTheDeepHours: &Card{
+		BasePower:               2,
+		BaseToughness:           2,
+		CastingCost:             &Cost{Colorless: 4},
+		DealsCombatDamageEffect: &Effect{EffectType: DrawCard, Selector: &Selector{Count: 1}},
+		Ninjitsu: &Cost{
+			Colorless: 2,
+			Effect: &Effect{
+				EffectType: ReturnToHand,
+				Selector: &Selector{
+					Type:         Creature,
+					ControlledBy: SamePlayer,
+					Targeted:     false,
+					AttackStatus: Unblocked},
+			}},
+		Type: []Type{Creature},
 	},
 
 	/*

@@ -264,6 +264,9 @@ func (c *Permanent) DidDealDamage(damage int) {
 	if c.Lifelink && damage > 0 {
 		c.Owner.Life += damage
 	}
+	if c.DealsCombatDamageEffect != nil {
+		c.Owner.ResolveEffect(c.DealsCombatDamageEffect, c)
+	}
 }
 
 func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {

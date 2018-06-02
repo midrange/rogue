@@ -13,4 +13,5 @@ type StackObject struct {
 	Source                          *Permanent
 	SpellTarget                     *StackObject
 	Target                          *Permanent // a target that is a Permanent (players not yet handled)
+	WithNinjitsu                    bool
 }
