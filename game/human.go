@@ -30,7 +30,11 @@ func promptForAction(game *Game, actions []*Action) *Action {
 	player := game.Priority()
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Printf("## Turn %d | %s\n", game.Turn, game.Phase)
+		whoseTurn := "your turn"
+		if player != game.Attacker() {
+			whoseTurn = "opponent's turn"
+		}
+		fmt.Printf("## Turn %d | %s (%s)\n", game.Turn, game.Phase, whoseTurn)
 		for index, action := range actions {
 			fmt.Printf("%d) %s\n", index+1, action.ShowTo(player))
 		}

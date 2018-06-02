@@ -194,25 +194,14 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 
 		if allowSorcerySpeed {
 			if forHuman && card.IsEnchantment() && p.HasLegalTarget(card) {
-				answer = append(answer, &Action{
-					Type: ChooseTargetAndMana,
-					Card: card,
-				})
+				answer = p.appendHumanChoiceIfCanPayCost(answer, card)
 			}
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
 		if card.IsInstant() && (p.HasLegalTarget(card) || card.HasCreatureTargets() == false) {
 			if forHuman {
-				if p.CanPayCost(card.CastingCost) ||
-					(card.Kicker != nil && p.CanPayCost(card.Kicker.Cost)) ||
-					(card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost)) ||
-					(card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost)) {
-					answer = append(answer, &Action{
-						Type: ChooseTargetAndMana,
-						Card: card,
-					})
-				}
+				answer = p.appendHumanChoiceIfCanPayCost(answer, card)
 			} else {
 				answer = p.appendActionsForInstant(answer, card)
 			}
@@ -228,6 +217,19 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 
 	}
 
+	return answer
+}
+
+func (p *Player) appendHumanChoiceIfCanPayCost(answer []*Action, card *Card) []*Action {
+	if p.CanPayCost(card.CastingCost) ||
+		(card.Kicker != nil && p.CanPayCost(card.Kicker.Cost)) ||
+		(card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost)) ||
+		(card.AlternateCastingCost != nil && p.CanPayCost(card.AlternateCastingCost)) {
+		answer = append(answer, &Action{
+			Type: ChooseTargetAndMana,
+			Card: card,
+		})
+	}
 	return answer
 }
 

@@ -13,7 +13,7 @@ type Action struct {
 	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
 	Cost                            *Cost
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
-    ShouldSwitchPriority            bool // whether to switch priority after the action
+	ShouldSwitchPriority            bool         // whether to switch priority after the action
 	Source                          *Permanent   // for targeted effects
 	SpellTarget                     *StackObject
 	Target                          *Permanent
@@ -37,10 +37,10 @@ const (
 	DeclareAttack
 	DecideOnChoice
 	DeclineChoice
-    EntersTheBattlefieldEffect
-    MakeChoice
+	EntersTheBattlefieldEffect
+	MakeChoice
 	PassPriority
-    UseForMana
+	UseForMana
 )
 
 func (a *Action) targetPronoun(p *Player) string {
@@ -53,6 +53,8 @@ func (a *Action) targetPronoun(p *Player) string {
 // For debugging and logging. Don't use this in the critical path.
 func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
+	case PassPriority:
+		return "pass priority"
 	case Pass:
 		return "pass"
 	case ChooseTargetAndMana:

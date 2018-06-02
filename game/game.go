@@ -57,7 +57,7 @@ type Game struct {
 	Stack []*StackObject
 }
 
-//go:generate stringer -type=CardName
+//go:generate stringer -type=Phase
 type Phase int
 
 // Phase encompasses both "phases" and "steps" as per:
@@ -108,6 +108,7 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
+	forHuman = false
 
 	// TODO maybe some other data stucture beside ChoiceEffect - a pointer to the action on stack instead?
 	// Currently handles Daze, Scry effects, and Ponder
@@ -124,32 +125,54 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		return actions
 	}
 
+	currentPlayerIsActing := g.PriorityId == g.AttackerId()
 	switch g.Phase {
+	case UntapStep:
+		return append(actions, g.Priority().PassAction())
+	case Upkeep:
+		fallthrough
+	case Draw:
+		if g.PriorityId == g.AttackerId() {
+			actions = append(actions, &Action{Type: PassPriority})
+		} else {
+			actions = append(actions, g.Priority().PassAction())
+		}
+		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
+		return append(actions, g.Priority().ManaActions()...)
 	case Main1:
-		actions = append(actions, &Action{Type: Pass})
-		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
-		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
-		actions = append(actions, &Action{Type: DeclareAttack})
+		actions = append(actions, g.Priority().PlayActions(currentPlayerIsActing, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(currentPlayerIsActing, forHuman)...)
+		if currentPlayerIsActing {
+			actions = append(actions, &Action{Type: DeclareAttack})
+		} else {
+			actions = append(actions, g.Priority().PassAction())
+		}
 		return append(actions, g.Priority().ManaActions()...)
 	case Main2:
-		actions = append(actions, &Action{Type: Pass})
-		actions = append(actions, g.Priority().PlayActions(true, forHuman)...)
-		actions = append(actions, g.Priority().ActivatedAbilityActions(true, forHuman)...)
+		if currentPlayerIsActing {
+			actions = append(actions, &Action{Type: PassPriority})
+		} else {
+			actions = append(actions, g.Priority().PassAction())
+		}
+		actions = append(actions, g.Priority().PlayActions(currentPlayerIsActing, forHuman)...)
+		actions = append(actions, g.Priority().ActivatedAbilityActions(currentPlayerIsActing, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())
 	case DeclareBlockers:
 		return append(g.Priority().BlockActions(), g.Priority().PassAction())
 	case CombatDamage:
-		if g.PriorityId == g.AttackerId() {
+		if currentPlayerIsActing {
 			actions = append(actions, &Action{Type: PassPriority})
 		} else {
-			actions = append(actions, &Action{Type: Pass})
+			actions = append(actions, g.Priority().PassAction())
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
 		actions = append(actions, g.Priority().ActivatedAbilityActions(false, forHuman)...)
 		return append(actions, g.Priority().ManaActions()...)
 	default:
+		fmt.Println("the panic pahse is ", g.Phase)
 		panic("unhandled phase")
 	}
 }
@@ -314,6 +337,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 	if action.Type == Pass {
 		g.nextPhase()
+		g.PriorityId = g.AttackerId()
 		return
 	}
 
@@ -324,9 +348,13 @@ func (g *Game) TakeAction(action *Action) {
 
 	switch g.Phase {
 
+	case Upkeep:
+		fallthrough
+	case Draw:
+		fallthrough
 	case Main1:
 		if action.Type == DeclareAttack {
-			g.nextPhase()
+			g.PriorityId = g.DefenderId()
 			break
 		}
 		fallthrough
@@ -367,6 +395,7 @@ func (g *Game) TakeAction(action *Action) {
 		}
 
 	default:
+		fmt.Println("the panic pahse is ", g.Phase)
 		panic("unhandled phase")
 	}
 }

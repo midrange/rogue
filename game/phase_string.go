@@ -4,9 +4,9 @@ package game
 
 import "strconv"
 
-const _Phase_name = "Main1DeclareAttackersDeclareBlockersMain2"
+const _Phase_name = "UntapStepUpkeepDrawMain1DeclareAttackersDeclareBlockersCombatDamageMain2"
 
-var _Phase_index = [...]uint8{0, 5, 21, 36, 41}
+var _Phase_index = [...]uint8{0, 9, 15, 19, 24, 40, 55, 67, 72}
 
 func (i Phase) String() string {
 	if i < 0 || i >= Phase(len(_Phase_index)-1) {
