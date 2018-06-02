@@ -545,7 +545,7 @@ func TestDazeNotPaid(t *testing.T) {
 	}
 	g.playInstant()
 	g.TakeAction(&Action{
-		Type: DeclineChoiceAction,
+		Type: DeclineChoice,
 	})
 	if len(g.Stack) != 0 {
 		t.Fatal("expected there to be no spells on the stack after Daze")
@@ -577,7 +577,7 @@ func TestDazePaid(t *testing.T) {
 	}
 	g.playInstant()
 	g.TakeAction(&Action{
-		Type:     DecideOnChoiceAction,
+		Type:     DecideOnChoice,
 		Selected: []*Permanent{g.Priority().Lands()[0]},
 	})
 	if len(g.Creatures()) != 1 {

@@ -186,19 +186,19 @@ func (p *Player) WaysToChoose(effect *Effect) []*Action {
 	for _, land := range p.Lands() {
 		if !land.Tapped {
 			answer = append(answer, &Action{
-				Type:     DecideOnChoiceAction,
+				Type:     DecideOnChoice,
 				Selected: []*Permanent{land},
 			})
 		}
 	}
 	if p.ColorlessManaPool > 0 {
 		answer = append(answer, &Action{
-			Type: DecideOnChoiceAction,
+			Type: DecideOnChoice,
 		})
 	}
 
 	answer = append(answer, &Action{
-		Type: DeclineChoiceAction,
+		Type: DeclineChoice,
 	})
 	return answer
 }
@@ -810,7 +810,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
 	} else if e.EffectType == ManaSink {
 		/*
-			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
+			when ChoiceEffect is set, the game forces DecideOnChoice or DeclineChoice
 			as the next action
 		*/
 		p.game.ChoiceEffect = e
