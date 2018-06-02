@@ -32,9 +32,9 @@ const (
 	UseForMana
 	ChooseTargetAndMana
 	Activate
-	DecideOnChoiceAction
-	DeclineChoiceAction
-	EntersTheBattlefieldEffect
+	DecideOnChoice
+	DeclineChoice
+    EntersTheBattlefieldEffect
 	PassPriority
 )
 
