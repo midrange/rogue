@@ -89,6 +89,9 @@ func (a *Action) ShowTo(p *Player) string {
 		if a.AfterEffect.EffectType == ReturnScryCardsDraw {
 			return fmt.Sprintf("%s, Top: %s, Bottom: %s", a.AfterEffect.EffectType, a.AfterEffect.ScryCards[0], a.AfterEffect.ScryCards[1])
 		}
+		if a.AfterEffect.EffectType == ReturnCardsToTopDraw {
+			return fmt.Sprintf("%s, %s", a.AfterEffect.EffectType, a.AfterEffect.Cards)
+		}
 		return fmt.Sprintf("Choose %s", a.AfterEffect)
 	}
 	fmt.Println("action is ", a)

@@ -683,7 +683,6 @@ func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject)
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
-			fmt.Println("pre effect ", e)
 			p.ResolveEffect(UpdatedEffectForStackObject(stackObject, e), nil)
 			if target != nil {
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
@@ -901,8 +900,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == TapLand {
 		e.SelectedForCost.Tapped = true
 	} else if e.EffectType == ReturnCardsToTopDraw || e.EffectType == ShuffleDraw {
-		for _, card := range e.Cards {
-			p.Deck.AddToTop(1, card)
+		for i := len(e.Cards) - 1; i >= 0; i-- {
+			p.Deck.AddToTop(1, e.Cards[i])
 		}
 		if e.EffectType == ShuffleDraw {
 			p.Deck.Shuffle()

@@ -171,6 +171,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		}
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
+		fmt.Println("Actions DeclareAttackers")
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())
 	case DeclareBlockers:
 		return append(g.Priority().BlockActions(), g.Priority().PassAction())
@@ -309,7 +310,6 @@ func (g *Game) nextPhase() {
 }
 
 func (g *Game) TakeAction(action *Action) {
-	fmt.Println("TakeAction ", action)
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
@@ -641,6 +641,7 @@ func (g *Game) playSorcery() {
 
 // attackWithEveryone passes priority when it's done attacking
 func (g *Game) attackWithEveryone() {
+	fmt.Println("attackWithEveryone")
 	for {
 		actions := g.Priority().AttackActions()
 		if len(actions) == 0 {
