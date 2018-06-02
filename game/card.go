@@ -66,6 +66,8 @@ const (
 	MutagenicGrowth
 	NestInvader
 	NettleSentinel
+	Ponder
+	Preordain
 	QuirionRanger
 	Rancor
 	SilhanaLedgewalker
@@ -289,6 +291,47 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 2,
 		CastingCost:   &Cost{Colorless: 1},
 		Type:          []Type{Creature},
+	},
+
+	/*
+		Look at the top three cards of your library, then put them back in any order.
+		You may shuffle your library.
+		Draw a card.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=ponder
+	*/
+	Ponder: &Card{
+		CastingCost: &Cost{Colorless: 1},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: TopScry,
+				Selector:   &Selector{Count: 3},
+			},
+			&Effect{
+				EffectType: DrawCard,
+				Selector:   &Selector{Count: 1},
+			},
+		},
+		Type: []Type{Sorcery},
+	},
+
+	/*
+		Scry 2, then draw a card. (To scry 2, look at the top two cards of your library,
+		then put any number of them on the bottom of your library and the rest on top in any order.)
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=preordain
+	*/
+	Preordain: &Card{
+		CastingCost: &Cost{Colorless: 1},
+		Effects: []*Effect{
+			&Effect{
+				EffectType: Scry,
+				Selector:   &Selector{Count: 2},
+			},
+			&Effect{
+				EffectType: DrawCard,
+				Selector:   &Selector{Count: 1},
+			},
+		},
+		Type: []Type{Sorcery},
 	},
 
 	/*

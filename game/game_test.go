@@ -545,7 +545,8 @@ func TestDazeNotPaid(t *testing.T) {
 	}
 	g.playInstant()
 	g.TakeAction(&Action{
-		Type: DeclineChoice,
+		Type:        MakeChoice,
+		AfterEffect: &Effect{EffectType: Countermagic, SpellTarget: g.ChoiceEffect.SpellTarget},
 	})
 	if len(g.Stack) != 0 {
 		t.Fatal("expected there to be no spells on the stack after Daze")
@@ -576,10 +577,14 @@ func TestDazePaid(t *testing.T) {
 		t.Fatal("expected there to be Vault Skirge on the stack")
 	}
 	g.playInstant()
-	g.TakeAction(&Action{
-		Type:     DecideOnChoice,
-		Selected: []*Permanent{g.Priority().Lands()[0]},
-	})
+
+	// pay for Daze
+	for _, a := range g.Priority().PlayActions(true, false) {
+		g.TakeAction(a)
+		break
+	}
+
+	g.TakeAction(&Action{Type: PassPriority})
 	if len(g.Creatures()) != 1 {
 		t.Fatal("expected there to be Vault Skirge in play after Daze was paid")
 	}
@@ -689,5 +694,47 @@ func TestSpellstutterSpriteFails(t *testing.T) {
 
 	if len(g.Stack) != 1 {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
+	}
+}
+
+func TestPonder(t *testing.T) {
+	ponder := NewEmptyDeck()
+	ponder.Add(1, Ponder)
+	ponder.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(ponder, allForests)
+	g.playLand()
+
+	g.playSorcery()
+
+	// DecideOnPonder action
+	g.TakeAction(g.Actions(false)[0])
+
+	if len(g.Priority().Hand) != 6 {
+		panic("expected 6 cards in hand after Ponder")
+	}
+}
+
+func TestPreordain(t *testing.T) {
+	preordain := NewEmptyDeck()
+	preordain.Add(1, Preordain)
+	preordain.Add(59, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(preordain, allForests)
+	g.playLand()
+
+	g.playSorcery()
+
+	// Scrye action
+	g.TakeAction(g.Actions(false)[0])
+
+	if len(g.Priority().Hand) != 6 {
+		panic("expected 6 cards in hand after Preordain")
 	}
 }

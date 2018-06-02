@@ -7,10 +7,13 @@ import (
 type Action struct {
 	Type ActionType
 
+	// a faux effect that resolves after a choice-based action, such as returning Scry cards and drawing
+	AfterEffect                     *Effect
 	Card                            *Card
 	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
 	Cost                            *Cost
 	Selected                        []*Permanent // for non-targetted effects, such as in Snap
+    ShouldSwitchPriority            bool // whether to switch priority after the action
 	Source                          *Permanent   // for targeted effects
 	SpellTarget                     *StackObject
 	Target                          *Permanent
@@ -26,16 +29,17 @@ type ActionType int
 const (
 	Pass ActionType = iota
 	Play
-	DeclareAttack
+	Activate
 	Attack
 	Block
-	UseForMana
 	ChooseTargetAndMana
-	Activate
+	DeclareAttack
 	DecideOnChoice
 	DeclineChoice
     EntersTheBattlefieldEffect
+    MakeChoice
 	PassPriority
+    UseForMana
 )
 
 func (a *Action) targetPronoun(p *Player) string {

@@ -179,30 +179,6 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 	return answer
 }
 
-// So far, this only deals with a player choosing how to pay for Daze
-func (p *Player) WaysToChoose(effect *Effect) []*Action {
-	answer := []*Action{}
-
-	for _, land := range p.Lands() {
-		if !land.Tapped {
-			answer = append(answer, &Action{
-				Type:     DecideOnChoice,
-				Selected: []*Permanent{land},
-			})
-		}
-	}
-	if p.ColorlessManaPool > 0 {
-		answer = append(answer, &Action{
-			Type: DecideOnChoice,
-		})
-	}
-
-	answer = append(answer, &Action{
-		Type: DeclineChoice,
-	})
-	return answer
-}
-
 // Returns possible actions when we can play a card from hand, including passing.
 func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	cardNames := make(map[CardName]bool)
@@ -485,6 +461,11 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 						Target: target,
 					})
 				}
+			} else if card.IsSorcery() {
+				answer = append(answer, &Action{
+					Type: Play,
+					Card: card,
+				})
 			}
 		}
 		if card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost) {
@@ -845,13 +826,38 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
-	} else if e.EffectType == ManaSink {
+	} else if e.EffectType == ManaSink ||
+		e.EffectType == TopScry ||
+		e.EffectType == Scry {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoice or DeclineChoice
 			as the next action
 		*/
 		p.game.ChoiceEffect = e
-		p.game.PriorityId = p.game.Priority().Opponent().Id
+		if e.EffectType == ManaSink {
+			p.game.PriorityId = p.game.Priority().Opponent().Id
+		}
+	} else if e.EffectType == SpendMana {
+		p.ColorlessManaPool -= e.Cost.Colorless
+	} else if e.EffectType == TapLand {
+		e.SelectedForCost.Tapped = true
+	} else if e.EffectType == ReturnCardsToTop || e.EffectType == Shuffle {
+		for _, card := range e.Cards {
+			p.game.Priority().Deck.AddToTop(1, card)
+		}
+		if e.EffectType == Shuffle {
+			p.game.Priority().Deck.Shuffle()
+		}
+	} else if e.EffectType == ReturnScryCards {
+		for index, cardList := range e.ScryCards {
+			for _, card := range cardList {
+				if index == 0 {
+					p.game.Priority().Deck.AddToTop(1, card)
+				} else {
+					p.game.Priority().Deck.Add(1, card)
+				}
+			}
+		}
 	} else {
 		panic("tried to resolve unknown effect")
 	}
@@ -912,4 +918,138 @@ func (p *Player) SpendMana(amount int) {
 		p.game.Print()
 		panic("could not spend mana")
 	}
+}
+
+// Returns possible Actions for choices like Daze, Ponder, and Scry.
+func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
+	if choiceEffect.EffectType == ManaSink {
+		return p.waysToChoose(choiceEffect)
+	} else if choiceEffect.EffectType == TopScry {
+		return p.waysToArrange(choiceEffect)
+	} else if choiceEffect.EffectType == Scry {
+		return p.waysToScry(choiceEffect)
+	} else {
+		panic("unhandled ChoiceEffect")
+	}
+}
+
+// Returns possible Actions to pay for Daze or not.
+func (p *Player) waysToChoose(effect *Effect) []*Action {
+	answer := []*Action{}
+
+	for _, land := range p.Lands() {
+		if !land.Tapped {
+			answer = append(answer, &Action{
+				Type:                 MakeChoice,
+				AfterEffect:          &Effect{EffectType: TapLand, SelectedForCost: land},
+				ShouldSwitchPriority: true,
+			})
+		}
+	}
+	if p.ColorlessManaPool > 0 {
+		answer = append(answer, &Action{
+			Type:                 MakeChoice,
+			AfterEffect:          &Effect{EffectType: SpendMana, Cost: &Cost{Colorless: 1}},
+			ShouldSwitchPriority: true,
+		})
+	}
+
+	answer = append(answer, &Action{
+		Type:                 MakeChoice,
+		AfterEffect:          &Effect{EffectType: Countermagic, SpellTarget: p.game.ChoiceEffect.SpellTarget},
+		ShouldSwitchPriority: true,
+	})
+	return answer
+}
+
+/*
+	Return actions for all ways to do a Ponder like effect.
+	For Ponder, Actions includes 6 permutations returning 3 cards to deck, and shuffling.
+*/
+func (p *Player) waysToArrange(effect *Effect) []*Action {
+
+	cards := []CardName{}
+	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
+		cards = append(cards, p.Deck.Draw())
+	}
+
+	perms := permutations(cards)
+
+	answer := []*Action{}
+	for _, permutation := range perms {
+		answer = append(answer, &Action{
+			Type:        MakeChoice,
+			AfterEffect: &Effect{EffectType: ReturnCardsToTop, Cards: permutation},
+		})
+
+	}
+
+	answer = append(answer, &Action{
+		Type:        MakeChoice,
+		AfterEffect: &Effect{EffectType: Shuffle, Cards: cards},
+	})
+
+	return answer
+}
+
+// Heap's algorithm
+// https://stackoverflow.com/questions/30226438/generate-all-permutations-in-go
+func permutations(arr []CardName) [][]CardName {
+	var helper func([]CardName, int)
+	res := [][]CardName{}
+
+	helper = func(arr []CardName, n int) {
+		if n == 1 {
+			tmp := make([]CardName, len(arr))
+			copy(tmp, arr)
+			res = append(res, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(arr, len(arr))
+	return res
+}
+
+/*
+	Return actions for all ways to do a Scry effect.
+*/
+func (p *Player) waysToScry(effect *Effect) []*Action {
+
+	cards := []CardName{}
+	for i := 0; i < Min(effect.Selector.Count, len(p.Deck.Cards)); i++ {
+		cards = append(cards, p.Deck.Draw())
+	}
+
+	perms := permutations(cards)
+	slicedPerms := [][][]CardName{}
+	for _, perm := range perms {
+		for index, _ := range perm {
+			top := perm[:index]
+			bottom := perm[index:]
+			slicedPerms = append(slicedPerms, [][]CardName{top, bottom})
+		}
+	}
+
+	answer := []*Action{}
+	for _, slicedPermutation := range slicedPerms {
+		answer = append(answer, &Action{
+			Type:        MakeChoice,
+			AfterEffect: &Effect{EffectType: ReturnScryCards, ScryCards: slicedPermutation},
+		})
+
+	}
+
+	return answer
 }

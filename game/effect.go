@@ -16,10 +16,14 @@ package game
 import ()
 
 type Effect struct {
+	Cards     []CardName   // list of cardnames to return to deck with Ponder
+	ScryCards [][]CardName // pair of lists of cardnames to return to deck with Scry
+
 	// required for effect to occur
 	Condition *Condition
 
 	// when an Effect is a kicker, it has a Cost
+	// or when the Effect is paying for Daze using pool
 	Cost *Cost
 
 	// these properties modify a Permanent the Effect targets, or the Game state
@@ -62,7 +66,14 @@ const (
 	Countermagic
 	DrawCard
 	ManaSink
+	ReturnCardsToTop
+	ReturnScryCards
 	ReturnToHand
+	Scry
+	Shuffle
+	SpendMana
+	TapLand
+	TopScry
 	Untap
 )
 
