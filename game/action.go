@@ -35,12 +35,12 @@ const (
 	Block
 	ChooseTargetAndMana
 	DeclareAttack
-	MakeChoice
-	UseForMana
-	DecideOnChoiceAction
-	DeclineChoiceAction
-	EntersTheBattlefieldEffect
+	DecideOnChoice
+	DeclineChoice
+    EntersTheBattlefieldEffect
+    MakeChoice
 	PassPriority
+    UseForMana
 )
 
 func (a *Action) targetPronoun(p *Player) string {
