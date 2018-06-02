@@ -42,6 +42,23 @@ func Stompy() *Deck {
 	})
 }
 
+func MonoBlueDelver() *Deck {
+	return NewDeck(map[CardName]int{
+		//DelverOfSecrets:     4,
+		//FaerieMiscreant:     4,
+		//SpellstutterSprite:  4,
+		Island: 18,
+		//NinjaOfTheDeepHours: 4,
+		//MutagenicGrowth:     4,
+		//Ponder:              4,
+		Preordain: 10,
+		//Counterspell:        4,
+		//Daze:                4,
+		//Snap:                4,
+		//Gush:                2,
+	})
+}
+
 func (d *Deck) Draw() CardName {
 	if len(d.Cards) == 0 {
 		d.FailedToDraw = true

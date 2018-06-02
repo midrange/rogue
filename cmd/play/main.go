@@ -33,7 +33,7 @@ func showWelcomePrompt() string {
 }
 
 func playHumanVsComputer() {
-	g := game.NewGame(game.Stompy(), game.Stompy())
+	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
 	game.PlayGame(g, &game.Human{}, &game.RandomBot{})
 }
 
@@ -47,7 +47,7 @@ func playComputerVsComputer() {
 }
 
 func playOutGameRandomly() {
-	game := game.NewGame(game.Stompy(), game.Stompy())
+	game := game.NewGame(game.Stompy(), game.MonoBlueDelver())
 
 	for {
 		actions := game.Actions(false)

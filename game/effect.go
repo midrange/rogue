@@ -69,14 +69,14 @@ const (
 	DelverScryReveal
 	DrawCard
 	ManaSink
-	ReturnCardsToTop
-	ReturnScryCards
+	ReturnCardsToTopDraw
+	ReturnScryCardsDraw
 	ReturnToHand
-	Scry
-	Shuffle
+	ScryDraw
+	ShuffleDraw
 	SpendMana
 	TapLand
-	TopScry
+	TopScryDraw
 	Untap
 )
 

@@ -85,6 +85,12 @@ func (a *Action) ShowTo(p *Player) string {
 		return fmt.Sprintf("tap %s for mana", a.Source)
 	case Activate:
 		return fmt.Sprintf("use %s", a.Source)
+	case MakeChoice:
+		if a.AfterEffect.EffectType == ReturnScryCardsDraw {
+			return fmt.Sprintf("%s, Top: %s, Bottom: %s", a.AfterEffect.EffectType, a.AfterEffect.ScryCards[0], a.AfterEffect.ScryCards[1])
+		}
+		return fmt.Sprintf("Choose %s", a.AfterEffect)
 	}
+	fmt.Println("action is ", a)
 	panic("control should not reach here")
 }

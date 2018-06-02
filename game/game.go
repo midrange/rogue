@@ -108,7 +108,7 @@ func (g *Game) Priority() *Player {
 
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
-	// forHuman = false
+	forHuman = false
 
 	// TODO maybe some other data stucture beside ChoiceEffect - a pointer to the action on stack instead?
 	// Currently handles Daze, Scry effects, and Ponder
@@ -309,6 +309,7 @@ func (g *Game) nextPhase() {
 }
 
 func (g *Game) TakeAction(action *Action) {
+	fmt.Println("TakeAction ", action)
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}

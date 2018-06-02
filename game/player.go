@@ -683,6 +683,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject)
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
+			fmt.Println("pre effect ", e)
 			p.ResolveEffect(UpdatedEffectForStackObject(stackObject, e), nil)
 			if target != nil {
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
@@ -883,8 +884,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == Countermagic {
 		p.game.RemoveSpellFromStack(e.SpellTarget)
 	} else if e.EffectType == ManaSink ||
-		e.EffectType == TopScry ||
-		e.EffectType == Scry ||
+		e.EffectType == TopScryDraw ||
+		e.EffectType == ScryDraw ||
 		e.EffectType == DelverScry {
 		/*
 			when ChoiceEffect is set, the game forces DecideOnChoice or DeclineChoice
@@ -899,14 +900,15 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.ColorlessManaPool -= e.Cost.Colorless
 	} else if e.EffectType == TapLand {
 		e.SelectedForCost.Tapped = true
-	} else if e.EffectType == ReturnCardsToTop || e.EffectType == Shuffle {
+	} else if e.EffectType == ReturnCardsToTopDraw || e.EffectType == ShuffleDraw {
 		for _, card := range e.Cards {
 			p.Deck.AddToTop(1, card)
 		}
-		if e.EffectType == Shuffle {
+		if e.EffectType == ShuffleDraw {
 			p.Deck.Shuffle()
 		}
-	} else if e.EffectType == ReturnScryCards {
+		p.Draw()
+	} else if e.EffectType == ReturnScryCardsDraw {
 		for index, cardList := range e.ScryCards {
 			for _, card := range cardList {
 				if index == 0 {
@@ -916,6 +918,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				}
 			}
 		}
+		p.Draw()
 	} else if e.EffectType == DelverScryReveal ||
 		e.EffectType == DelverScryNoReveal {
 		// return card
@@ -1003,9 +1006,9 @@ func (p *Player) SpendMana(amount int) {
 func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 	if choiceEffect.EffectType == ManaSink {
 		return p.waysToChoose(choiceEffect)
-	} else if choiceEffect.EffectType == TopScry {
+	} else if choiceEffect.EffectType == TopScryDraw {
 		return p.waysToArrange(choiceEffect)
-	} else if choiceEffect.EffectType == Scry {
+	} else if choiceEffect.EffectType == ScryDraw {
 		return p.waysToScry(choiceEffect)
 	} else if choiceEffect.EffectType == DelverScry {
 		return p.waysToDelverScry(choiceEffect)
@@ -1060,14 +1063,14 @@ func (p *Player) waysToArrange(effect *Effect) []*Action {
 	for _, permutation := range perms {
 		answer = append(answer, &Action{
 			Type:        MakeChoice,
-			AfterEffect: &Effect{EffectType: ReturnCardsToTop, Cards: permutation},
+			AfterEffect: &Effect{EffectType: ReturnCardsToTopDraw, Cards: permutation},
 		})
 
 	}
 
 	answer = append(answer, &Action{
 		Type:        MakeChoice,
-		AfterEffect: &Effect{EffectType: Shuffle, Cards: cards},
+		AfterEffect: &Effect{EffectType: ShuffleDraw, Cards: cards},
 	})
 
 	return answer
@@ -1123,11 +1126,15 @@ func (p *Player) waysToScry(effect *Effect) []*Action {
 		}
 	}
 
+	for _, perm := range perms {
+		slicedPerms = append(slicedPerms, [][]CardName{perm, []CardName{}})
+	}
+
 	answer := []*Action{}
 	for _, slicedPermutation := range slicedPerms {
 		answer = append(answer, &Action{
 			Type:        MakeChoice,
-			AfterEffect: &Effect{EffectType: ReturnScryCards, ScryCards: slicedPermutation},
+			AfterEffect: &Effect{EffectType: ReturnScryCardsDraw, ScryCards: slicedPermutation},
 		})
 
 	}

@@ -368,12 +368,8 @@ var Cards = map[CardName]*Card{
 		CastingCost: &Cost{Colorless: 1},
 		Effects: []*Effect{
 			&Effect{
-				EffectType: TopScry,
+				EffectType: TopScryDraw,
 				Selector:   &Selector{Count: 3},
-			},
-			&Effect{
-				EffectType: DrawCard,
-				Selector:   &Selector{Count: 1},
 			},
 		},
 		Type: []Type{Sorcery},
@@ -388,12 +384,8 @@ var Cards = map[CardName]*Card{
 		CastingCost: &Cost{Colorless: 1},
 		Effects: []*Effect{
 			&Effect{
-				EffectType: Scry,
+				EffectType: ScryDraw,
 				Selector:   &Selector{Count: 2},
-			},
-			&Effect{
-				EffectType: DrawCard,
-				Selector:   &Selector{Count: 1},
 			},
 		},
 		Type: []Type{Sorcery},

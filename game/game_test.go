@@ -51,6 +51,7 @@ func TestTwoBearsFighting(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	attackingBear := g.Attacker().GetCreature(GrizzlyBears)
 	if !attackingBear.Attacking {
@@ -89,6 +90,7 @@ func TestVinesOfVastwoodBuff(t *testing.T) {
 	g.playLand()
 	g.playKickedInstant()
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
 
@@ -147,6 +149,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
 	if len(g.Actions(false)) > 1 {
@@ -190,6 +193,7 @@ func TestSkarrganPitskulkBloodthirst(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
 
@@ -215,6 +219,7 @@ func TestSkarrganPitskulksDontMeet(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
 
@@ -224,6 +229,7 @@ func TestSkarrganPitskulksDontMeet(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	if len(g.Actions(false)) > 2 {
 		t.Fatal("expected the small skulk couldnt block the big skulk")
@@ -244,6 +250,7 @@ func TestVaultSkirgeLoseAndGain(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
 	if g.Priority().Life != 19 {
@@ -344,6 +351,7 @@ func TestElephantGuide(t *testing.T) {
 	g.passTurn()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
 	g.doBlockAction()
@@ -386,6 +394,7 @@ func TestRancor(t *testing.T) {
 	}
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
 	g.doBlockAction()
@@ -727,15 +736,20 @@ func TestPreordain(t *testing.T) {
 	allForests.Add(60, Forest)
 
 	g := NewGame(preordain, allForests)
+
 	g.playLand()
 
 	g.playSorcery()
 
-	// Scrye action
+	if len(g.Priority().Hand) != 5 {
+		g.Print()
+		panic("expected 5 cards in hand on cast Preordain")
+	}
+	// Scry action
 	g.TakeAction(g.Actions(false)[0])
 
 	if len(g.Priority().Hand) != 6 {
-		panic("expected 6 cards in hand after Preordain")
+		panic("expected 6 cards in hand after Preordain resolved")
 	}
 }
 
@@ -759,6 +773,7 @@ func TestNinjaOfTheDeepWater(t *testing.T) {
 	g.playLand()
 
 	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(CombatDamage)
 
