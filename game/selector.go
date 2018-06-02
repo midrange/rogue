@@ -71,7 +71,7 @@ const (
 	Attacking
 	Blocked
 	Blocking
-	Unblocked // currently the only AttackStatus slected upon
+	Unblocked // currently the only AttackStatus selected upon
 )
 
 type Selector struct {

@@ -882,7 +882,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		e.EffectType == Scry ||
 		e.EffectType == DelverScry {
 		/*
-			when ChoiceEffect is set, the game forces DecideOnChoiceAction or DeclineChoiceAction
+			when ChoiceEffect is set, the game forces DecideOnChoice or DeclineChoice
 			as the next action
 		*/
 		e.Selected = []*Permanent{perm}
