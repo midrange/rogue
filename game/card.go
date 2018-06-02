@@ -6,24 +6,25 @@ import ()
 // The properties on Card are the properties like "base toughness" that do not change
 // over time for a particular card.
 type Card struct {
-	ActivatedAbility           *Effect
-	AddsTemporaryEffect        bool
-	AlternateCastingCost       *Cost
-	Bloodthirst                int
-	CastingCost                *Cost
-	DealsCombatDamageEffect    *Effect
-	Effects                    []*Effect
-	EntersGraveyardEffect      *Effect
-	EntersTheBattlefieldEffect *Effect
-	Flash                      bool
-	Flying                     bool
-	GroundEvader               bool // only blockable by fliers (like Silhana Ledgewalker)
-	Hexproof                   bool
-	Kicker                     *Effect
-	Lifelink                   bool
-	Morbid                     *Effect
-	Name                       CardName
-	Ninjitsu                   *Cost
+	ActivatedAbility            *Effect
+	AddsTemporaryEffect         bool
+	AlternateCastingCost        *Cost
+	BeginningOfYourUpkeepEffect *Effect
+	Bloodthirst                 int
+	CastingCost                 *Cost
+	DealsCombatDamageEffect     *Effect
+	Effects                     []*Effect
+	EntersGraveyardEffect       *Effect
+	EntersTheBattlefieldEffect  *Effect
+	Flash                       bool
+	Flying                      bool
+	GroundEvader                bool // only blockable by fliers (like Silhana Ledgewalker)
+	Hexproof                    bool
+	Kicker                      *Effect
+	Lifelink                    bool
+	Morbid                      *Effect
+	Name                        CardName
+	Ninjitsu                    *Cost
 
 	PhyrexianCastingCost *Cost
 	Powermenace          bool // only blockable by >= power (like Skarrgan Pitskulk)
@@ -38,6 +39,8 @@ type Card struct {
 	BasePower     int
 	BaseToughness int
 	BaseTrample   bool
+	// For flip cards like Delver of Secrets.
+	TransformInto CardName
 
 	// Properties that are relevant for Lands and other mana producers
 	Colorless         int
@@ -57,6 +60,7 @@ const (
 	BurningTreeEmissary
 	Counterspell
 	Daze
+	DelverOfSecrets
 	EldraziSpawnToken
 	ElephantGuide
 	ElephantToken
@@ -65,6 +69,7 @@ const (
 	GrizzlyBears
 	Gush
 	HungerOfTheHowlpack
+	InsectileAberration
 	Island
 	MutagenicGrowth
 	NestInvader
@@ -133,6 +138,23 @@ var Cards = map[CardName]*Card{
 			Selector:   &Selector{Type: Spell, Count: 1},
 		}},
 		Type: []Type{Instant},
+	},
+
+	/*
+		At the beginning of your upkeep, look at the top card of your library.
+		You may reveal that card. If an instant or sorcery card is revealed this way,
+		transform Delver of Secrets.
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=delver+of+secrets
+	*/
+	DelverOfSecrets: &Card{
+		BasePower:     1,
+		BaseToughness: 1,
+		BeginningOfYourUpkeepEffect: &Effect{
+			EffectType: DelverScry,
+		},
+		CastingCost:   &Cost{Colorless: 1},
+		TransformInto: InsectileAberration,
+		Type:          []Type{Creature},
 	},
 
 	/*
@@ -242,6 +264,20 @@ var Cards = map[CardName]*Card{
 			Plus1Plus1Counters: 2,
 		},
 		Type: []Type{Instant},
+	},
+
+	/*
+		Transformed from DelverOfSecrets.
+		Flying
+		http://gatherer.wizards.com/Pages/Card/Details.aspx?name=delver+of+secrets
+	*/
+	InsectileAberration: &Card{
+		BasePower:     3,
+		BaseToughness: 2,
+		CastingCost:   &Cost{Colorless: 0},
+		Flying:        true,
+		TransformInto: DelverOfSecrets,
+		Type:          []Type{Creature},
 	},
 
 	/*

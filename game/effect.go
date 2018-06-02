@@ -64,6 +64,9 @@ type EffectType int
 const (
 	AddMana EffectType = iota
 	Countermagic
+	DelverScry
+	DelverScryNoReveal
+	DelverScryReveal
 	DrawCard
 	ManaSink
 	ReturnCardsToTop
