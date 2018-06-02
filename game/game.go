@@ -105,10 +105,10 @@ func (g *Game) Priority() *Player {
 func (g *Game) Actions(forHuman bool) []*Action {
 	actions := []*Action{}
 
-	// Currently, the only ChoiceEffect that can be set is how to pay for Daze
-	// TODO maybe some other data structure beside ChoiceEffect - a pointer to the action on stack instead?
+	// TODO maybe some other data stucture beside ChoiceEffect - a pointer to the action on stack instead?
+	// Currently handles Daze, Scry effects, and Ponder
 	if g.ChoiceEffect != nil {
-		return g.Priority().WaysToChoose(g.ChoiceEffect)
+		return g.Priority().OptionsForChoiceEffect(g.ChoiceEffect)
 	}
 
 	if len(g.Stack) > 0 {
@@ -249,35 +249,18 @@ func (g *Game) TakeAction(action *Action) {
 		panic("cannot take action when the game is over")
 	}
 	/*
-	   when Daze isn't paid, the spell it targetted gets countered
-
 	   TODO this could be more abstract... instead of raw calling RemoveSpellFromStack,
 	   it could execute an arbitrary Action/Effect
 	*/
-	if action.Type == DeclineChoice {
-		g.RemoveSpellFromStack(g.ChoiceEffect.SpellTarget)
-		g.PriorityId = g.PriorityId.OpponentId()
-		g.ChoiceEffect = nil
-		return
-	}
 
-	/*
-	   Daze gets paid
-
-	   TODO this data structure could change when introducing other choices to resolve -
-	   e.g. Fact or Fiction
-	*/
-	if action.Type == DecideOnChoice {
-		if action.Selected == nil {
-			g.Priority().ColorlessManaPool--
-		} else {
-			for _, land := range action.Selected {
-				land.Tapped = true
-			}
+	if action.Type == MakeChoice {
+		if action.ShouldSwitchPriority {
+			g.PriorityId = g.PriorityId.OpponentId()
 		}
-		g.PriorityId = g.PriorityId.OpponentId()
+		g.Priority().ResolveEffect(action.AfterEffect, nil)
 		g.ChoiceEffect = nil
 		return
+
 	}
 
 	if action.Type == PassPriority && g.AttackerId() == g.PriorityId {
