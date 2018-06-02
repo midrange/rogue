@@ -171,7 +171,6 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		}
 		return append(actions, g.Priority().ManaActions()...)
 	case DeclareAttackers:
-		fmt.Println("Actions DeclareAttackers")
 		return append(g.Priority().AttackActions(), g.Priority().PassAction())
 	case DeclareBlockers:
 		return append(g.Priority().BlockActions(), g.Priority().PassAction())
@@ -423,7 +422,7 @@ func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
 		}
 	}
 	if len(newStack) == len(g.Stack) {
-		fmt.Println("This should be fine, it means a Counterspell's target was countered.")
+		// fmt.Println("This should be fine, it means a Counterspell's target was countered.")
 	}
 	g.Stack = newStack
 }

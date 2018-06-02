@@ -252,11 +252,13 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 		// TODO - add player targets - this assumes all instants target creatures or spells
 		if card.Selector != nil && card.Selector.Type == Spell {
 			for _, spellAction := range p.game.Stack {
-				answer = append(answer, &Action{
-					Type:        Play,
-					Card:        card,
-					SpellTarget: spellAction,
-				})
+				if spellAction.Type == Play {
+					answer = append(answer, &Action{
+						Type:        Play,
+						Card:        card,
+						SpellTarget: spellAction,
+					})
+				}
 			}
 		} else {
 			for _, targetCreature := range p.game.Creatures() {
@@ -344,13 +346,15 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, selectedLands []*Permanent) []*Action {
 	if card.HasSpellTargets() { // daze
 		for _, spellAction := range p.game.Stack {
-			answer = append(answer, &Action{
-				Type:          Play,
-				Card:          card,
-				Selected:      selectedLands,
-				SpellTarget:   spellAction,
-				WithAlternate: true,
-			})
+			if spellAction.Type == Play {
+				answer = append(answer, &Action{
+					Type:          Play,
+					Card:          card,
+					Selected:      selectedLands,
+					SpellTarget:   spellAction,
+					WithAlternate: true,
+				})
+			}
 		}
 	} else { // gush
 		answer = append(answer, &Action{
@@ -457,11 +461,13 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				if card.HasEntersTheBattlefieldTargets() {
 					if card.EntersTheBattlefieldEffect.Selector.Type == Spell {
 						for _, spellTarget := range p.game.Stack {
-							answer = append(answer, &Action{
-								Type: Play,
-								Card: card,
-								EntersTheBattleFieldSpellTarget: spellTarget,
-							})
+							if spellTarget.Type == Play {
+								answer = append(answer, &Action{
+									Type: Play,
+									Card: card,
+									EntersTheBattleFieldSpellTarget: spellTarget,
+								})
+							}
 						}
 					} else {
 						panic("unhandled EntersTheBattlefieldEffect.Selector.Type")
@@ -835,7 +841,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					controlCount++
 				}
 			}
-			if controlCount < e.SpellTarget.Card.CastingCost.Colorless {
+			if e.SpellTarget != nil && controlCount < e.SpellTarget.Card.CastingCost.Colorless {
 				return
 			}
 		}
@@ -1152,7 +1158,11 @@ func (p *Player) waysToDelverScry(effect *Effect) []*Action {
 
 	if !(card.IsSpell()) {
 		p.Deck.AddToTop(1, card.Name)
-		return []*Action{}
+		return []*Action{
+			&Action{
+				Type: Pass,
+			},
+		}
 	}
 
 	return []*Action{
