@@ -221,6 +221,9 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 }
 
 func (p *Player) appendHumanChoiceIfCanPayCost(answer []*Action, card *Card) []*Action {
+	if !p.HasLegalTarget(card) {
+		return answer
+	}
 	if p.CanPayCost(card.CastingCost) ||
 		(card.Kicker != nil && p.CanPayCost(card.Kicker.Cost)) ||
 		(card.PhyrexianCastingCost != nil && p.CanPayCost(card.PhyrexianCastingCost)) ||
