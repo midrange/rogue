@@ -198,8 +198,9 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 			}
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
-
-		if card.IsInstant() && (p.HasLegalPermanentTarget(card) || (p.HasLegalSpellTarget(card))) {
+		targetsSpellOrCreature := card.HasCreatureTargets() || card.HasSpellTargets()
+		hasLegalTarget := p.HasLegalPermanentTarget(card) || p.HasLegalSpellTarget(card)
+		if card.IsInstant() && (hasLegalTarget || !targetsSpellOrCreature) {
 			if forHuman {
 				answer = p.appendHumanChoiceIfCanPayCostAndHasTarget(answer, card)
 			} else {

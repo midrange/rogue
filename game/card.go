@@ -301,6 +301,7 @@ var Cards = map[CardName]*Card{
 		CastingCost:         &Cost{Colorless: 1},
 		Effects: []*Effect{&Effect{
 			Power:     2,
+			Selector:  &Selector{Type: Creature},
 			Toughness: 2,
 		}},
 		PhyrexianCastingCost: &Cost{Life: 2},
@@ -535,9 +536,11 @@ var Cards = map[CardName]*Card{
 		Kicker: &Effect{
 			Cost:      &Cost{Colorless: 2},
 			Power:     4,
+			Selector:  &Selector{Type: Creature, Targeted: true},
 			Toughness: 4,
 		},
 		Effects: []*Effect{&Effect{
+			Selector:     &Selector{Type: Creature, Targeted: true},
 			Untargetable: true,
 		}},
 		Type: []Type{Instant},
@@ -621,7 +624,13 @@ func (c *Card) HasSubtype(subtype Subtype) bool {
 	return false
 }
 
+// TODO this should check kicker too
 func (c *Card) HasCreatureTargets() bool {
+	if c.Selector != nil {
+		if c.Selector.Type == Creature {
+			return true
+		}
+	}
 	for _, e := range c.Effects {
 		if e.Selector != nil {
 			if e.Selector.Type == Creature {
