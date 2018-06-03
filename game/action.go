@@ -9,20 +9,25 @@ type Action struct {
 	Type ActionType
 
 	// a faux effect that resolves after a choice-based action, such as returning Scry cards and drawing
-	AfterEffect                     *Effect
-	Card                            *Card
-	EntersTheBattleFieldSpellTarget *StackObject // the spell target Card's coming into play effect
+	AfterEffect *Effect
+	Card        *Card
+	// the spell target Card's coming into play effect
+	EntersTheBattleFieldSpellTarget *StackObject
 	Cost                            *Cost
-	Selected                        []*Permanent // for non-targetted effects, such as in Snap
-	ShouldSwitchPriority            bool         // whether to switch priority after the action
-	Source                          *Permanent   // for targeted effects
-	SpellTarget                     *StackObject
-	Target                          *Permanent
-	With                            *Permanent // for attacking
-	WithAlternate                   bool
-	WithKicker                      bool
-	WithNinjitsu                    bool
-	WithPhyrexian                   bool
+	// for non-targetted effects, such as in Snap
+	Selected []*Permanent
+	// whether to switch priority after the action
+	ShouldSwitchPriority bool
+	// for targeted effects
+	Source      *Permanent
+	SpellTarget *StackObject
+	Target      *Permanent
+	// for attacking
+	With          *Permanent
+	WithAlternate bool
+	WithKicker    bool
+	WithNinjitsu  bool
+	WithPhyrexian bool
 }
 
 //go:generate stringer -type=ActionType

@@ -28,6 +28,7 @@ func (h *Human) Action(g *Game) *Action {
 
 func promptForAction(game *Game, actions []*Action) *Action {
 	player := game.Priority()
+	allowSorcerySpeed := game.PriorityId == game.AttackerId()
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		whoseTurn := "your turn"
@@ -45,36 +46,23 @@ func promptForAction(game *Game, actions []*Action) *Action {
 		if err == nil && intChoice >= 0 && intChoice < len(actions) {
 			action := actions[intChoice]
 			if action.Type == ChooseTargetAndMana {
-				return promptForTargetAndMana(game, action)
+				return promptForTargetAndMana(allowSorcerySpeed, game, action)
 			}
 			return actions[intChoice]
 		}
 	}
 }
 
-func promptForTargetAndMana(game *Game, action *Action) *Action {
+func promptForTargetAndMana(allowSorcerySpeed bool, game *Game, action *Action) *Action {
 	player := game.Priority()
-	c := action.Card
+	card := action.Card
 	actions := []*Action{}
-	for _, target := range game.Creatures() {
-		actions = append(actions, &Action{
-			Type:   Play,
-			Card:   c,
-			Target: target,
-		})
+	if allowSorcerySpeed {
+		actions = player.appendActionsIfNonInstant(actions, card, false)
 	}
-	mana := game.Priority().AvailableMana()
-	if c.IsInstant() && c.Kicker != nil && c.Kicker.Cost.Colorless > 0 && mana >= c.Kicker.Cost.Colorless {
-		for _, target := range game.Creatures() {
-			if player.IsLegalTarget(c, target) {
-				actions = append(actions, &Action{
-					Type:       Play,
-					Card:       c,
-					WithKicker: true,
-					Target:     target,
-				})
-			}
-		}
+
+	if card.IsInstant() && (player.HasLegalPermanentTarget(card) || card.HasCreatureTargets() == false) {
+		actions = player.appendActionsForInstant(actions, card)
 	}
 
 	for {

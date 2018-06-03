@@ -193,15 +193,15 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 		card := name.Card()
 
 		if allowSorcerySpeed {
-			if forHuman && card.IsEnchantment() && p.HasLegalTarget(card) {
-				answer = p.appendHumanChoiceIfCanPayCost(answer, card)
+			if forHuman && card.IsEnchantment() && p.HasLegalPermanentTarget(card) {
+				answer = p.appendHumanChoiceIfCanPayCostAndHasTarget(answer, card)
 			}
 			answer = p.appendActionsIfNonInstant(answer, card, forHuman)
 		}
 
-		if card.IsInstant() && (p.HasLegalTarget(card) || card.HasCreatureTargets() == false) {
+		if card.IsInstant() && (p.HasLegalPermanentTarget(card) || (p.HasLegalSpellTarget(card))) {
 			if forHuman {
-				answer = p.appendHumanChoiceIfCanPayCost(answer, card)
+				answer = p.appendHumanChoiceIfCanPayCostAndHasTarget(answer, card)
 			} else {
 				answer = p.appendActionsForInstant(answer, card)
 			}
@@ -220,8 +220,8 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	return answer
 }
 
-func (p *Player) appendHumanChoiceIfCanPayCost(answer []*Action, card *Card) []*Action {
-	if !p.HasLegalTarget(card) {
+func (p *Player) appendHumanChoiceIfCanPayCostAndHasTarget(answer []*Action, card *Card) []*Action {
+	if !p.HasLegalPermanentTarget(card) {
 		return answer
 	}
 	if p.CanPayCost(card.CastingCost) ||
@@ -478,7 +478,7 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 						Card: card,
 					})
 				}
-			} else if card.IsEnchantment() && p.HasLegalTarget(card) && !forHuman {
+			} else if card.IsEnchantment() && p.HasLegalPermanentTarget(card) && !forHuman {
 				for _, target := range p.game.Creatures() {
 					answer = append(answer, &Action{
 						Type:   Play,
@@ -809,10 +809,26 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 	return true
 }
 
-// HasLegalTarget returns whether the player has a legal target for casting this card.
-func (p *Player) HasLegalTarget(c *Card) bool {
+// HasLegalPermanentTarget returns whether the player has a legal target for casting this card in play.
+func (p *Player) HasLegalPermanentTarget(c *Card) bool {
+	if !c.HasCreatureTargets() {
+		return false
+	}
 	for _, creature := range p.game.Creatures() {
 		if p.IsLegalTarget(c, creature) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasLegalSpellTarget returns whether the player has a legal target for casting this card on the stack
+func (p *Player) HasLegalSpellTarget(c *Card) bool {
+	if !c.HasSpellTargets() {
+		return false
+	}
+	for _, stackObject := range p.game.Stack {
+		if stackObject.Type == Play {
 			return true
 		}
 	}

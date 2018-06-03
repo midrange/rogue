@@ -53,7 +53,7 @@ func MonoBlueDelver() *Deck {
 		Ponder:              4,
 		Preordain:           4,
 		Counterspell:        4,
-		Daze:                4,
+		Daze:                34,
 		Snap:                4,
 		Gush:                2,
 	})
