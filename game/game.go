@@ -618,7 +618,6 @@ func (g *Game) playSorcery() {
 
 // attackWithEveryone passes priority when it's done attacking
 func (g *Game) attackWithEveryone() {
-	fmt.Println("attackWithEveryone")
 	for {
 		actions := g.Priority().AttackActions()
 		if len(actions) == 0 {

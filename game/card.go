@@ -111,10 +111,10 @@ var Cards = map[CardName]*Card{
 		Effects: []*Effect{
 			&Effect{
 				EffectType: Countermagic,
+				Selector:   &Selector{Type: Spell},
 			},
 		},
-		Selector: &Selector{Type: Spell},
-		Type:     []Type{Instant},
+		Type: []Type{Instant},
 	},
 
 	/*
@@ -642,6 +642,11 @@ func (c *Card) HasCreatureTargets() bool {
 }
 
 func (c *Card) HasSpellTargets() bool {
+	if c.Selector != nil {
+		if c.Selector.Type == Spell {
+			return true
+		}
+	}
 	for _, e := range c.Effects {
 		if e.Selector != nil {
 			if e.Selector.Type == Spell {

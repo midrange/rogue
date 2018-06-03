@@ -222,7 +222,10 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 }
 
 func (p *Player) appendHumanChoiceIfCanPayCostAndHasTarget(answer []*Action, card *Card) []*Action {
-	if !p.HasLegalPermanentTarget(card) {
+	targetsSpellOrCreature := card.HasCreatureTargets() || card.HasSpellTargets()
+	hasLegalTarget := p.HasLegalPermanentTarget(card) || p.HasLegalSpellTarget(card)
+
+	if !hasLegalTarget && targetsSpellOrCreature {
 		return answer
 	}
 	if p.CanPayCost(card.CastingCost) ||
@@ -251,7 +254,7 @@ func removePermanent(attackers []*Permanent, attacker *Permanent) []*Permanent {
 func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action {
 	if p.CanPayCost(card.CastingCost) {
 		// TODO - add player targets - this assumes all instants target creatures or spells
-		if card.Selector != nil && card.Selector.Type == Spell {
+		if card.HasSpellTargets() {
 			for _, spellAction := range p.game.Stack {
 				if spellAction.Type == Play {
 					answer = append(answer, &Action{
