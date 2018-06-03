@@ -65,6 +65,7 @@ func (a *Action) ShowTo(p *Player) string {
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
+			p.game.Phase == CombatDamage ||
 			p.game.Phase == Main1 ||
 			p.game.Phase == Main2 {
 			return fmt.Sprintf("end %s", p.game.Phase)
@@ -76,6 +77,7 @@ func (a *Action) ShowTo(p *Player) string {
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
+			p.game.Phase == CombatDamage ||
 			p.game.Phase == Main1 ||
 			p.game.Phase == Main2 {
 			return fmt.Sprintf("agree to end %s", p.game.Phase)
@@ -147,7 +149,7 @@ func (a *Action) ShowTo(p *Player) string {
 		if a.AfterEffect.EffectType == ShuffleDraw {
 			return fmt.Sprintf("Shuffle")
 		}
-		if a.AfterEffect.EffectType == DelverScry {
+		if a.AfterEffect.EffectType == DelverScryReveal {
 			return fmt.Sprintf("Reveal %s", a.AfterEffect.Cards[0])
 		}
 		if a.AfterEffect.EffectType == DelverScryNoReveal {
