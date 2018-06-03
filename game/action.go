@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Action struct {
@@ -34,7 +35,6 @@ const (
 	Attack
 	Block
 	ChooseTargetAndMana
-	DeclareAttack
 	DecideOnChoice
 	DeclineChoice
 	EntersTheBattlefieldEffect
@@ -54,12 +54,56 @@ func (a *Action) targetPronoun(p *Player) string {
 func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case PassPriority:
+		if len(p.game.Stack) > 0 {
+			return fmt.Sprintf("%s", p.game.Stack[len(p.game.Stack)-1])
+		}
+		if p.game.Phase == Upkeep {
+			return "enter draw step"
+		}
+		if p.game.Phase == Draw {
+			return "enter main phase"
+		}
+		if p.game.Phase == Main1 {
+			return "enter attack step"
+		}
+		if p.game.Phase == Main2 {
+			return "enter end step"
+		}
 		return "pass priority"
 	case Pass:
+		if len(p.game.Stack) > 0 {
+			return fmt.Sprintf("resolve %s", p.game.Stack[len(p.game.Stack)-1])
+		}
+		if p.game.Phase == Upkeep {
+			return "agree to enter draw step"
+		}
+		if p.game.Phase == Draw {
+			return "agree to enter main phase"
+		}
+		if p.game.Phase == Main1 {
+			return "agree to enter attack step"
+		}
+		if p.game.Phase == Main2 {
+			return "agree to enter end step"
+		}
 		return "pass"
 	case ChooseTargetAndMana:
 		fallthrough
 	case Play:
+		if a.WithAlternate {
+			if a.Target == nil {
+				return fmt.Sprintf("%s: %s", a.Card.AlternateCastingCost, a.Card)
+			}
+			return fmt.Sprintf("%s: %s on %s %s",
+				a.Card.AlternateCastingCost, a.Card, a.targetPronoun(p), a.Target)
+		}
+		if a.WithPhyrexian {
+			if a.Target == nil {
+				return fmt.Sprintf("%s: %s", a.Card.PhyrexianCastingCost, a.Card)
+			}
+			return fmt.Sprintf("%s: %s on %s %s",
+				a.Card.PhyrexianCastingCost, a.Card, a.targetPronoun(p), a.Target)
+		}
 		if a.WithKicker {
 			if a.Target == nil {
 				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.Cost, a.Card)
@@ -75,8 +119,6 @@ func (a *Action) ShowTo(p *Player) string {
 		}
 		return fmt.Sprintf("%s: %s on %s %s",
 			a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target)
-	case DeclareAttack:
-		return "enter attack step"
 	case Attack:
 		return fmt.Sprintf("attack with %s", a.With)
 	case Block:
@@ -87,10 +129,25 @@ func (a *Action) ShowTo(p *Player) string {
 		return fmt.Sprintf("use %s", a.Source)
 	case MakeChoice:
 		if a.AfterEffect.EffectType == ReturnScryCardsDraw {
-			return fmt.Sprintf("%s, Top: %s, Bottom: %s", a.AfterEffect.EffectType, a.AfterEffect.ScryCards[0], a.AfterEffect.ScryCards[1])
+			topStrings := []string{}
+			for _, cn := range a.AfterEffect.ScryCards[0] {
+				topStrings = append(topStrings, fmt.Sprintf("%s", cn))
+			}
+			bottomStrings := []string{}
+			for _, cn := range a.AfterEffect.ScryCards[1] {
+				bottomStrings = append(bottomStrings, fmt.Sprintf("%s", cn))
+			}
+			return fmt.Sprintf("Top: %s, Bottom: %s", strings.Join(topStrings, ", "), strings.Join(bottomStrings, ", "))
 		}
 		if a.AfterEffect.EffectType == ReturnCardsToTopDraw {
-			return fmt.Sprintf("%s, %s", a.AfterEffect.EffectType, a.AfterEffect.Cards)
+			nameStrings := []string{}
+			for _, cn := range a.AfterEffect.Cards {
+				nameStrings = append(nameStrings, fmt.Sprintf("%s", cn))
+			}
+			return fmt.Sprintf(strings.Join(nameStrings, ", "))
+		}
+		if a.AfterEffect.EffectType == ShuffleDraw {
+			return fmt.Sprintf("Shuffle")
 		}
 		return fmt.Sprintf("Choose %s", a.AfterEffect)
 	}

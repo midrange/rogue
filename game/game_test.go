@@ -50,7 +50,7 @@ func TestTwoBearsFighting(t *testing.T) {
 	g.playCreature()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	attackingBear := g.Attacker().GetCreature(GrizzlyBears)
@@ -89,7 +89,7 @@ func TestVinesOfVastwoodBuff(t *testing.T) {
 
 	g.playLand()
 	g.playKickedInstant()
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
@@ -148,7 +148,7 @@ func TestSilhanasDontMeet(t *testing.T) {
 	g.playCreature()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
@@ -192,7 +192,7 @@ func TestSkarrganPitskulkBloodthirst(t *testing.T) {
 	g.playLand()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
@@ -218,7 +218,7 @@ func TestSkarrganPitskulksDontMeet(t *testing.T) {
 	g.playCreature()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
@@ -228,7 +228,7 @@ func TestSkarrganPitskulksDontMeet(t *testing.T) {
 
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	if len(g.Actions(false)) > 2 {
@@ -249,7 +249,7 @@ func TestVaultSkirgeLoseAndGain(t *testing.T) {
 	g.playLand()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(Main2)
@@ -350,7 +350,7 @@ func TestElephantGuide(t *testing.T) {
 	g.playAura()
 	g.passTurn()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
@@ -393,7 +393,7 @@ func TestRancor(t *testing.T) {
 		t.Fatal("expected the hand size to be 5 before rancor return")
 	}
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(DeclareBlockers)
@@ -772,7 +772,7 @@ func TestNinjaOfTheDeepWater(t *testing.T) {
 
 	g.playLand()
 
-	g.TakeAction(&Action{Type: DeclareAttack})
+	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: Pass})
 	g.attackWithEveryone()
 	g.passUntilPhase(CombatDamage)

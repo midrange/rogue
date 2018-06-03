@@ -1,6 +1,8 @@
 package game
 
-import ()
+import (
+	"fmt"
+)
 
 type StackObject struct {
 	Type                            ActionType
@@ -14,4 +16,11 @@ type StackObject struct {
 	SpellTarget                     *StackObject
 	Target                          *Permanent // a target that is a Permanent (players not yet handled)
 	WithNinjitsu                    bool
+}
+
+func (s *StackObject) String() string {
+	if s.Card != nil {
+		return fmt.Sprintf("resolve %s", s.Card)
+	}
+	return fmt.Sprintf("resolve ability from %s", s.Source)
 }
