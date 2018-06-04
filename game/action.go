@@ -87,6 +87,9 @@ func (a *Action) ShowTo(p *Player) string {
 		forHuman = true
 		fallthrough
 	case Play:
+		if a.WithNinjitsu {
+			return fmt.Sprintf("%s: %s", a.Card.Ninjitsu, a.Card)
+		}
 		if a.WithAlternate {
 			if a.Target == nil {
 				return fmt.Sprintf("%s: %s", a.Card.AlternateCastingCost, a.Card)

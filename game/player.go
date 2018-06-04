@@ -221,6 +221,32 @@ func (p *Player) PlayActions(allowSorcerySpeed bool, forHuman bool) []*Action {
 	return answer
 }
 
+// HasLegalPermanentTarget returns whether the player has a legal target for casting this card in play.
+func (p *Player) HasLegalPermanentTarget(c *Card) bool {
+	if !c.HasCreatureTargets() {
+		return false
+	}
+	for _, creature := range p.game.Creatures() {
+		if p.IsLegalTarget(c, creature) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasLegalSpellTarget returns whether the player has a legal target for casting this card on the stack
+func (p *Player) HasLegalSpellTarget(c *Card) bool {
+	if !c.HasSpellTargets() {
+		return false
+	}
+	for _, stackObject := range p.game.Stack {
+		if stackObject.Type == Play {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Player) appendHumanChoiceIfCanPayCostAndHasTarget(answer []*Action, card *Card) []*Action {
 	targetsSpellOrCreature := card.HasCreatureTargets() || card.HasSpellTargets()
 	hasLegalTarget := p.HasLegalPermanentTarget(card) || p.HasLegalSpellTarget(card)
@@ -535,8 +561,15 @@ func (p *Player) unblockedAtackers() []*Permanent {
 
 // Returns possible actions to generate mana.
 func (p *Player) ManaActions() []*Action {
+
+	cardNames := make(map[CardName]bool)
+
 	actions := []*Action{}
 	for _, card := range p.Board {
+		if cardNames[card.Name] {
+			continue
+		}
+		cardNames[card.Name] = true
 		actions = append(actions, card.ManaActions()...)
 	}
 	return actions
@@ -811,32 +844,6 @@ func (p *Player) IsLegalTarget(c *Card, perm *Permanent) bool {
 		}
 	}
 	return true
-}
-
-// HasLegalPermanentTarget returns whether the player has a legal target for casting this card in play.
-func (p *Player) HasLegalPermanentTarget(c *Card) bool {
-	if !c.HasCreatureTargets() {
-		return false
-	}
-	for _, creature := range p.game.Creatures() {
-		if p.IsLegalTarget(c, creature) {
-			return true
-		}
-	}
-	return false
-}
-
-// HasLegalSpellTarget returns whether the player has a legal target for casting this card on the stack
-func (p *Player) HasLegalSpellTarget(c *Card) bool {
-	if !c.HasSpellTargets() {
-		return false
-	}
-	for _, stackObject := range p.game.Stack {
-		if stackObject.Type == Play {
-			return true
-		}
-	}
-	return false
 }
 
 func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {

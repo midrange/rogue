@@ -37,12 +37,20 @@ func promptForAction(game *Game, actions []*Action) *Action {
 		}
 		fmt.Printf("## Turn %d | %s (%s)\n", game.Turn, game.Phase, whoseTurn)
 		for index, action := range actions {
-			fmt.Printf("%d) %s\n", index+1, action.ShowTo(player))
+			if index == len(actions)-1 && (actions[len(actions)-1].Type == Pass || actions[len(actions)-1].Type == PassPriority) {
+				fmt.Printf("enter) %s\n", action.ShowTo(player))
+			} else {
+				fmt.Printf("%d) %s\n", index+1, action.ShowTo(player))
+			}
 		}
-		fmt.Print("\nEnter a number: ")
+		fmt.Print("\nChoose a move: ")
 		text, _ := reader.ReadString('\n')
 		intChoice, err := strconv.Atoi(strings.TrimSpace(text))
 		intChoice--
+		if text == "\n" {
+			intChoice = len(actions) - 1
+			err = nil
+		}
 		if err == nil && intChoice >= 0 && intChoice < len(actions) {
 			action := actions[intChoice]
 			if action.Type == ChooseTargetAndMana {
