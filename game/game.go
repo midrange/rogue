@@ -374,7 +374,7 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.With.Blocking = action.Target
+		action.With.Blocking = action.Target.Id
 		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
 
 	case CombatDamage:

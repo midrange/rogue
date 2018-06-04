@@ -28,7 +28,7 @@ type Permanent struct {
 
 	// Creature-specific properties
 	Attacking          bool
-	Blocking           *Permanent
+	Blocking           PermanentId
 	DamageOrder        []*Permanent
 	Damage             int
 	Plus1Plus1Counters int
@@ -47,6 +47,10 @@ func (p *Permanent) String() string {
 		return fmt.Sprintf("%s (%d/%d)", p.Name, p.Power(), p.Toughness())
 	}
 	return fmt.Sprintf("%s", p.Name)
+}
+
+func (p *Permanent) GetBlocking() *Permanent {
+	return p.game.Permanent(p.Blocking)
 }
 
 const CARD_HEIGHT = 5

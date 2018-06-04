@@ -72,7 +72,7 @@ func (p *Player) Lost() bool {
 func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
-		card.Blocking = nil
+		card.Blocking = NoPermanentId
 		card.DamageOrder = []*Permanent{}
 	}
 }
@@ -552,8 +552,8 @@ func (p *Player) unblockedAtackers() []*Permanent {
 	}
 
 	for _, perm := range p.Opponent().Board {
-		if perm.Blocking != nil {
-			attackers = removePermanent(attackers, perm.Blocking)
+		if perm.Blocking != NoPermanentId {
+			attackers = removePermanent(attackers, perm.GetBlocking())
 		}
 	}
 	return attackers
@@ -604,7 +604,7 @@ func (p *Player) BlockActions() []*Action {
 		}
 	}
 	for _, perm := range p.Board {
-		if perm.Blocking == nil && !perm.Tapped && perm.IsCreature() {
+		if perm.Blocking == NoPermanentId && !perm.Tapped && perm.IsCreature() {
 			for _, attacker := range attackers {
 				if perm.CanBlock(attacker) {
 					answer = append(answer, &Action{
