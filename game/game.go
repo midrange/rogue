@@ -418,6 +418,7 @@ func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject)
 		Owner:      owner,
 		TurnPlayed: g.Turn,
 		Id:         g.NextPermanentId,
+		game:       g,
 	}
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++

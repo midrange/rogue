@@ -35,6 +35,9 @@ type Permanent struct {
 
 	// Auras, equipment, instants, and sorceries can have targets
 	Target *Permanent
+
+	// game should not be included when the permanent is serialized.
+	game *Game
 }
 
 func (p *Permanent) String() string {
