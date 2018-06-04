@@ -20,7 +20,7 @@ type Permanent struct {
 
 	// Properties that are relevant for any permanent
 	ActivatedThisTurn bool
-	Auras             []*Permanent
+	Auras             []PermanentId
 	Owner             *Player
 	Tapped            bool
 	TemporaryEffects  []*Effect
@@ -51,6 +51,14 @@ func (p *Permanent) String() string {
 
 func (p *Permanent) GetBlocking() *Permanent {
 	return p.game.Permanent(p.Blocking)
+}
+
+func (p *Permanent) GetAuras() []*Permanent {
+	answer := []*Permanent{}
+	for _, id := range p.Auras {
+		answer = append(answer, p.game.Permanent(id))
+	}
+	return answer
 }
 
 const CARD_HEIGHT = 5
@@ -153,7 +161,7 @@ func Max(x, y int) int {
 
 func (p *Permanent) Power() int {
 	answer := p.BasePower + p.Plus1Plus1Counters
-	for _, aura := range p.Auras {
+	for _, aura := range p.GetAuras() {
 		answer += aura.BasePower
 	}
 	for _, effect := range p.TemporaryEffects {
@@ -167,7 +175,7 @@ func (p *Permanent) Power() int {
 
 func (c *Permanent) Toughness() int {
 	answer := c.BaseToughness + c.Plus1Plus1Counters
-	for _, aura := range c.Auras {
+	for _, aura := range c.GetAuras() {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.TemporaryEffects {
@@ -190,7 +198,7 @@ func (c *Permanent) Trample() bool {
 	if c.BaseTrample {
 		return true
 	}
-	for _, aura := range c.Auras {
+	for _, aura := range c.GetAuras() {
 		if aura.BaseTrample {
 			return true
 		}

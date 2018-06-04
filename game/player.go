@@ -114,7 +114,7 @@ func (p *Player) SendToGraveyard(perm *Permanent) {
 	}
 
 	perm.TemporaryEffects = []*Effect{}
-	for _, aura := range perm.Auras {
+	for _, aura := range perm.GetAuras() {
 		if aura.EnchantedPermanentDiesEffect != nil {
 			p.ResolveEffect(aura.EnchantedPermanentDiesEffect, aura)
 		}
@@ -714,7 +714,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		}
 
 		if card.IsEnchantCreature() {
-			stackObject.Target.Auras = append(stackObject.Target.Auras, perm)
+			stackObject.Target.Auras = append(stackObject.Target.Auras, perm.Id)
 		}
 	}
 }
