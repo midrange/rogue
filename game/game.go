@@ -190,7 +190,7 @@ func (g *Game) Defender() *Player {
 }
 
 func (g *Game) HandleCombatDamage() {
-	for _, attacker := range g.Attacker().Board {
+	for _, attacker := range g.Attacker().GetBoard() {
 		if attacker.Attacking {
 			damage := attacker.Power()
 			if damage < 0 {
@@ -199,7 +199,7 @@ func (g *Game) HandleCombatDamage() {
 
 			if len(attacker.DamageOrder) > 0 {
 				// Deal damage to blockers
-				for _, blocker := range attacker.DamageOrder {
+				for _, blocker := range attacker.GetDamageOrder() {
 					attacker.Damage += blocker.Power()
 					if damage == 0 {
 						continue
@@ -256,7 +256,7 @@ func (g *Game) nextPhase() {
 		g.Attacker().Untap()
 		g.Phase = Upkeep
 	case Upkeep:
-		for _, c := range g.Attacker().Board {
+		for _, c := range g.Attacker().GetBoard() {
 			if c.BeginningOfYourUpkeepEffect != nil {
 				g.Attacker().ResolveEffect(c.BeginningOfYourUpkeepEffect, c)
 			}
@@ -321,7 +321,7 @@ func (g *Game) TakeAction(action *Action) {
 		} else if stackObject.Type == Activate {
 			stackObject.Player.ResolveActivatedAbility(stackObject)
 		} else if stackObject.Type == EntersTheBattlefieldEffect {
-			for _, perm := range g.Priority().Board {
+			for _, perm := range g.Priority().GetBoard() {
 				if perm.Card == stackObject.Card {
 					effect := UpdatedEffectForStackObject(stackObject, stackObject.Card.EntersTheBattlefieldEffect)
 					g.Priority().ResolveEffect(effect, perm)
@@ -374,8 +374,8 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.With.Blocking = action.Target
-		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
+		action.With.Blocking = action.Target.Id
+		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With.Id)
 
 	case CombatDamage:
 		if action.Type == Play {
@@ -418,10 +418,11 @@ func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject)
 		Owner:      owner,
 		TurnPlayed: g.Turn,
 		Id:         g.NextPermanentId,
+		game:       g,
 	}
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
-	owner.Board = append(owner.Board, perm)
+	owner.Board = append(owner.Board, perm.Id)
 	perm.HandleEnterTheBattlefield(stackObject)
 	return perm
 }
@@ -436,6 +437,14 @@ func (g *Game) Permanent(id PermanentId) *Permanent {
 		panic("0 is not a valid PermanentId")
 	}
 	return g.Permanents[id]
+}
+
+func (g *Game) GetPermanents(ids []PermanentId) []*Permanent {
+	answer := []*Permanent{}
+	for _, id := range ids {
+		answer = append(answer, g.Permanent(id))
+	}
+	return answer
 }
 
 func (g *Game) Print() {

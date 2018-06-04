@@ -12,13 +12,15 @@ import (
 // see anything with an id of 0 it means we are using something uninitialized.
 type PermanentId int
 
+const NoPermanentId PermanentId = 0
+
 type Permanent struct {
 	*Card
 	Id PermanentId
 
 	// Properties that are relevant for any permanent
 	ActivatedThisTurn bool
-	Auras             []*Permanent
+	Auras             []PermanentId
 	Owner             *Player
 	Tapped            bool
 	TemporaryEffects  []*Effect
@@ -26,13 +28,16 @@ type Permanent struct {
 
 	// Creature-specific properties
 	Attacking          bool
-	Blocking           *Permanent
-	DamageOrder        []*Permanent
+	Blocking           PermanentId
+	DamageOrder        []PermanentId
 	Damage             int
 	Plus1Plus1Counters int
 
-	// Auras, equipment, instants, and sorceries can have targets
-	Target *Permanent
+	// Auras and equipment can have targets
+	Target PermanentId
+
+	// game should not be included when the permanent is serialized.
+	game *Game
 }
 
 func (p *Permanent) String() string {
@@ -42,6 +47,22 @@ func (p *Permanent) String() string {
 		return fmt.Sprintf("%s (%d/%d)", p.Name, p.Power(), p.Toughness())
 	}
 	return fmt.Sprintf("%s", p.Name)
+}
+
+func (p *Permanent) GetBlocking() *Permanent {
+	return p.game.Permanent(p.Blocking)
+}
+
+func (p *Permanent) GetAuras() []*Permanent {
+	return p.game.GetPermanents(p.Auras)
+}
+
+func (p *Permanent) GetDamageOrder() []*Permanent {
+	return p.game.GetPermanents(p.DamageOrder)
+}
+
+func (p *Permanent) GetTarget() *Permanent {
+	return p.game.Permanent(p.Target)
 }
 
 const CARD_HEIGHT = 5
@@ -144,7 +165,7 @@ func Max(x, y int) int {
 
 func (p *Permanent) Power() int {
 	answer := p.BasePower + p.Plus1Plus1Counters
-	for _, aura := range p.Auras {
+	for _, aura := range p.GetAuras() {
 		answer += aura.BasePower
 	}
 	for _, effect := range p.TemporaryEffects {
@@ -158,7 +179,7 @@ func (p *Permanent) Power() int {
 
 func (c *Permanent) Toughness() int {
 	answer := c.BaseToughness + c.Plus1Plus1Counters
-	for _, aura := range c.Auras {
+	for _, aura := range c.GetAuras() {
 		answer += aura.BaseToughness
 	}
 	for _, effect := range c.TemporaryEffects {
@@ -181,7 +202,7 @@ func (c *Permanent) Trample() bool {
 	if c.BaseTrample {
 		return true
 	}
-	for _, aura := range c.Auras {
+	for _, aura := range c.GetAuras() {
 		if aura.BaseTrample {
 			return true
 		}
