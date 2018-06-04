@@ -190,7 +190,7 @@ func (g *Game) Defender() *Player {
 }
 
 func (g *Game) HandleCombatDamage() {
-	for _, attacker := range g.Attacker().Board {
+	for _, attacker := range g.Attacker().GetBoard() {
 		if attacker.Attacking {
 			damage := attacker.Power()
 			if damage < 0 {
@@ -256,7 +256,7 @@ func (g *Game) nextPhase() {
 		g.Attacker().Untap()
 		g.Phase = Upkeep
 	case Upkeep:
-		for _, c := range g.Attacker().Board {
+		for _, c := range g.Attacker().GetBoard() {
 			if c.BeginningOfYourUpkeepEffect != nil {
 				g.Attacker().ResolveEffect(c.BeginningOfYourUpkeepEffect, c)
 			}
@@ -321,7 +321,7 @@ func (g *Game) TakeAction(action *Action) {
 		} else if stackObject.Type == Activate {
 			stackObject.Player.ResolveActivatedAbility(stackObject)
 		} else if stackObject.Type == EntersTheBattlefieldEffect {
-			for _, perm := range g.Priority().Board {
+			for _, perm := range g.Priority().GetBoard() {
 				if perm.Card == stackObject.Card {
 					effect := UpdatedEffectForStackObject(stackObject, stackObject.Card.EntersTheBattlefieldEffect)
 					g.Priority().ResolveEffect(effect, perm)
@@ -422,7 +422,7 @@ func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject)
 	}
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
-	owner.Board = append(owner.Board, perm)
+	owner.Board = append(owner.Board, perm.Id)
 	perm.HandleEnterTheBattlefield(stackObject)
 	return perm
 }

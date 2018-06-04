@@ -6,7 +6,7 @@ import (
 )
 
 type Player struct {
-	Board              []*Permanent
+	Board              []PermanentId
 	ColorlessManaPool  int
 	CreatureDied       bool
 	DamageThisTurn     int
@@ -26,7 +26,7 @@ func NewPlayer(deck *Deck, id PlayerId) *Player {
 		Life:  20,
 		Hand:  []CardName{},
 		Id:    id,
-		Board: []*Permanent{},
+		Board: []PermanentId{},
 		Deck:  deck,
 	}
 	for i := 0; i < 7; i++ {
@@ -43,9 +43,13 @@ func (p *Player) Draw() {
 	p.Hand = append(p.Hand, card)
 }
 
+func (p *Player) GetBoard() []*Permanent {
+	return p.game.GetPermanents(p.Board)
+}
+
 func (p *Player) AvailableMana() int {
 	answer := 0
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		if card.IsLand() && !card.Tapped {
 			answer += card.Colorless
 		}
@@ -56,7 +60,7 @@ func (p *Player) AvailableMana() int {
 
 func (p *Player) Untap() {
 	p.LandPlayedThisTurn = 0
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		card.RespondToUntapPhase()
 	}
 }
@@ -70,7 +74,7 @@ func (p *Player) Lost() bool {
 }
 
 func (p *Player) EndCombat() {
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		card.Attacking = false
 		card.Blocking = NoPermanentId
 		card.DamageOrder = []PermanentId{}
@@ -82,7 +86,7 @@ func (p *Player) EndPhase() {
 }
 
 func (p *Player) EndTurn() {
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		perm.Damage = 0
 		perm.TemporaryEffects = []*Effect{}
 		perm.ActivatedThisTurn = false
@@ -95,7 +99,7 @@ func (p *Player) EndTurn() {
 
 func (p *Player) Creatures() []*Permanent {
 	answer := []*Permanent{}
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		if card.IsCreature() {
 			answer = append(answer, card)
 		}
@@ -123,10 +127,10 @@ func (p *Player) SendToGraveyard(perm *Permanent) {
 }
 
 func (p *Player) RemoveFromBoard(perm *Permanent) {
-	newBoard := []*Permanent{}
-	for _, permanent := range p.Board {
-		if permanent != perm {
-			newBoard = append(newBoard, permanent)
+	newBoard := []PermanentId{}
+	for _, id := range p.Board {
+		if id != perm.Id {
+			newBoard = append(newBoard, id)
 		}
 	}
 	p.Board = newBoard
@@ -137,7 +141,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 	permNames := make(map[CardName]bool)
 	answer := []*Action{}
 
-	for _, perm := range p.Board { // TODO could be opponent's board for some actions, e.g. Warmonger
+	for _, perm := range p.GetBoard() { // TODO could be opponent's board for some actions, e.g. Warmonger
 		// Don't re-check playing duplicate actions
 		if permNames[perm.Name] {
 			continue
@@ -545,13 +549,13 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 
 func (p *Player) unblockedAtackers() []*Permanent {
 	attackers := []*Permanent{}
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		if perm.Attacking {
 			attackers = append(attackers, perm)
 		}
 	}
 
-	for _, perm := range p.Opponent().Board {
+	for _, perm := range p.Opponent().GetBoard() {
 		if perm.Blocking != NoPermanentId {
 			attackers = removePermanent(attackers, perm.GetBlocking())
 		}
@@ -565,7 +569,7 @@ func (p *Player) ManaActions() []*Action {
 	cardNames := make(map[CardName]bool)
 
 	actions := []*Action{}
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		if cardNames[card.Name] {
 			continue
 		}
@@ -586,7 +590,7 @@ func (p *Player) AttackActions() []*Action {
 		log.Fatalf("do not call AttackActions in phase %s", p.game.Phase)
 	}
 	answer := []*Action{}
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		if card.IsCreature() && !card.Attacking && !card.Tapped && card.TurnPlayed != p.game.Turn {
 			answer = append(answer, &Action{Type: Attack, With: card})
 		}
@@ -598,12 +602,12 @@ func (p *Player) AttackActions() []*Action {
 func (p *Player) BlockActions() []*Action {
 	answer := []*Action{}
 	attackers := []*Permanent{}
-	for _, perm := range p.Opponent().Board {
+	for _, perm := range p.Opponent().GetBoard() {
 		if perm.Attacking {
 			attackers = append(attackers, perm)
 		}
 	}
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		if perm.Blocking == NoPermanentId && !perm.Tapped && perm.IsCreature() {
 			for _, attacker := range attackers {
 				if perm.CanBlock(attacker) {
@@ -633,7 +637,7 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 	if !found {
 		log.Printf("could not play card %+v from hand %+v", card, p.Hand)
 		p.game.Print()
-		panic("XXX")
+		panic("cannot continue")
 	}
 	p.Hand = newHand
 }
@@ -698,7 +702,7 @@ func (p *Player) PlayLand(action *Action) {
 func (p *Player) ResolveSpell(stackObject *StackObject) {
 	card := stackObject.Card
 
-	for _, permanent := range p.Board {
+	for _, permanent := range p.GetBoard() {
 		permanent.RespondToSpell()
 	}
 
@@ -761,7 +765,7 @@ func (p *Player) Print(position int, hideCards bool, gameWidth int) {
 
 func (p *Player) Lands() []*Permanent {
 	lands := []*Permanent{}
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		if perm.IsLand() {
 			lands = append(lands, perm)
 		}
@@ -771,7 +775,7 @@ func (p *Player) Lands() []*Permanent {
 
 func (p *Player) NonLandPermanents() []*Permanent {
 	other := []*Permanent{}
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		if !perm.IsLand() && !perm.IsEnchantment() {
 			other = append(other, perm)
 		}
@@ -818,7 +822,7 @@ func PrintRowOfPermanents(perms []*Permanent, gameWidth int) {
 // GetCreature gets the first creature in play with the given name.
 // It returns nil if there is no such creature in play.
 func (p *Player) GetCreature(name CardName) *Permanent {
-	for _, perm := range p.Board {
+	for _, perm := range p.GetBoard() {
 		if perm.Name == name {
 			return perm
 		}
@@ -850,7 +854,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	if e.Condition != nil {
 		if e.Condition.ControlAnother != NoCard {
 			controlsOne := false
-			for _, boardPerm := range p.Board {
+			for _, boardPerm := range p.GetBoard() {
 				if boardPerm.Name == e.Condition.ControlAnother && boardPerm.Id != perm.Id {
 					controlsOne = true
 					break
@@ -863,7 +867,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 		if e.Condition.ConvertedManaCostLTE != NoSubtype {
 			controlCount := 0
-			for _, boardPerm := range p.Board {
+			for _, boardPerm := range p.GetBoard() {
 				if boardPerm.HasSubtype(Faerie) {
 					controlCount++
 				}
@@ -1019,7 +1023,7 @@ func (p *Player) SpendMana(amount int) {
 		p.ColorlessManaPool = 0
 
 	}
-	for _, card := range p.Board {
+	for _, card := range p.GetBoard() {
 		if amount == 0 {
 			return
 		}
