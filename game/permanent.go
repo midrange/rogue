@@ -33,8 +33,8 @@ type Permanent struct {
 	Damage             int
 	Plus1Plus1Counters int
 
-	// Auras, equipment, instants, and sorceries can have targets
-	Target *Permanent
+	// Auras and equipment can have targets
+	Target PermanentId
 
 	// game should not be included when the permanent is serialized.
 	game *Game
@@ -59,6 +59,10 @@ func (p *Permanent) GetAuras() []*Permanent {
 
 func (p *Permanent) GetDamageOrder() []*Permanent {
 	return p.game.GetPermanents(p.DamageOrder)
+}
+
+func (p *Permanent) GetTarget() *Permanent {
+	return p.game.Permanent(p.Target)
 }
 
 const CARD_HEIGHT = 5
