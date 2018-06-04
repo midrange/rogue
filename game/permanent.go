@@ -12,6 +12,8 @@ import (
 // see anything with an id of 0 it means we are using something uninitialized.
 type PermanentId int
 
+const NoPermanentId PermanentId = 0
+
 type Permanent struct {
 	*Card
 	Id PermanentId
