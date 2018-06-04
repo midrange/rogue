@@ -199,7 +199,7 @@ func (g *Game) HandleCombatDamage() {
 
 			if len(attacker.DamageOrder) > 0 {
 				// Deal damage to blockers
-				for _, blocker := range attacker.DamageOrder {
+				for _, blocker := range attacker.GetDamageOrder() {
 					attacker.Damage += blocker.Power()
 					if damage == 0 {
 						continue
@@ -375,7 +375,7 @@ func (g *Game) TakeAction(action *Action) {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
 		action.With.Blocking = action.Target.Id
-		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With)
+		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With.Id)
 
 	case CombatDamage:
 		if action.Type == Play {
@@ -437,6 +437,14 @@ func (g *Game) Permanent(id PermanentId) *Permanent {
 		panic("0 is not a valid PermanentId")
 	}
 	return g.Permanents[id]
+}
+
+func (g *Game) GetPermanents(ids []PermanentId) []*Permanent {
+	answer := []*Permanent{}
+	for _, id := range ids {
+		answer = append(answer, g.Permanent(id))
+	}
+	return answer
 }
 
 func (g *Game) Print() {

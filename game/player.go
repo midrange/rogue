@@ -73,7 +73,7 @@ func (p *Player) EndCombat() {
 	for _, card := range p.Board {
 		card.Attacking = false
 		card.Blocking = NoPermanentId
-		card.DamageOrder = []*Permanent{}
+		card.DamageOrder = []PermanentId{}
 	}
 }
 

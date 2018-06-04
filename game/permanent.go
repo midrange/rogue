@@ -29,7 +29,7 @@ type Permanent struct {
 	// Creature-specific properties
 	Attacking          bool
 	Blocking           PermanentId
-	DamageOrder        []*Permanent
+	DamageOrder        []PermanentId
 	Damage             int
 	Plus1Plus1Counters int
 
@@ -54,11 +54,11 @@ func (p *Permanent) GetBlocking() *Permanent {
 }
 
 func (p *Permanent) GetAuras() []*Permanent {
-	answer := []*Permanent{}
-	for _, id := range p.Auras {
-		answer = append(answer, p.game.Permanent(id))
-	}
-	return answer
+	return p.game.GetPermanents(p.Auras)
+}
+
+func (p *Permanent) GetDamageOrder() []*Permanent {
+	return p.game.GetPermanents(p.DamageOrder)
 }
 
 const CARD_HEIGHT = 5
