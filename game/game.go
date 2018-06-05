@@ -291,6 +291,7 @@ func (g *Game) nextPhase() {
 }
 
 func (g *Game) TakeAction(action *Action) {
+
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
@@ -313,7 +314,6 @@ func (g *Game) TakeAction(action *Action) {
 		g.PriorityId = g.PriorityId.OpponentId()
 		return
 	} else if action.Type == PassPriority {
-		g.PriorityId = g.PriorityId.OpponentId()
 		stackObject := g.Stack[len(g.Stack)-1]
 		g.Stack = g.Stack[:len(g.Stack)-1]
 		if stackObject.Type == Play {
@@ -329,6 +329,7 @@ func (g *Game) TakeAction(action *Action) {
 				}
 			}
 		}
+		g.PriorityId = g.PriorityId.OpponentId()
 		return
 	}
 	if action.Type == Pass {
