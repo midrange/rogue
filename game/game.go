@@ -316,6 +316,7 @@ func (g *Game) TakeAction(action *Action) {
 	} else if action.Type == PassPriority {
 		stackObject := g.Stack[len(g.Stack)-1]
 		g.Stack = g.Stack[:len(g.Stack)-1]
+		g.PriorityId = g.PriorityId.OpponentId()
 		if stackObject.Type == Play {
 			stackObject.Player.ResolveSpell(stackObject)
 		} else if stackObject.Type == Activate {
@@ -329,7 +330,6 @@ func (g *Game) TakeAction(action *Action) {
 				}
 			}
 		}
-		g.PriorityId = g.PriorityId.OpponentId()
 		return
 	}
 	if action.Type == Pass {
