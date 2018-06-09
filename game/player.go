@@ -254,7 +254,6 @@ func (p *Player) HasLegalSpellTarget(c *Card) bool {
 func (p *Player) appendHumanChoiceIfCanPayCostAndHasTarget(answer []*Action, card *Card) []*Action {
 	targetsSpellOrCreature := card.HasCreatureTargets() || card.HasSpellTargets()
 	hasLegalTarget := p.HasLegalPermanentTarget(card) || p.HasLegalSpellTarget(card)
-
 	if !hasLegalTarget && targetsSpellOrCreature {
 		return answer
 	}
@@ -893,8 +892,9 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				p.Hand = append(p.Hand, selected.Card.Name)
 			}
 		} else {
-			p.RemoveFromBoard(effectedPermanent)
-			p.Hand = append(p.Hand, effectedPermanent.Card.Name)
+			fmt.Println("The snapping player is ", p.Id)
+			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
+			effectedPermanent.Owner.Hand = append(effectedPermanent.Owner.Hand, effectedPermanent.Card.Name)
 		}
 	} else if e.EffectType == Untap {
 		if e.Selector == nil { // nettle sentinel, or any effect of a permanent on itself
