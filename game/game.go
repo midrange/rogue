@@ -358,6 +358,7 @@ func (g *Game) TakeAction(action *Action) {
 	case Main1:
 		fallthrough
 	case Main2:
+		fmt.Println("action is ", action)
 		if action.Type == Play {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
