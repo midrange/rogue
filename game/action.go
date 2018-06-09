@@ -61,7 +61,7 @@ func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case PassPriority:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("%s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("%s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
@@ -73,7 +73,7 @@ func (a *Action) ShowTo(p *Player) string {
 		return "Pass priority"
 	case Pass:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("resolve %s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("resolve %s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
