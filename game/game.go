@@ -91,14 +91,15 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		NewPlayer(deckToDraw, OnTheDraw),
 	}
 	g := &Game{
-		Players:         players,
-		Phase:           Main1,
-		Turn:            0,
-		PriorityId:      OnThePlay,
-		NextPermanentId: PermanentId(1),
-		Permanents:      make(map[PermanentId]*Permanent),
-		Stack:           []StackObjectId{},
-		StackObjects:    make(map[StackObjectId]*StackObject),
+		Players:           players,
+		Phase:             Main1,
+		Turn:              0,
+		PriorityId:        OnThePlay,
+		NextPermanentId:   PermanentId(1),
+		NextStackObjectId: StackObjectId(1),
+		Permanents:        make(map[PermanentId]*Permanent),
+		Stack:             []StackObjectId{},
+		StackObjects:      make(map[StackObjectId]*StackObject),
 	}
 
 	players[0].game = g
@@ -328,7 +329,6 @@ func (g *Game) TakeAction(action *Action) {
 			if g.PriorityId == stackObject.Player.Id {
 				g.actorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
-				delete(g.StackObjects, stackObject.Id)
 				if stackObject.Type == Play {
 					stackObject.Player.ResolveSpell(stackObject)
 				} else if stackObject.Type == Activate {
@@ -342,7 +342,7 @@ func (g *Game) TakeAction(action *Action) {
 						}
 					}
 				}
-
+				delete(g.StackObjects, stackObject.Id)
 			}
 		}
 		return
@@ -490,14 +490,17 @@ func (g *Game) newStackObject(
 		Source:        source,
 		EntersTheBattleFieldSpellTargetId: entersTheBattleFieldSpellTargetId,
 	}
-	g.StackObjects[g.NextStackObjectId] = so
+	g.StackObjects[so.Id] = so
 	g.NextStackObjectId++
 	return so
 }
 
 func (g *Game) StackObject(id StackObjectId) *StackObject {
 	if id == StackObjectId(0) {
-		panic("0 is not a valid PermanentId")
+		panic("0 is not a valid StackObjectId")
+	}
+	if g.StackObjects[id] == nil {
+		panic("id not found in g.StackObjects")
 	}
 	return g.StackObjects[id]
 }

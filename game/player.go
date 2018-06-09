@@ -684,7 +684,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 		nil,
 		p,
 		a.Selected,
-		nil,
+		a.Target,
 		false,
 		a.Source,
 		0,

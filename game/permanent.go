@@ -263,7 +263,7 @@ func (c *Permanent) HandleEnterTheBattlefield(id StackObjectId) {
 	}
 	stackObject := c.Owner.game.StackObject(id)
 	// TODO handle generically, this just handles ETB effects that target spells
-	if stackObject.EntersTheBattleFieldSpellTargetId != 0 {
+	if stackObject.EntersTheBattleFieldSpellTargetId != NoStackObjectId {
 		so := c.Owner.game.newStackObject(
 			EntersTheBattlefieldEffect,
 			stackObject.EntersTheBattleFieldSpellTargetId,
