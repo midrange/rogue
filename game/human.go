@@ -17,6 +17,9 @@ func (h *Human) String() string {
 
 func (h *Human) Action(g *Game) *Action {
 	actions := g.Actions(true)
+	if len(actions) == 0 {
+		panic("Humans need actions to play ")
+	}
 	if len(actions) == 1 {
 		return actions[0]
 	}

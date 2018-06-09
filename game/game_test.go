@@ -83,7 +83,6 @@ func TestVinesOfVastwoodBuff(t *testing.T) {
 	g.playLand()
 	g.playCreature()
 	g.passTurn()
-
 	g.playLand()
 	g.passTurn()
 
@@ -563,15 +562,15 @@ func TestDazeNotPaid(t *testing.T) {
 }
 
 func TestDazePaid(t *testing.T) {
-	skirge := NewEmptyDeck()
-	skirge.Add(1, VaultSkirge)
-	skirge.Add(59, Island)
+	skulk := NewEmptyDeck()
+	skulk.Add(1, SkarrganPitskulk)
+	skulk.Add(59, Island)
 
 	daze := NewEmptyDeck()
 	daze.Add(1, Daze)
 	daze.Add(59, Island)
 
-	g := NewGame(skirge, daze)
+	g := NewGame(skulk, daze)
 
 	g.playLand()
 	g.passTurn()
@@ -588,9 +587,11 @@ func TestDazePaid(t *testing.T) {
 	g.playInstant()
 
 	// pay for Daze
-	for _, a := range g.Priority().PlayActions(true, false) {
-		g.TakeAction(a)
-		break
+	for _, a := range g.Actions(false) {
+		if a.AfterEffect.EffectType == TapLand {
+			g.TakeAction(a)
+			break
+		}
 	}
 
 	g.TakeAction(&Action{Type: PassPriority})
@@ -628,8 +629,10 @@ func TestSpellstutterSpriteSucceeds(t *testing.T) {
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.Name == NettleSentinel {
 			g.TakeAction(a)
+			break
 		}
 	}
+
 	g.putCreatureOnStackAndPass()
 
 	if len(g.Stack) != 2 {
@@ -647,6 +650,10 @@ func TestSpellstutterSpriteSucceeds(t *testing.T) {
 
 	if len(g.Stack) != 0 {
 		t.Fatal("expected 0 creatures on the stack ", g.Stack)
+	}
+
+	if len(g.Priority().Board) != 4 {
+		t.Fatal("expected no NettleSentinel in play ", g.Priority().Board)
 	}
 }
 
@@ -677,8 +684,6 @@ func TestSpellstutterSpriteFails(t *testing.T) {
 	g.passTurn()
 
 	g.playLand()
-
-	g.Print()
 
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.Name == VaultSkirge {

@@ -1053,7 +1053,6 @@ func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 // Returns possible Actions to pay for Daze or not.
 func (p *Player) waysToChoose(effect *Effect) []*Action {
 	answer := []*Action{}
-
 	for _, land := range p.Lands() {
 		if !land.Tapped {
 			answer = append(answer, &Action{
