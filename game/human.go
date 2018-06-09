@@ -76,14 +76,23 @@ func promptForTargetAndMana(allowSorcerySpeed bool, game *Game, action *Action) 
 		actions = player.appendActionsForInstant(actions, card)
 	}
 
+	if len(actions) == 1 {
+		return actions[0]
+	}
+
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		for index, action := range actions {
-			fmt.Printf("%d) %s\n", index, action.ShowTo(player))
+			fmt.Printf("%d) %s\n", index+1, action.ShowTo(player))
 		}
 		fmt.Print("\nEnter a number: ")
 		text, _ := reader.ReadString('\n')
 		intChoice, err := strconv.Atoi(strings.TrimSpace(text))
+		intChoice--
+		if text == "\n" {
+			intChoice = len(actions) - 1
+			err = nil
+		}
 		if err == nil && intChoice >= 0 && intChoice < len(actions) {
 			return actions[intChoice]
 		}
