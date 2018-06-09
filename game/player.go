@@ -565,9 +565,7 @@ func (p *Player) unblockedAtackers() []*Permanent {
 
 // Returns possible actions to generate mana.
 func (p *Player) ManaActions() []*Action {
-
 	cardNames := make(map[CardName]bool)
-
 	actions := []*Action{}
 	for _, card := range p.GetBoard() {
 		if cardNames[card.Name] {
@@ -880,7 +878,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			e.Condition.ConvertedManaCostLTE == NoSubtype {
 			panic("unhandled Condition in ResolveEffect")
 		}
-
 	}
 	if e.Summon != NoCard {
 		p.game.newPermanent(e.Summon.Card(), p, nil)
@@ -1056,7 +1053,6 @@ func (p *Player) OptionsForChoiceEffect(choiceEffect *Effect) []*Action {
 // Returns possible Actions to pay for Daze or not.
 func (p *Player) waysToChoose(effect *Effect) []*Action {
 	answer := []*Action{}
-
 	for _, land := range p.Lands() {
 		if !land.Tapped {
 			answer = append(answer, &Action{

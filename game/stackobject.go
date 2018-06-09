@@ -19,6 +19,9 @@ type StackObject struct {
 }
 
 func (s *StackObject) String() string {
+	if s.Type == EntersTheBattlefieldEffect {
+		return fmt.Sprintf("%s Enters the Battlefield effect", s.Card)
+	}
 	if s.Card != nil {
 		return fmt.Sprintf("resolve %s", s.Card)
 	}
