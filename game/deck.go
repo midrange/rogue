@@ -44,8 +44,7 @@ func Stompy() *Deck {
 
 func MonoBlueDelver() *Deck {
 	return NewDeck(map[CardName]int{
-		DelverOfSecrets:     12,
-		Rancor:              12,
+		DelverOfSecrets:     4,
 		FaerieMiscreant:     4,
 		SpellstutterSprite:  4,
 		Island:              18,
