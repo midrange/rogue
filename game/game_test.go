@@ -554,7 +554,7 @@ func TestDazeNotPaid(t *testing.T) {
 	g.playInstant()
 	g.TakeAction(&Action{
 		Type:        MakeChoice,
-		AfterEffect: &Effect{EffectType: Countermagic, SpellTarget: g.ChoiceEffect.SpellTarget},
+		AfterEffect: &Effect{EffectType: Countermagic, SpellTargetId: g.ChoiceEffect.SpellTargetId},
 	})
 	if len(g.Stack) != 0 {
 		t.Fatal("expected there to be no spells on the stack after Daze")

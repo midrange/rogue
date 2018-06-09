@@ -12,16 +12,16 @@ type Action struct {
 	AfterEffect *Effect
 	Card        *Card
 	// the spell target Card's coming into play effect
-	EntersTheBattleFieldSpellTarget *StackObject
-	Cost                            *Cost
+	EntersTheBattleFieldSpellTargetId StackObjectId
+	Cost                              *Cost
 	// for non-targetted effects, such as in Snap
 	Selected []*Permanent
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool
 	// for targeted effects
-	Source      *Permanent
-	SpellTarget *StackObject
-	Target      *Permanent
+	Source        *Permanent
+	SpellTargetId StackObjectId
+	Target        *Permanent
 	// for attacking
 	With          *Permanent
 	WithAlternate bool

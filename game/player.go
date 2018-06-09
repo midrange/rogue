@@ -243,7 +243,7 @@ func (p *Player) HasLegalSpellTarget(c *Card) bool {
 	if !c.HasSpellTargets() {
 		return false
 	}
-	for _, stackObject := range p.game.Stack {
+	for _, stackObject := range p.game.GetStack(p.game.Stack) {
 		if stackObject.Type == Play {
 			return true
 		}
@@ -284,12 +284,12 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 	if p.CanPayCost(card.CastingCost) {
 		// TODO - add player targets - this assumes all instants target creatures or spells
 		if card.HasSpellTargets() {
-			for _, spellAction := range p.game.Stack {
+			for _, spellAction := range p.game.GetStack(p.game.Stack) {
 				if spellAction.Type == Play {
 					answer = append(answer, &Action{
-						Type:        Play,
-						Card:        card,
-						SpellTarget: spellAction,
+						Type:          Play,
+						Card:          card,
+						SpellTargetId: spellAction.Id,
 					})
 				}
 			}
@@ -378,13 +378,13 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 // Appends new Actions to answer for selectedLands, used for Gush and Daze
 func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, selectedLands []*Permanent) []*Action {
 	if card.HasSpellTargets() { // daze
-		for _, spellAction := range p.game.Stack {
+		for _, spellAction := range p.game.GetStack(p.game.Stack) {
 			if spellAction.Type == Play {
 				answer = append(answer, &Action{
 					Type:          Play,
 					Card:          card,
 					Selected:      selectedLands,
-					SpellTarget:   spellAction,
+					SpellTargetId: spellAction.Id,
 					WithAlternate: true,
 				})
 			}
@@ -493,12 +493,12 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 			if card.IsCreature() {
 				if card.HasEntersTheBattlefieldTargets() {
 					if card.EntersTheBattlefieldEffect.Selector.Type == Spell {
-						for _, spellTarget := range p.game.Stack {
+						for _, spellTarget := range p.game.GetStack(p.game.Stack) {
 							if spellTarget.Type == Play {
 								answer = append(answer, &Action{
 									Type: Play,
 									Card: card,
-									EntersTheBattleFieldSpellTarget: spellTarget,
+									EntersTheBattleFieldSpellTargetId: spellTarget.Id,
 								})
 							}
 						}
@@ -641,20 +641,21 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 
-	so := &StackObject{
-		Card: action.Card,
-		EntersTheBattleFieldSpellTarget: action.EntersTheBattleFieldSpellTarget,
-		Player:       p,
-		Selected:     action.Selected,
-		SpellTarget:  action.SpellTarget,
-		Target:       action.Target,
-		Type:         action.Type,
-		WithNinjitsu: action.WithNinjitsu,
-	}
+	so := p.game.newStackObject(
+		action.Type,
+		action.SpellTargetId,
+		action.Card,
+		p,
+		action.Selected,
+		action.Target,
+		action.WithNinjitsu,
+		nil,
+		action.EntersTheBattleFieldSpellTargetId,
+	)
 	if action.WithKicker {
 		so.Kicker = action.Card.Kicker
 	}
-	p.game.Stack = append(p.game.Stack, so)
+	p.game.Stack = append(p.game.Stack, so.Id)
 
 	p.RemoveCardForActionFromHand(action)
 
@@ -677,21 +678,25 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 }
 
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
-	so := &StackObject{
-		Player:   p,
-		Selected: a.Selected,
-		Source:   a.Source,
-		Target:   a.Target,
-		Type:     a.Type,
-	}
-	p.game.Stack = append(p.game.Stack, so)
+	so := p.game.newStackObject(
+		a.Type,
+		0,
+		nil,
+		p,
+		a.Selected,
+		nil,
+		false,
+		a.Source,
+		0,
+	)
+	p.game.Stack = append(p.game.Stack, so.Id)
 	a.Source.PayForActivatedAbility(a.Cost, a.Target)
 }
 
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p, nil)
+	p.game.newPermanent(card, p, 0)
 	p.LandPlayedThisTurn++
 }
 
@@ -708,7 +713,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p, stackObject)
+		perm := p.game.newPermanent(card, p, stackObject.Id)
 		if stackObject.WithNinjitsu {
 			perm.Attacking = true
 			perm.Tapped = true
@@ -869,7 +874,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					controlCount++
 				}
 			}
-			if e.SpellTarget != nil && controlCount < e.SpellTarget.Card.CastingCost.Colorless {
+			if e.SpellTargetId != 0 && controlCount < p.game.StackObject(e.SpellTargetId).Card.CastingCost.Colorless {
 				return
 			}
 		}
@@ -879,7 +884,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	}
 	if e.Summon != NoCard {
-		p.game.newPermanent(e.Summon.Card(), p, nil)
+		p.game.newPermanent(e.Summon.Card(), p, 0)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
 		effectedPermanent := e.Target
@@ -892,7 +897,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				p.Hand = append(p.Hand, selected.Card.Name)
 			}
 		} else {
-			fmt.Println("The snapping player is ", p.Id)
 			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
 			effectedPermanent.Owner.Hand = append(effectedPermanent.Owner.Hand, effectedPermanent.Card.Name)
 		}
@@ -915,7 +919,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			p.Draw()
 		}
 	} else if e.EffectType == Countermagic {
-		p.game.RemoveSpellFromStack(e.SpellTarget)
+		p.game.RemoveSpellFromStack(e.SpellTargetId)
 	} else if e.EffectType == ManaSink ||
 		e.EffectType == TopScryDraw ||
 		e.EffectType == ScryDraw ||
@@ -963,7 +967,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 			// flip
 			p.RemoveFromBoard(e.Selected[0])
-			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, nil)
+			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, 0)
 		}
 	} else {
 		panic("tried to resolve unknown effect")
@@ -1072,7 +1076,7 @@ func (p *Player) waysToChoose(effect *Effect) []*Action {
 
 	answer = append(answer, &Action{
 		Type:                 MakeChoice,
-		AfterEffect:          &Effect{EffectType: Countermagic, SpellTarget: p.game.ChoiceEffect.SpellTarget},
+		AfterEffect:          &Effect{EffectType: Countermagic, SpellTargetId: p.game.ChoiceEffect.SpellTargetId},
 		ShouldSwitchPriority: true,
 	})
 	return answer

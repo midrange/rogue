@@ -54,7 +54,13 @@ type Game struct {
 		Some actions go on the stack and can be responded to before they resolve
 		https://mtg.gamepedia.com/Stack#Actions
 	*/
-	Stack []*StackObject
+
+	// StackObjects contains all objects on the stack
+	StackObjects map[StackObjectId]*StackObject
+	// The stack holds IDs only to prevent circular refs in serialization.
+	Stack []StackObjectId
+	// The StackObjectId that will be assigned to the next object that gets put on the stack.
+	NextStackObjectId StackObjectId
 
 	// True if the acting player passed priority after outting a spell or ability on the stack.
 	actorPassedOnStack bool
@@ -91,7 +97,8 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		PriorityId:      OnThePlay,
 		NextPermanentId: PermanentId(1),
 		Permanents:      make(map[PermanentId]*Permanent),
-		Stack:           []*StackObject{},
+		Stack:           []StackObjectId{},
+		StackObjects:    make(map[StackObjectId]*StackObject),
 	}
 
 	players[0].game = g
@@ -123,7 +130,9 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		actions = append(actions, &Action{
 			Type: PassPriority,
 		})
-		stackObject := g.Stack[len(g.Stack)-1]
+		stackObjectId := g.Stack[len(g.Stack)-1]
+		stackObject := g.StackObject(stackObjectId)
+
 		if g.PriorityId == stackObject.Player.Id && g.actorPassedOnStack {
 			return actions
 		}
@@ -315,10 +324,11 @@ func (g *Game) TakeAction(action *Action) {
 		g.actorPassedOnStack = true
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
-			stackObject := g.Stack[len(g.Stack)-1]
+			stackObject := g.StackObject(g.Stack[len(g.Stack)-1])
 			if g.PriorityId == stackObject.Player.Id {
 				g.actorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
+				delete(g.StackObjects, stackObject.Id)
 				if stackObject.Type == Play {
 					stackObject.Player.ResolveSpell(stackObject)
 				} else if stackObject.Type == Activate {
@@ -399,17 +409,18 @@ func (g *Game) TakeAction(action *Action) {
 }
 
 // Removes targetSpell from the stack, as in when Counterspelled.
-func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
-	newStack := []*StackObject{}
-	for _, spellAction := range g.Stack {
-		if spellAction != targetSpell {
-			newStack = append(newStack, spellAction)
+func (g *Game) RemoveSpellFromStack(targetSpellId StackObjectId) {
+	newStack := []StackObjectId{}
+	for _, spellActionId := range g.Stack {
+		if spellActionId != targetSpellId {
+			newStack = append(newStack, spellActionId)
 		}
 	}
 	if len(newStack) == len(g.Stack) {
 		// fmt.Println("This should be fine, it means a Counterspell's target was countered.")
 	}
 	g.Stack = newStack
+	delete(g.StackObjects, targetSpellId)
 }
 
 func (g *Game) IsOver() bool {
@@ -419,7 +430,7 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject) *Permanent {
+func (g *Game) newPermanent(card *Card, owner *Player, stackObjectId StackObjectId) *Permanent {
 	perm := &Permanent{
 		Card:       card,
 		Owner:      owner,
@@ -430,7 +441,7 @@ func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject)
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
 	owner.Board = append(owner.Board, perm.Id)
-	perm.HandleEnterTheBattlefield(stackObject)
+	perm.HandleEnterTheBattlefield(stackObjectId)
 	return perm
 }
 
@@ -450,6 +461,51 @@ func (g *Game) GetPermanents(ids []PermanentId) []*Permanent {
 	answer := []*Permanent{}
 	for _, id := range ids {
 		answer = append(answer, g.Permanent(id))
+	}
+	return answer
+}
+
+// All StackObjects added to the game should be created via newStackObject.
+// This assigns a unique id to the stackObject.
+func (g *Game) newStackObject(
+	actionType ActionType,
+	spellTargetId StackObjectId,
+	card *Card,
+	player *Player,
+	selected []*Permanent,
+	target *Permanent,
+	withNinjitsu bool,
+	source *Permanent,
+	entersTheBattleFieldSpellTargetId StackObjectId) *StackObject {
+
+	so := &StackObject{
+		Type:          actionType,
+		SpellTargetId: spellTargetId,
+		Card:          card,
+		Player:        player,
+		Selected:      selected,
+		Target:        target,
+		Id:            g.NextStackObjectId,
+		WithNinjitsu:  withNinjitsu,
+		Source:        source,
+		EntersTheBattleFieldSpellTargetId: entersTheBattleFieldSpellTargetId,
+	}
+	g.StackObjects[g.NextStackObjectId] = so
+	g.NextStackObjectId++
+	return so
+}
+
+func (g *Game) StackObject(id StackObjectId) *StackObject {
+	if id == StackObjectId(0) {
+		panic("0 is not a valid PermanentId")
+	}
+	return g.StackObjects[id]
+}
+
+func (g *Game) GetStack(ids []StackObjectId) []*StackObject {
+	answer := []*StackObject{}
+	for _, id := range ids {
+		answer = append(answer, g.StackObject(id))
 	}
 	return answer
 }
