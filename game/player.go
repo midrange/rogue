@@ -962,8 +962,12 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			// TODO reveal when that matters
 
 			// flip
+			auras := e.Selected[0].Auras
 			p.RemoveFromBoard(e.Selected[0])
-			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, nil)
+			perm := p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, nil)
+			for _, a := range auras {
+				perm.Auras = append(perm.Auras, a)
+			}
 		}
 	} else {
 		panic("tried to resolve unknown effect")
