@@ -55,6 +55,9 @@ type Game struct {
 		https://mtg.gamepedia.com/Stack#Actions
 	*/
 	Stack []*StackObject
+
+	// True if the acting player passed priority after outting a spell or ability on the stack.
+	actorPassedOnStack bool
 }
 
 //go:generate stringer -type=Phase
@@ -121,7 +124,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 			Type: PassPriority,
 		})
 		stackObject := g.Stack[len(g.Stack)-1]
-		if g.PriorityId == stackObject.Player.Id {
+		if g.PriorityId == stackObject.Player.Id && g.actorPassedOnStack {
 			return actions
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -309,10 +312,12 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == PassPriority {
+		g.actorPassedOnStack = true
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
 			stackObject := g.Stack[len(g.Stack)-1]
 			if g.PriorityId == stackObject.Player.Id {
+				g.actorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
 				if stackObject.Type == Play {
 					stackObject.Player.ResolveSpell(stackObject)
