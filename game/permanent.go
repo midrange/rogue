@@ -258,7 +258,7 @@ func (c *Permanent) HandleEnterTheBattlefield(id StackObjectId) {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 
-	if id == 0 {
+	if id == NoStackObjectId {
 		return
 	}
 	stackObject := c.Owner.game.StackObject(id)
