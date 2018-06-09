@@ -691,7 +691,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p, 0)
+	p.game.newPermanent(card, p, NoStackObjectId)
 	p.LandPlayedThisTurn++
 }
 
@@ -879,7 +879,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	}
 	if e.Summon != NoCard {
-		p.game.newPermanent(e.Summon.Card(), p, 0)
+		p.game.newPermanent(e.Summon.Card(), p, NoStackObjectId)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
 		effectedPermanent := e.Target
@@ -962,7 +962,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 
 			// flip
 			p.RemoveFromBoard(e.Selected[0])
-			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, 0)
+			p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, NoStackObjectId)
 		}
 	} else {
 		panic("tried to resolve unknown effect")
