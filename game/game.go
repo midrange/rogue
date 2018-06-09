@@ -465,34 +465,12 @@ func (g *Game) GetPermanents(ids []PermanentId) []*Permanent {
 	return answer
 }
 
-// All StackObjects added to the game should be created via newStackObject.
-// This assigns a unique id to the stackObject.
-func (g *Game) newStackObject(
-	actionType ActionType,
-	spellTargetId StackObjectId,
-	card *Card,
-	player *Player,
-	selected []*Permanent,
-	target *Permanent,
-	withNinjitsu bool,
-	source *Permanent,
-	entersTheBattleFieldSpellTargetId StackObjectId) *StackObject {
-
-	so := &StackObject{
-		Type:          actionType,
-		SpellTargetId: spellTargetId,
-		Card:          card,
-		Player:        player,
-		Selected:      selected,
-		Target:        target,
-		Id:            g.NextStackObjectId,
-		WithNinjitsu:  withNinjitsu,
-		Source:        source,
-		EntersTheBattleFieldSpellTargetId: entersTheBattleFieldSpellTargetId,
-	}
-	g.StackObjects[so.Id] = so
+// All objects must be put on the Stack via this method to get a unique ID.
+func (g *Game) AddToStack(stackObject *StackObject) {
+	stackObject.Id = g.NextStackObjectId
+	g.StackObjects[stackObject.Id] = stackObject
 	g.NextStackObjectId++
-	return so
+	g.Stack = append(g.Stack, stackObject.Id)
 }
 
 func (g *Game) StackObject(id StackObjectId) *StackObject {

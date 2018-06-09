@@ -641,21 +641,20 @@ func (p *Player) RemoveCardForActionFromHand(action *Action) {
 
 func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 
-	so := p.game.newStackObject(
-		action.Type,
-		action.SpellTargetId,
-		action.Card,
-		p,
-		action.Selected,
-		action.Target,
-		action.WithNinjitsu,
-		nil,
-		action.EntersTheBattleFieldSpellTargetId,
-	)
+	so := &StackObject{
+		Type:                              action.Type,
+		SpellTargetId:                     action.SpellTargetId,
+		Card:                              action.Card,
+		Player:                            p,
+		Selected:                          action.Selected,
+		Target:                            action.Target,
+		WithNinjitsu:                      action.WithNinjitsu,
+		EntersTheBattleFieldSpellTargetId: action.EntersTheBattleFieldSpellTargetId,
+	}
 	if action.WithKicker {
 		so.Kicker = action.Card.Kicker
 	}
-	p.game.Stack = append(p.game.Stack, so.Id)
+	p.game.AddToStack(so)
 
 	p.RemoveCardForActionFromHand(action)
 
@@ -678,18 +677,14 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 }
 
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
-	so := p.game.newStackObject(
-		a.Type,
-		0,
-		nil,
-		p,
-		a.Selected,
-		a.Target,
-		false,
-		a.Source,
-		0,
-	)
-	p.game.Stack = append(p.game.Stack, so.Id)
+	so := &StackObject{
+		Type:     a.Type,
+		Player:   p,
+		Selected: a.Selected,
+		Target:   a.Target,
+		Source:   a.Source,
+	}
+	p.game.AddToStack(so)
 	a.Source.PayForActivatedAbility(a.Cost, a.Target)
 }
 

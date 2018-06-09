@@ -264,31 +264,20 @@ func (c *Permanent) HandleEnterTheBattlefield(id StackObjectId) {
 	stackObject := c.Owner.game.StackObject(id)
 	// TODO handle generically, this just handles ETB effects that target spells
 	if stackObject.EntersTheBattleFieldSpellTargetId != NoStackObjectId {
-		so := c.Owner.game.newStackObject(
-			EntersTheBattlefieldEffect,
-			stackObject.EntersTheBattleFieldSpellTargetId,
-			stackObject.Card,
-			c.Owner,
-			nil,
-			nil,
-			false,
-			nil,
-			0,
-		)
-		c.Owner.game.Stack = append(c.Owner.game.Stack, so.Id)
+		so := &StackObject{
+			Type: EntersTheBattlefieldEffect,
+			EntersTheBattleFieldSpellTargetId: stackObject.EntersTheBattleFieldSpellTargetId,
+			Card:   stackObject.Card,
+			Player: c.Owner,
+		}
+		c.Owner.game.AddToStack(so)
 	} else if stackObject.Card.EntersTheBattlefieldEffect != nil {
-		so := c.Owner.game.newStackObject(
-			EntersTheBattlefieldEffect,
-			0,
-			stackObject.Card,
-			c.Owner,
-			nil,
-			nil,
-			false,
-			nil,
-			0,
-		)
-		c.Owner.game.Stack = append(c.Owner.game.Stack, so.Id)
+		so := &StackObject{
+			Type:   EntersTheBattlefieldEffect,
+			Card:   stackObject.Card,
+			Player: c.Owner,
+		}
+		c.Owner.game.AddToStack(so)
 	}
 }
 
