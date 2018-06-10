@@ -47,14 +47,14 @@ func MonoBlueDelver() *Deck {
 		DelverOfSecrets:     4,
 		FaerieMiscreant:     4,
 		SpellstutterSprite:  4,
-		Island:              18,
+		Island:              28,
 		NinjaOfTheDeepHours: 4,
 		MutagenicGrowth:     4,
 		Ponder:              4,
 		Preordain:           4,
 		Counterspell:        4,
 		Daze:                4,
-		Snap:                4,
+		Snap:                24,
 		Gush:                2,
 	})
 }

@@ -120,6 +120,14 @@ func (a *Action) ShowTo(p *Player) string {
 			}
 			return fmt.Sprintf("%s: %s", a.Card.CastingCost, a.Card)
 		}
+		if len(a.Selected) > 0 {
+			cardNames := []string{}
+			for _, p := range a.Selected {
+				cardNames = append(cardNames, fmt.Sprintf("%s", p.Card.Name))
+			}
+			return fmt.Sprintf("%s: %s on %s %s (%s)",
+				a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target, strings.Join(cardNames, ", "))
+		}
 		return fmt.Sprintf("%s: %s on %s %s",
 			a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target)
 	case Attack:
