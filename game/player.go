@@ -934,7 +934,6 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				p.Hand = append(p.Hand, selected.Card.Name)
 			}
 		} else {
-			fmt.Println("The snapping player is ", p.Id)
 			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
 			effectedPermanent.Owner.Hand = append(effectedPermanent.Owner.Hand, effectedPermanent.Card.Name)
 		}
