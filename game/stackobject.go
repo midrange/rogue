@@ -16,7 +16,7 @@ type StackObject struct {
 	Id                              StackObjectId
 	Kicker                          *Effect
 	Player                          PlayerId
-	Selected                        []*Permanent
+	Selected                        []PermanentId
 	Source                          *Permanent
 	SpellTarget                     StackObjectId
 	Target                          *Permanent // a target that is a Permanent (players not yet handled)

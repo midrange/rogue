@@ -15,7 +15,7 @@ type Action struct {
 	EntersTheBattleFieldSpellTarget StackObjectId
 	Cost                            *Cost
 	// for non-targetted effects, such as in Snap
-	Selected []*Permanent
+	Selected []PermanentId
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool
 	// for targeted effects

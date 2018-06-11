@@ -167,7 +167,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 				for _, c := range p.Creatures() {
 					for _, land := range landsForCost {
 						costEffect := effect.Cost.Effect
-						costEffect.SelectedForCost = land
+						costEffect.SelectedForCost = land.Id
 						answer = append(answer,
 							&Action{
 								Type:   Activate,
@@ -301,9 +301,9 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						for i := 1; i <= len(p.game.Lands())-1; i++ {
 							comb := combinations(makeRange(0, i), selectableLandCount)
 							for _, c := range comb {
-								selected := []*Permanent{}
+								selected := []PermanentId{}
 								for _, index := range c {
-									selected = append(selected, p.game.Lands()[index])
+									selected = append(selected, p.game.Lands()[index].Id)
 								}
 								answer = append(answer, &Action{
 									Type:     Play,
@@ -362,7 +362,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 			for i := 1; i <= len(islands)-1; i++ {
 				comb := combinations(makeRange(0, i), selectableLandCount)
 				for _, c := range comb {
-					selected := []*Permanent{}
+					selected := []PermanentId{}
 					for _, index := range c {
 						selected = append(selected, islands[index])
 					}
@@ -376,7 +376,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 }
 
 // Appends new Actions to answer for selectedLands, used for Gush and Daze
-func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, selectedLands []*Permanent) []*Action {
+func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, selectedLands []PermanentId) []*Action {
 	if card.HasSpellTargets() { // daze
 		for _, spellAction := range p.game.GetStack() {
 			if spellAction.Type == Play {
@@ -401,12 +401,12 @@ func (p *Player) addActionsForSelectedLands(card *Card, answer []*Action, select
 }
 
 // Returns a list of lands of the given subtype.
-func (p *Player) landsOfSubtype(subtype Subtype) []*Permanent {
-	lands := []*Permanent{}
+func (p *Player) landsOfSubtype(subtype Subtype) []PermanentId {
+	lands := []PermanentId{}
 	for _, l := range p.Lands() {
 		for _, st := range l.Subtype {
 			if st == subtype {
-				lands = append(lands, l)
+				lands = append(lands, l.Id)
 				break
 			}
 		}
@@ -536,7 +536,7 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 				answer = append(answer, &Action{
 					Type:         Play,
 					Card:         card,
-					Selected:     []*Permanent{a},
+					Selected:     []PermanentId{a.Id},
 					WithNinjitsu: true,
 				})
 			}
@@ -889,8 +889,9 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 		if effectedPermanent == nil {
 			for _, selected := range e.Selected {
-				p.RemoveFromBoard(selected)
-				p.Hand = append(p.Hand, selected.Card.Name)
+				perm := p.game.Permanent(selected)
+				p.RemoveFromBoard(perm)
+				p.Hand = append(p.Hand, perm.Card.Name)
 			}
 		} else {
 			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
@@ -900,8 +901,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		if e.Selector == nil { // nettle sentinel, or any effect of a permanent on itself
 			perm.Tapped = false
 		} else {
-			for _, p := range e.Selected {
-				p.Tapped = false
+			for _, s := range e.Selected {
+				p.game.Permanent(s).Tapped = false
 			}
 		}
 	} else if e.EffectType == AddMana {
@@ -924,7 +925,9 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			when ChoiceEffect is set, the game forces DecideOnChoice or DeclineChoice
 			as the next action
 		*/
-		e.Selected = []*Permanent{perm}
+		if perm != nil {
+			e.Selected = []PermanentId{perm.Id}
+		}
 		p.game.ChoiceEffect = e
 		if e.EffectType == ManaSink {
 			p.game.PriorityId = p.game.Priority().Opponent().Id
@@ -932,7 +935,7 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 	} else if e.EffectType == SpendMana {
 		p.ColorlessManaPool -= e.Cost.Colorless
 	} else if e.EffectType == TapLand {
-		e.SelectedForCost.Tapped = true
+		p.game.Permanent(e.SelectedForCost).Tapped = true
 	} else if e.EffectType == ReturnCardsToTopDraw || e.EffectType == ShuffleDraw {
 		for i := len(e.Cards) - 1; i >= 0; i-- {
 			p.Deck.AddToTop(1, e.Cards[i])
@@ -962,9 +965,10 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			// TODO reveal when that matters
 
 			// flip
-			auras := e.Selected[0].Auras
-			p.RemoveFromBoard(e.Selected[0])
-			perm := p.game.newPermanent(e.Selected[0].TransformInto.Card(), p, NoStackObjectId)
+			delver := p.game.Permanent(e.Selected[0])
+			auras := delver.Auras
+			p.RemoveFromBoard(delver)
+			perm := p.game.newPermanent(delver.TransformInto.Card(), p, NoStackObjectId)
 			for _, a := range auras {
 				perm.Auras = append(perm.Auras, a)
 			}
@@ -1061,7 +1065,7 @@ func (p *Player) waysToChoose(effect *Effect) []*Action {
 		if !land.Tapped {
 			answer = append(answer, &Action{
 				Type:                 MakeChoice,
-				AfterEffect:          &Effect{EffectType: TapLand, SelectedForCost: land},
+				AfterEffect:          &Effect{EffectType: TapLand, SelectedForCost: land.Id},
 				ShouldSwitchPriority: true,
 			})
 		}

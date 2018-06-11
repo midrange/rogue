@@ -299,7 +299,7 @@ func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
 		panic("tried to activate a permanent without an ability")
 	}
 	c.ActivatedThisTurn = true
-	selectedForCost := cost.Effect.SelectedForCost
+	selectedForCost := c.Owner.game.Permanent(cost.Effect.SelectedForCost)
 
 	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
 		selectedForCost.Owner.RemoveFromBoard(selectedForCost)

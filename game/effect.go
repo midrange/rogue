@@ -46,7 +46,7 @@ type Effect struct {
 	// Source is the source of activated abilities, nil for other effects.
 	Source *Permanent
 
-	SelectedForCost *Permanent
+	SelectedForCost PermanentId
 	SpellTarget     StackObjectId
 	Target          *Permanent
 
@@ -55,7 +55,7 @@ type Effect struct {
 	Selector   *Selector
 
 	// for non-targeted effects of spells, such as Snap
-	Selected []*Permanent
+	Selected []PermanentId
 }
 
 //go:generate stringer -type=EffectType
