@@ -9,7 +9,8 @@ const GAME_WIDTH = 100
 type PlayerId int
 
 const (
-	OnThePlay PlayerId = iota
+	NoPlayerId PlayerId = iota - 1
+	OnThePlay
 	OnTheDraw
 )
 
@@ -191,7 +192,7 @@ func appendPassAction(g *Game, actions []*Action) []*Action {
 }
 
 func (g *Game) AttackerId() PlayerId {
-	return PlayerId(g.Turn % 2)
+	return PlayerId((g.Turn) % 2)
 }
 
 func (g *Game) Attacker() *Player {
@@ -433,14 +434,15 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, owner *Player, stackObjectId StackObjectId) *Permanent {
+func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId) *Permanent {
 	perm := &Permanent{
 		Card:       card,
-		Owner:      owner,
+		Owner:      ownerId,
 		TurnPlayed: g.Turn,
 		Id:         g.NextPermanentId,
 		game:       g,
 	}
+	owner := g.Player(ownerId)
 	g.Permanents[g.NextPermanentId] = perm
 	g.NextPermanentId++
 	owner.Board = append(owner.Board, perm.Id)
@@ -606,7 +608,7 @@ func (g *Game) TakeActionAndResolve(action *Action) {
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsEnchantCreature() && g.Permanent(a.Target).Owner == g.Priority() {
+		if a.Card != nil && a.Card.IsEnchantCreature() && g.Permanent(a.Target).Owner == g.PriorityId {
 			g.TakeActionAndResolve(a)
 			return
 		}

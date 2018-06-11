@@ -49,7 +49,7 @@ const (
 )
 
 func (a *Action) targetPronoun(p *Player) string {
-	if p.game.Permanent(a.Target).Owner == p {
+	if p.game.Permanent(a.Target).Owner == p.Id {
 		return "your"
 	}
 	return "their"

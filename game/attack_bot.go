@@ -75,6 +75,6 @@ func (a *Action) isOpponentBuff(g *Game) bool {
 		return false
 	}
 	target := g.Permanent(a.Target)
-	return target.Owner != target.Owner.game.Priority() && (c.Name == Rancor || c.Name == VinesOfVastwood ||
+	return target.Owner != g.PriorityId && (c.Name == Rancor || c.Name == VinesOfVastwood ||
 		c.Name == MutagenicGrowth || c.Name == HungerOfTheHowlpack)
 }
