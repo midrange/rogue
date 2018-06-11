@@ -368,7 +368,6 @@ func (g *Game) TakeAction(action *Action) {
 	case Main1:
 		fallthrough
 	case Main2:
-		fmt.Println("action is ", action)
 		if action.Type == Play {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
@@ -480,7 +479,7 @@ func (g *Game) StackObject(id StackObjectId) *StackObject {
 	}
 	obj, ok := g.StackObjects[id]
 	if !ok {
-		panic("id not found in g.StackObjects")
+		// it's OK, spell must have been otherwise countered
 	}
 	return obj
 }

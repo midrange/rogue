@@ -869,7 +869,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 					controlCount++
 				}
 			}
-			if e.SpellTarget != NoStackObjectId && controlCount < p.game.StackObject(e.SpellTarget).Card.CastingCost.Colorless {
+			so := p.game.StackObject(e.SpellTarget)
+			if so != nil && e.SpellTarget != NoStackObjectId && controlCount < so.Card.CastingCost.Colorless {
 				return
 			}
 		}
