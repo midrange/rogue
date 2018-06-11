@@ -48,7 +48,7 @@ type Effect struct {
 
 	SelectedForCost PermanentId
 	SpellTarget     StackObjectId
-	Target          *Permanent
+	Target          PermanentId
 
 	// for effects from targeted spells
 	EffectType EffectType

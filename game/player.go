@@ -173,7 +173,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 								Type:   Activate,
 								Cost:   &Cost{Effect: costEffect},
 								Source: perm.Id,
-								Target: c,
+								Target: c.Id,
 							})
 					}
 				}
@@ -309,7 +309,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 									Type:     Play,
 									Card:     card,
 									Selected: selected,
-									Target:   targetCreature,
+									Target:   targetCreature.Id,
 								})
 							}
 						}
@@ -317,7 +317,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						answer = append(answer, &Action{
 							Type:   Play,
 							Card:   card,
-							Target: targetCreature,
+							Target: targetCreature.Id,
 						})
 					}
 				}
@@ -330,7 +330,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:       Play,
 					Card:       card,
-					Target:     target,
+					Target:     target.Id,
 					WithKicker: true,
 				})
 			}
@@ -343,7 +343,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				answer = append(answer, &Action{
 					Type:          Play,
 					Card:          card,
-					Target:        target,
+					Target:        target.Id,
 					WithPhyrexian: true,
 				})
 			}
@@ -516,7 +516,7 @@ func (p *Player) appendActionsIfNonInstant(answer []*Action, card *Card, forHuma
 					answer = append(answer, &Action{
 						Type:   Play,
 						Card:   card,
-						Target: target,
+						Target: target.Id,
 					})
 				}
 			} else if card.IsSorcery() {
@@ -610,7 +610,7 @@ func (p *Player) BlockActions() []*Action {
 				if perm.CanBlock(attacker) {
 					answer = append(answer, &Action{
 						Type:   Block,
-						Target: attacker,
+						Target: attacker.Id,
 						With:   perm,
 					})
 				}
@@ -715,25 +715,29 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		}
 
 		if card.IsEnchantCreature() {
-			stackObject.Target.Auras = append(stackObject.Target.Auras, perm.Id)
+			target := p.game.Permanent(stackObject.Target)
+			target.Auras = append(target.Auras, perm.Id)
 		}
 	}
 }
 
-func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject) {
+func (p *Player) CastSpell(c *Card, targetId PermanentId, stackObject *StackObject) {
 	if c.AddsTemporaryEffect {
+		target := p.game.Permanent(targetId)
 		for _, e := range c.Effects {
 			target.TemporaryEffects = append(target.TemporaryEffects, UpdatedEffectForStackObject(stackObject, e))
 		}
 	} else if c.Effects != nil {
 		for _, e := range c.Effects {
 			p.ResolveEffect(UpdatedEffectForStackObject(stackObject, e), nil)
-			if target != nil {
+			if targetId != NoPermanentId {
+				target := p.game.Permanent(targetId)
 				target.Plus1Plus1Counters += e.Plus1Plus1Counters // can be and often is 0 here
 			}
 		}
 	}
-	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && target != nil {
+	if c.Morbid != nil && (p.CreatureDied || p.Opponent().CreatureDied) && targetId != NoPermanentId {
+		target := p.game.Permanent(targetId)
 		target.Plus1Plus1Counters += c.Morbid.Plus1Plus1Counters
 	}
 }
@@ -883,17 +887,16 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.newPermanent(e.Summon.Card(), p, NoStackObjectId)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
-		effectedPermanent := e.Target
-		if effectedPermanent == nil {
-			effectedPermanent = perm
-		}
-		if effectedPermanent == nil {
+		if e.Target == NoPermanentId {
+			fmt.Println("NoPermanentId  for ", e.Selected, " effect is ", e)
 			for _, selected := range e.Selected {
-				perm := p.game.Permanent(selected)
-				p.RemoveFromBoard(perm)
-				p.Hand = append(p.Hand, perm.Card.Name)
+				fmt.Println("removing ", selected)
+				selectedPerm := p.game.Permanent(selected)
+				p.RemoveFromBoard(selectedPerm)
+				p.Hand = append(p.Hand, selectedPerm.Card.Name)
 			}
 		} else {
+			effectedPermanent := p.game.Permanent(e.Target)
 			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
 			effectedPermanent.Owner.Hand = append(effectedPermanent.Owner.Hand, effectedPermanent.Card.Name)
 		}
