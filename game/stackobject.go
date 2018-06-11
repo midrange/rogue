@@ -4,16 +4,21 @@ import (
 	"fmt"
 )
 
+type StackObjectId int
+
+const NoStackObjectId StackObjectId = 0
+
 type StackObject struct {
 	Type                            ActionType
 	Card                            *Card // for spell-based stack objects
 	Cost                            *Cost
-	EntersTheBattleFieldSpellTarget *StackObject
+	EntersTheBattleFieldSpellTarget StackObjectId
+	Id                              StackObjectId
 	Kicker                          *Effect
 	Player                          *Player
 	Selected                        []*Permanent
 	Source                          *Permanent
-	SpellTarget                     *StackObject
+	SpellTarget                     StackObjectId
 	Target                          *Permanent // a target that is a Permanent (players not yet handled)
 	WithNinjitsu                    bool
 }

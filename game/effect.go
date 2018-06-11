@@ -47,7 +47,7 @@ type Effect struct {
 	Source *Permanent
 
 	SelectedForCost *Permanent
-	SpellTarget     *StackObject
+	SpellTarget     StackObjectId
 	Target          *Permanent
 
 	// for effects from targeted spells

@@ -12,7 +12,7 @@ type Action struct {
 	AfterEffect *Effect
 	Card        *Card
 	// the spell target Card's coming into play effect
-	EntersTheBattleFieldSpellTarget *StackObject
+	EntersTheBattleFieldSpellTarget StackObjectId
 	Cost                            *Cost
 	// for non-targetted effects, such as in Snap
 	Selected []*Permanent
@@ -20,7 +20,7 @@ type Action struct {
 	ShouldSwitchPriority bool
 	// for targeted effects
 	Source      *Permanent
-	SpellTarget *StackObject
+	SpellTarget StackObjectId
 	Target      *Permanent
 	// for attacking
 	With          *Permanent
@@ -61,7 +61,7 @@ func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case PassPriority:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("%s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("%s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
@@ -73,7 +73,7 @@ func (a *Action) ShowTo(p *Player) string {
 		return "Pass priority"
 	case Pass:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("resolve %s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("resolve %s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
