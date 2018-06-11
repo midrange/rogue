@@ -14,8 +14,10 @@ import (
 func main() {
 	text := showWelcomePrompt()
 	if text == "1" {
-		playHumanVsComputer()
+		playHumanVsAttackBot()
 	} else if text == "2" {
+		playHumanVsRandom()
+	} else if text == "3" {
 		playComputerVsComputer()
 	} else {
 		main()
@@ -25,14 +27,20 @@ func main() {
 func showWelcomePrompt() string {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\n ~~~~~~ Welcome to Rogue ~~~~~~\n")
-	fmt.Println("1) Human vs AI")
-	fmt.Println("2) AI vs AI")
+	fmt.Println("1) Human vs AttackBot")
+	fmt.Println("2) Human vs Random")
+	fmt.Println("3) AI vs AI")
 	fmt.Print("\nEnter a number: ")
 	text, _ := reader.ReadString('\n')
 	return strings.TrimSpace(text)
 }
 
-func playHumanVsComputer() {
+func playHumanVsAttackBot() {
+	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
+	game.PlayGame(g, &game.Human{}, &game.AttackBot{})
+}
+
+func playHumanVsRandom() {
 	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
 	game.PlayGame(g, &game.Human{}, &game.RandomBot{})
 }
