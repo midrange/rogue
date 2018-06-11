@@ -61,10 +61,6 @@ func (p *Permanent) GetDamageOrder() []*Permanent {
 	return p.game.GetPermanents(p.DamageOrder)
 }
 
-func (p *Permanent) GetTarget() *Permanent {
-	return p.game.Permanent(p.Target)
-}
-
 const CARD_HEIGHT = 5
 const CARD_WIDTH = 11
 
@@ -294,7 +290,7 @@ func (c *Permanent) DidDealDamage(damage int) {
 	}
 }
 
-func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
+func (c *Permanent) PayForActivatedAbility(cost *Cost, target PermanentId) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
@@ -312,6 +308,6 @@ func (c *Permanent) ActivateAbility(stackObject *StackObject) {
 		panic("tried to activate a permanent without an ability")
 	}
 	if c.ActivatedAbility.EffectType == Untap {
-		stackObject.Target.Tapped = false
+		c.game.Permanent(stackObject.Target).Tapped = false
 	}
 }

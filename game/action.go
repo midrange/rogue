@@ -21,7 +21,7 @@ type Action struct {
 	// for targeted effects
 	Source      PermanentId
 	SpellTarget StackObjectId
-	Target      *Permanent
+	Target      PermanentId
 	// for attacking
 	With          *Permanent
 	WithAlternate bool
@@ -49,7 +49,7 @@ const (
 )
 
 func (a *Action) targetPronoun(p *Player) string {
-	if a.Target.Owner == p {
+	if p.game.Permanent(a.Target).Owner == p {
 		return "your"
 	}
 	return "their"
@@ -91,41 +91,41 @@ func (a *Action) ShowTo(p *Player) string {
 			return fmt.Sprintf("%s: %s", a.Card.Ninjitsu, a.Card)
 		}
 		if a.WithAlternate {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s", a.Card.AlternateCastingCost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s",
 				a.Card.AlternateCastingCost, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.WithPhyrexian {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s", a.Card.PhyrexianCastingCost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s",
-				a.Card.PhyrexianCastingCost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.PhyrexianCastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 		}
 		if a.WithKicker {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.Cost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
-				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 		}
 		if a.Card.IsLand() {
 			return fmt.Sprintf("%s", a.Card)
 		}
-		if a.Target == nil {
+		if a.Target == NoPermanentId {
 			if forHuman && (a.Card.AlternateCastingCost != nil || a.Card.PhyrexianCastingCost != nil) {
 				return fmt.Sprintf("%s", a.Card)
 			}
 			return fmt.Sprintf("%s: %s", a.Card.CastingCost, a.Card)
 		}
 		return fmt.Sprintf("%s: %s on %s %s",
-			a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target)
+			a.Card.CastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 	case Attack:
 		return fmt.Sprintf("Attack with %s", a.With)
 	case Block:
-		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
+		return fmt.Sprintf("%s blocks %s", a.With, p.game.Permanent(a.Target))
 	case UseForMana:
 		return fmt.Sprintf("Tap %s for mana", p.game.Permanent(a.Source))
 	case Activate:

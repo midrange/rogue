@@ -19,7 +19,7 @@ type StackObject struct {
 	Selected                        []PermanentId
 	Source                          PermanentId
 	SpellTarget                     StackObjectId
-	Target                          *Permanent // a target that is a Permanent (players not yet handled)
+	Target                          PermanentId // a target that is a Permanent (players not yet handled)
 	WithNinjitsu                    bool
 }
 

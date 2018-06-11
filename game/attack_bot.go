@@ -22,7 +22,7 @@ func (ab *AttackBot) Action(g *Game) *Action {
 
 	for _, a := range actions {
 		if a.Type == Play {
-			if a.isOpponentBuff() {
+			if a.isOpponentBuff(g) {
 				continue
 			}
 			if bestAction.Type == Play {
@@ -53,7 +53,7 @@ func (ab *AttackBot) Action(g *Game) *Action {
 	}
 
 	for _, a := range actions {
-		if !bestAction.isOpponentBuff() {
+		if !bestAction.isOpponentBuff(g) {
 			break
 		}
 		bestAction = a
@@ -69,8 +69,12 @@ func (ab *AttackBot) Action(g *Game) *Action {
 	return bestAction
 }
 
-func (a *Action) isOpponentBuff() bool {
+func (a *Action) isOpponentBuff(g *Game) bool {
 	c := a.Card
-	return a.Target != nil && a.Target.Owner != a.Target.Owner.game.Priority() && (c.Name == Rancor || c.Name == VinesOfVastwood ||
+	if a.Target == NoPermanentId {
+		return false
+	}
+	target := g.Permanent(a.Target)
+	return target.Owner != target.Owner.game.Priority() && (c.Name == Rancor || c.Name == VinesOfVastwood ||
 		c.Name == MutagenicGrowth || c.Name == HungerOfTheHowlpack)
 }

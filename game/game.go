@@ -391,8 +391,9 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.With.Blocking = action.Target.Id
-		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With.Id)
+		action.With.Blocking = action.Target
+		perm := g.Permanent(action.Target)
+		perm.DamageOrder = append(perm.DamageOrder, action.With.Id)
 
 	case CombatDamage:
 		if action.Type == Play {
@@ -409,18 +410,18 @@ func (g *Game) TakeAction(action *Action) {
 }
 
 // Removes targetSpell from the stack, as in when Counterspelled.
-func (g *Game) RemoveSpellFromStack(targetSpellId StackObjectId) {
+func (g *Game) RemoveSpellFromStack(targetSpell StackObjectId) {
 	newStack := []StackObjectId{}
-	for _, spellActionId := range g.Stack {
-		if spellActionId != targetSpellId {
-			newStack = append(newStack, spellActionId)
+	for _, spellAction := range g.Stack {
+		if spellAction != targetSpell {
+			newStack = append(newStack, spellAction)
 		}
 	}
 	if len(newStack) == len(g.Stack) {
 		// fmt.Println("This should be fine, it means a Counterspell's target was countered.")
 	}
 	g.Stack = newStack
-	delete(g.StackObjects, targetSpellId)
+	delete(g.StackObjects, targetSpell)
 }
 
 func (g *Game) IsOver() bool {
@@ -603,7 +604,7 @@ func (g *Game) TakeActionAndResolve(action *Action) {
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
+		if a.Card != nil && a.Card.IsEnchantCreature() && g.Permanent(a.Target).Owner == g.Priority() {
 			g.TakeActionAndResolve(a)
 			return
 		}
