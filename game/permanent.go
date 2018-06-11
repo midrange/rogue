@@ -268,14 +268,14 @@ func (c *Permanent) HandleEnterTheBattlefield(id StackObjectId) {
 			Type:        EntersTheBattlefieldEffect,
 			SpellTarget: stackObject.EntersTheBattleFieldSpellTarget,
 			Card:        stackObject.Card,
-			Player:      c.Owner,
+			Player:      c.Owner.Id,
 		}
 		c.Owner.game.AddToStack(so)
 	} else if stackObject.Card.EntersTheBattlefieldEffect != nil {
 		so := &StackObject{
 			Type:   EntersTheBattlefieldEffect,
 			Card:   stackObject.Card,
-			Player: c.Owner,
+			Player: c.Owner.Id,
 		}
 		c.Owner.game.AddToStack(so)
 	}

@@ -15,7 +15,7 @@ type StackObject struct {
 	EntersTheBattleFieldSpellTarget StackObjectId
 	Id                              StackObjectId
 	Kicker                          *Effect
-	Player                          *Player
+	Player                          PlayerId
 	Selected                        []*Permanent
 	Source                          *Permanent
 	SpellTarget                     StackObjectId

@@ -645,7 +645,7 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 		Type:                            action.Type,
 		SpellTarget:                     action.SpellTarget,
 		Card:                            action.Card,
-		Player:                          p,
+		Player:                          p.Id,
 		Selected:                        action.Selected,
 		Target:                          action.Target,
 		WithNinjitsu:                    action.WithNinjitsu,
@@ -679,7 +679,7 @@ func (p *Player) PayCostsAndPutSpellOnStack(action *Action) {
 func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 	so := &StackObject{
 		Type:     a.Type,
-		Player:   p,
+		Player:   p.Id,
 		Selected: a.Selected,
 		Target:   a.Target,
 		Source:   a.Source,

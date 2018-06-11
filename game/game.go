@@ -134,7 +134,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		stackObjectId := g.Stack[len(g.Stack)-1]
 		stackObject := g.StackObject(stackObjectId)
 
-		if g.PriorityId == stackObject.Player.Id && g.actorPassedOnStack {
+		if g.PriorityId == stackObject.Player && g.actorPassedOnStack {
 			return actions
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -326,13 +326,13 @@ func (g *Game) TakeAction(action *Action) {
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
 			stackObject := g.StackObject(g.Stack[len(g.Stack)-1])
-			if g.PriorityId == stackObject.Player.Id {
+			if g.PriorityId == stackObject.Player {
 				g.actorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
 				if stackObject.Type == Play {
-					stackObject.Player.ResolveSpell(stackObject)
+					g.Player(stackObject.Player).ResolveSpell(stackObject)
 				} else if stackObject.Type == Activate {
-					stackObject.Player.ResolveActivatedAbility(stackObject)
+					g.Player(stackObject.Player).ResolveActivatedAbility(stackObject)
 				} else if stackObject.Type == EntersTheBattlefieldEffect {
 					for _, perm := range g.Priority().GetBoard() {
 						if perm.Card == stackObject.Card {
