@@ -474,18 +474,19 @@ func (g *Game) AddToStack(stackObject *StackObject) {
 }
 
 func (g *Game) StackObject(id StackObjectId) *StackObject {
-	if id == StackObjectId(0) {
-		panic("0 is not a valid StackObjectId")
+	if id == NoStackObjectId {
+		panic("NoStackObjectId is not a valid StackObjectId")
 	}
-	if g.StackObjects[id] == nil {
+	obj, ok = g.StackObjects[id]
+	if !ok {
 		panic("id not found in g.StackObjects")
 	}
-	return g.StackObjects[id]
+	return obj
 }
 
-func (g *Game) GetStack(ids []StackObjectId) []*StackObject {
+func (g *Game) GetStack() []*StackObject {
 	answer := []*StackObject{}
-	for _, id := range ids {
+	for _, id := range g.Stack {
 		answer = append(answer, g.StackObject(id))
 	}
 	return answer

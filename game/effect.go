@@ -47,7 +47,7 @@ type Effect struct {
 	Source *Permanent
 
 	SelectedForCost *Permanent
-	SpellTargetId   StackObjectId
+	SpellTarget     StackObjectId
 	Target          *Permanent
 
 	// for effects from targeted spells
@@ -86,6 +86,6 @@ func UpdatedEffectForStackObject(stackObject *StackObject, effect *Effect) *Effe
 	newEffect.Source = stackObject.Source
 	newEffect.Target = stackObject.Target
 	newEffect.Selected = stackObject.Selected
-	newEffect.SpellTargetId = stackObject.SpellTargetId
+	newEffect.SpellTarget = stackObject.SpellTarget
 	return newEffect
 }
