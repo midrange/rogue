@@ -887,16 +887,17 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		p.game.newPermanent(e.Summon.Card(), p, NoStackObjectId)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
-		if e.Target == NoPermanentId {
-			fmt.Println("NoPermanentId  for ", e.Selected, " effect is ", e)
+		if e.Target == NoPermanentId && perm == nil {
 			for _, selected := range e.Selected {
-				fmt.Println("removing ", selected)
 				selectedPerm := p.game.Permanent(selected)
 				p.RemoveFromBoard(selectedPerm)
 				p.Hand = append(p.Hand, selectedPerm.Card.Name)
 			}
 		} else {
-			effectedPermanent := p.game.Permanent(e.Target)
+			effectedPermanent := perm
+			if e.Target != NoPermanentId {
+				effectedPermanent = p.game.Permanent(e.Target)
+			}
 			effectedPermanent.Owner.RemoveFromBoard(effectedPermanent)
 			effectedPermanent.Owner.Hand = append(effectedPermanent.Owner.Hand, effectedPermanent.Card.Name)
 		}
