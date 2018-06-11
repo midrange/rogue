@@ -384,16 +384,18 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Attack {
 			panic("expected an attack or a pass during DeclareAttackers")
 		}
-		action.With.Attacking = true
-		action.With.Tapped = true
+		creature := g.Permanent(action.With)
+		creature.Attacking = true
+		creature.Tapped = true
 
 	case DeclareBlockers:
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.With.Blocking = action.Target
+		creature := g.Permanent(action.With)
+		creature.Blocking = action.Target
 		perm := g.Permanent(action.Target)
-		perm.DamageOrder = append(perm.DamageOrder, action.With.Id)
+		perm.DamageOrder = append(perm.DamageOrder, creature.Id)
 
 	case CombatDamage:
 		if action.Type == Play {

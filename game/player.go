@@ -587,9 +587,9 @@ func (p *Player) AttackActions() []*Action {
 		log.Fatalf("do not call AttackActions in phase %s", p.game.Phase)
 	}
 	answer := []*Action{}
-	for _, card := range p.GetBoard() {
-		if card.IsCreature() && !card.Attacking && !card.Tapped && card.TurnPlayed != p.game.Turn {
-			answer = append(answer, &Action{Type: Attack, With: card})
+	for _, perm := range p.GetBoard() {
+		if perm.IsCreature() && !perm.Attacking && !perm.Tapped && perm.TurnPlayed != p.game.Turn {
+			answer = append(answer, &Action{Type: Attack, With: perm.Id})
 		}
 	}
 	return answer
@@ -611,7 +611,7 @@ func (p *Player) BlockActions() []*Action {
 					answer = append(answer, &Action{
 						Type:   Block,
 						Target: attacker.Id,
-						With:   perm,
+						With:   perm.Id,
 					})
 				}
 			}

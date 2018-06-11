@@ -23,7 +23,7 @@ type Action struct {
 	SpellTarget StackObjectId
 	Target      PermanentId
 	// for attacking
-	With          *Permanent
+	With          PermanentId
 	WithAlternate bool
 	WithKicker    bool
 	WithNinjitsu  bool
