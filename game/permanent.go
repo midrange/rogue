@@ -224,7 +224,7 @@ func (c *Permanent) RespondToSpell() {
 
 func (c *Permanent) ManaActions() []*Action {
 	if c.IsLand() && !c.Tapped || c.SacrificesForMana {
-		return []*Action{&Action{Type: UseForMana, Source: c}}
+		return []*Action{&Action{Type: UseForMana, Source: c.Id}}
 	}
 	return []*Action{}
 }

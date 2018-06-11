@@ -172,7 +172,7 @@ func (p *Player) ActivatedAbilityActions(allowSorcerySpeed bool, forHuman bool) 
 							&Action{
 								Type:   Activate,
 								Cost:   &Cost{Effect: costEffect},
-								Source: perm,
+								Source: perm.Id,
 								Target: c,
 							})
 					}
@@ -685,7 +685,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 		Source:   a.Source,
 	}
 	p.game.AddToStack(so)
-	a.Source.PayForActivatedAbility(a.Cost, a.Target)
+	p.game.Permanent(a.Source).PayForActivatedAbility(a.Cost, a.Target)
 }
 
 func (p *Player) PlayLand(action *Action) {
@@ -739,7 +739,7 @@ func (p *Player) CastSpell(c *Card, target *Permanent, stackObject *StackObject)
 }
 
 func (p *Player) ResolveActivatedAbility(stackObject *StackObject) {
-	stackObject.Source.ActivateAbility(stackObject)
+	p.game.Permanent(stackObject.Source).ActivateAbility(stackObject)
 }
 
 func (p *Player) AddMana(colorless int) {

@@ -19,7 +19,7 @@ type Action struct {
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool
 	// for targeted effects
-	Source      *Permanent
+	Source      PermanentId
 	SpellTarget StackObjectId
 	Target      *Permanent
 	// for attacking
@@ -127,9 +127,9 @@ func (a *Action) ShowTo(p *Player) string {
 	case Block:
 		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
 	case UseForMana:
-		return fmt.Sprintf("Tap %s for mana", a.Source)
+		return fmt.Sprintf("Tap %s for mana", p.game.Permanent(a.Source))
 	case Activate:
-		return fmt.Sprintf("Use %s", a.Source)
+		return fmt.Sprintf("Use %s", p.game.Permanent(a.Source))
 	case MakeChoice:
 		if a.AfterEffect.EffectType == ReturnScryCardsDraw {
 			topStrings := []string{}

@@ -355,7 +355,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.Source.UseForMana()
+		g.Permanent(action.Source).UseForMana()
 		return
 	}
 

@@ -44,7 +44,7 @@ type Effect struct {
 	Summon CardName
 
 	// Source is the source of activated abilities, nil for other effects.
-	Source *Permanent
+	Source PermanentId
 
 	SelectedForCost PermanentId
 	SpellTarget     StackObjectId

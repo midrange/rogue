@@ -17,7 +17,7 @@ type StackObject struct {
 	Kicker                          *Effect
 	Player                          PlayerId
 	Selected                        []PermanentId
-	Source                          *Permanent
+	Source                          PermanentId
 	SpellTarget                     StackObjectId
 	Target                          *Permanent // a target that is a Permanent (players not yet handled)
 	WithNinjitsu                    bool
