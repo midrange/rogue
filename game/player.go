@@ -108,17 +108,17 @@ func (p *Player) Creatures() []*Permanent {
 }
 
 func (p *Player) SendToGraveyard(perm *Permanent) {
-	p.RemoveFromBoard(perm)
-	if perm.EntersGraveyardEffect != nil {
-		p.ResolveEffect(perm.EntersGraveyardEffect, perm)
+	removedPerm := p.RemoveFromBoard(perm)
+	if removedPerm.EntersGraveyardEffect != nil {
+		p.ResolveEffect(removedPerm.EntersGraveyardEffect, removedPerm)
 	}
 
-	if perm.IsCreature() {
+	if removedPerm.IsCreature() {
 		p.CreatureDied = true
 	}
 
-	perm.TemporaryEffects = []*Effect{}
-	for _, aura := range perm.GetAuras() {
+	removedPerm.TemporaryEffects = []*Effect{}
+	for _, aura := range removedPerm.GetAuras() {
 		if aura.EnchantedPermanentDiesEffect != nil {
 			p.ResolveEffect(aura.EnchantedPermanentDiesEffect, aura)
 		}
@@ -126,7 +126,7 @@ func (p *Player) SendToGraveyard(perm *Permanent) {
 	}
 }
 
-func (p *Player) RemoveFromBoard(perm *Permanent) {
+func (p *Player) RemoveFromBoard(perm *Permanent) *Permanent {
 	newBoard := []PermanentId{}
 	for _, id := range p.Board {
 		if id != perm.Id {
@@ -134,6 +134,11 @@ func (p *Player) RemoveFromBoard(perm *Permanent) {
 		}
 	}
 	p.Board = newBoard
+	if perm.IsTransformed {
+		return p.game.newPermanent(Cards[perm.TransformInto], perm.Owner, NoStackObjectId, true)
+	} else {
+		return perm
+	}
 }
 
 // Returns possible actions when we can activate cards on the board.
@@ -691,7 +696,7 @@ func (p *Player) PayCostsAndPutAbilityOnStack(a *Action) {
 func (p *Player) PlayLand(action *Action) {
 	p.RemoveCardForActionFromHand(action)
 	card := action.Card
-	p.game.newPermanent(card, p.Id, NoStackObjectId)
+	p.game.newPermanent(card, p.Id, NoStackObjectId, true)
 	p.LandPlayedThisTurn++
 }
 
@@ -708,7 +713,7 @@ func (p *Player) ResolveSpell(stackObject *StackObject) {
 		// TODO put spells (instants and sorceries) in graveyard (or exile)
 	} else {
 		// Non-spell (instant/sorcery) cards turn into permanents
-		perm := p.game.newPermanent(card, p.Id, stackObject.Id)
+		perm := p.game.newPermanent(card, p.Id, stackObject.Id, true)
 		if stackObject.WithNinjitsu {
 			perm.Attacking = true
 			perm.Tapped = true
@@ -884,14 +889,14 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 		}
 	}
 	if e.Summon != NoCard {
-		p.game.newPermanent(e.Summon.Card(), p.Id, NoStackObjectId)
+		p.game.newPermanent(e.Summon.Card(), p.Id, NoStackObjectId, true)
 	} else if e.EffectType == ReturnToHand {
 		// target is nil for rancor, or any effect of a permanent on itself
 		if e.Target == NoPermanentId && perm == nil {
 			for _, selected := range e.Selected {
 				selectedPerm := p.game.Permanent(selected)
-				p.RemoveFromBoard(selectedPerm)
-				p.Hand = append(p.Hand, selectedPerm.Card.Name)
+				removedPerm := p.RemoveFromBoard(selectedPerm)
+				p.Hand = append(p.Hand, removedPerm.Card.Name)
 			}
 		} else {
 			effectedPermanent := perm
@@ -899,8 +904,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 				effectedPermanent = p.game.Permanent(e.Target)
 			}
 			owner := p.game.Player(effectedPermanent.Owner)
-			owner.RemoveFromBoard(effectedPermanent)
-			owner.Hand = append(owner.Hand, effectedPermanent.Card.Name)
+			removedPerm := owner.RemoveFromBoard(effectedPermanent)
+			owner.Hand = append(owner.Hand, removedPerm.Card.Name)
 		}
 	} else if e.EffectType == Untap {
 		if e.Selector == nil { // nettle sentinel, or any effect of a permanent on itself
@@ -973,7 +978,8 @@ func (p *Player) ResolveEffect(e *Effect, perm *Permanent) {
 			delver := p.game.Permanent(e.Selected[0])
 			auras := delver.Auras
 			p.RemoveFromBoard(delver)
-			perm := p.game.newPermanent(delver.TransformInto.Card(), p.Id, NoStackObjectId)
+			perm := p.game.newPermanent(delver.TransformInto.Card(), p.Id, NoStackObjectId, true)
+			perm.TurnPlayed = delver.TurnPlayed
 			for _, a := range auras {
 				perm.Auras = append(perm.Auras, a)
 			}

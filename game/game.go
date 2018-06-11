@@ -434,7 +434,7 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId) *Permanent {
+func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId, addToBoard bool) *Permanent {
 	perm := &Permanent{
 		Card:       card,
 		Owner:      ownerId,
@@ -443,10 +443,12 @@ func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObj
 		game:       g,
 	}
 	owner := g.Player(ownerId)
-	g.Permanents[g.NextPermanentId] = perm
-	g.NextPermanentId++
-	owner.Board = append(owner.Board, perm.Id)
-	perm.HandleEnterTheBattlefield(stackObjectId)
+	if addToBoard {
+		g.Permanents[g.NextPermanentId] = perm
+		g.NextPermanentId++
+		owner.Board = append(owner.Board, perm.Id)
+		perm.HandleEnterTheBattlefield(stackObjectId)
+	}
 	return perm
 }
 

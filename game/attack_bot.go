@@ -58,13 +58,14 @@ func (ab *AttackBot) Action(g *Game) *Action {
 		}
 		bestAction = a
 	}
-
-	perm := g.Permanent(bestAction.Source)
-	for _, a := range actions {
-		if bestAction.Source == NoPermanentId || perm.Card.Name != QuirionRanger {
-			break
+	if bestAction.Source != NoPermanentId {
+		perm := g.Permanent(bestAction.Source)
+		for _, a := range actions {
+			if bestAction.Source == NoPermanentId || perm.Card.Name != QuirionRanger {
+				break
+			}
+			bestAction = a
 		}
-		bestAction = a
 	}
 	return bestAction
 }

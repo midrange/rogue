@@ -20,6 +20,7 @@ type Card struct {
 	Flying                      bool
 	GroundEvader                bool // only blockable by fliers (like Silhana Ledgewalker)
 	Hexproof                    bool
+	IsTransformed               bool // a flip card that has been flipped
 	Kicker                      *Effect
 	Lifelink                    bool
 	Morbid                      *Effect
@@ -276,6 +277,7 @@ var Cards = map[CardName]*Card{
 		BaseToughness: 2,
 		CastingCost:   &Cost{Colorless: 0},
 		Flying:        true,
+		IsTransformed: true,
 		TransformInto: DelverOfSecrets,
 		Type:          []Type{Creature},
 	},
