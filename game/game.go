@@ -478,7 +478,7 @@ func (g *Game) StackObject(id StackObjectId) *StackObject {
 	if id == NoStackObjectId {
 		panic("NoStackObjectId is not a valid StackObjectId")
 	}
-	obj, ok = g.StackObjects[id]
+	obj, ok := g.StackObjects[id]
 	if !ok {
 		panic("id not found in g.StackObjects")
 	}
