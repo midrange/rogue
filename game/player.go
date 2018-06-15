@@ -307,7 +307,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						// temporarily tap lands before calculation
 						tapCount := 0
 						for _, l := range p.game.Lands() {
-							if l.Owner == p && !l.Tapped {
+							if p.game.Player(l.Owner) == p && !l.Tapped {
 								l.Tapped = true
 								tapCount++
 							}
@@ -318,7 +318,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						for i := 1; i <= len(p.game.Lands())-1; i++ {
 							comb := combinations(makeRange(0, i), selectableLandCount)
 							for _, c := range comb {
-								selected := []*Permanent{}
+								selected := []PermanentId{}
 								landState := &LandState{}
 								for _, index := range c {
 									land := p.game.Lands()[index]
@@ -335,7 +335,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 											landState.IslandUntappedCount++
 										}
 									}
-									selected = append(selected, land)
+									selected = append(selected, land.Id)
 								}
 								landState.TargetId = targetCreature.Id
 								landState.TargetTapped = targetCreature.Tapped
@@ -352,7 +352,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 						}
 						// untap lands after calculation
 						for _, l := range p.game.Lands() {
-							if l.Owner == p && l.Tapped {
+							if p.game.Player(l.Owner) == p && l.Tapped {
 								l.Tapped = false
 								tapCount--
 							}
