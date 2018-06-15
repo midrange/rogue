@@ -710,11 +710,13 @@ func (g *Game) playActivatedAbility() {
 	panic("playActivatedAbility failed")
 }
 
+// Returns a binary representation of the game, json for now
 func (g *Game) serialized() []byte {
 	gameJson, _ := json.Marshal(g)
 	return gameJson
 }
 
+// Reset the game pointer for game.players, and return a deserialized game
 func deserializeGameState(jsonBytes []byte) *Game {
 	game := &Game{}
 	json.Unmarshal(jsonBytes, game)
