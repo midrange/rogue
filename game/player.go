@@ -299,65 +299,36 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 				}
 			}
 		} else {
-			landStatesSet := make(map[LandState]bool)
+
+			gameStates := make(map[string]bool)
 			for _, targetCreature := range p.game.Creatures() {
 				if p.IsLegalTarget(card, targetCreature) {
 					selectableLandCount := selectableLandCount(card)
 					if selectableLandCount > 0 { // snap
-						// temporarily tap lands before calculation
-						tapCount := 0
-						for _, l := range p.game.Lands() {
-							if p.game.Player(l.Owner) == p && !l.Tapped {
-								l.Tapped = true
-								tapCount++
-							}
-							if tapCount == 2 {
-								break
-							}
-						}
 						for i := 1; i <= len(p.game.Lands())-1; i++ {
 							comb := combinations(makeRange(0, i), selectableLandCount)
+							selected := []PermanentId{}
 							for _, c := range comb {
-								selected := []PermanentId{}
-								landState := &LandState{}
 								for _, index := range c {
-									land := p.game.Lands()[index]
-									if land.Tapped {
-										if land.Card.Name == Forest {
-											landState.ForestTappedCount++
-										} else {
-											landState.IslandTappedCount++
-										}
-									} else {
-										if land.Card.Name == Forest {
-											landState.ForestUntappedCount++
-										} else {
-											landState.IslandUntappedCount++
-										}
-									}
-									selected = append(selected, land.Id)
+									selected = append(selected, p.game.Lands()[index].Id)
 								}
-								landState.TargetId = targetCreature.Id
-								landState.TargetTapped = targetCreature.Tapped
-								if landStatesSet[*landState] != true {
-									landStatesSet[*landState] = true
-									answer = append(answer, &Action{
-										Type:     Play,
-										Card:     card,
-										Selected: selected,
-										Target:   targetCreature.Id,
-									})
+								action := &Action{
+									Type:     Play,
+									Card:     card,
+									Selected: selected,
+									Target:   targetCreature.Id,
 								}
-							}
-						}
-						// untap lands after calculation
-						for _, l := range p.game.Lands() {
-							if p.game.Player(l.Owner) == p && l.Tapped {
-								l.Tapped = false
-								tapCount--
-							}
-							if tapCount == 0 {
-								break
+
+								gJson := p.game.serialized()
+								cloneGame := deserializeGameState(gJson)
+								cloneGame.TakeAction(action)
+								gJson = cloneGame.serialized()
+
+								gameStateString := fmt.Sprintf("%s", gJson)
+								if gameStates[gameStateString] != true {
+									gameStates[gameStateString] = true
+									answer = append(answer, action)
+								}
 							}
 						}
 					} else {
