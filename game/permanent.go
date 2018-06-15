@@ -21,7 +21,7 @@ type Permanent struct {
 	// Properties that are relevant for any permanent
 	ActivatedThisTurn bool
 	Auras             []PermanentId
-	Owner             *Player
+	Owner             PlayerId
 	Tapped            bool
 	TemporaryEffects  []*Effect
 	TurnPlayed        int
@@ -59,10 +59,6 @@ func (p *Permanent) GetAuras() []*Permanent {
 
 func (p *Permanent) GetDamageOrder() []*Permanent {
 	return p.game.GetPermanents(p.DamageOrder)
-}
-
-func (p *Permanent) GetTarget() *Permanent {
-	return p.game.Permanent(p.Target)
 }
 
 const CARD_HEIGHT = 5
@@ -224,16 +220,17 @@ func (c *Permanent) RespondToSpell() {
 
 func (c *Permanent) ManaActions() []*Action {
 	if c.IsLand() && !c.Tapped || c.SacrificesForMana {
-		return []*Action{&Action{Type: UseForMana, Source: c}}
+		return []*Action{&Action{Type: UseForMana, Source: c.Id}}
 	}
 	return []*Action{}
 }
 
-func (c *Permanent) UseForMana() {
-	c.Owner.AddMana(c.Colorless)
-	c.Tapped = true
-	if c.SacrificesForMana {
-		c.Owner.SendToGraveyard(c)
+func (p *Permanent) UseForMana() {
+	owner := p.game.Player(p.Owner)
+	owner.AddMana(p.Colorless)
+	p.Tapped = true
+	if p.SacrificesForMana {
+		owner.SendToGraveyard(p)
 	}
 }
 
@@ -250,32 +247,35 @@ func (c *Permanent) CanBlock(attacker *Permanent) bool {
 	return true
 }
 
-func (c *Permanent) HandleEnterTheBattlefield(stackObject *StackObject) {
-	if c.Owner == nil {
+func (c *Permanent) HandleEnterTheBattlefield(id StackObjectId) {
+	if c.Owner == NoPlayerId {
 		panic("permanent has unset owner")
 	}
-	if c.Bloodthirst > 0 && c.Owner.Opponent().DamageThisTurn > 0 {
+	owner := c.game.Player(c.Owner)
+	if c.Bloodthirst > 0 && owner.Opponent().DamageThisTurn > 0 {
 		c.Plus1Plus1Counters += c.Bloodthirst
 	}
 
-	if stackObject == nil {
+	if id == NoStackObjectId {
 		return
 	}
-
+	stackObject := c.game.StackObject(id)
 	// TODO handle generically, this just handles ETB effects that target spells
-	if stackObject.EntersTheBattleFieldSpellTarget != nil {
-		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
+	if stackObject.EntersTheBattleFieldSpellTarget != NoStackObjectId {
+		so := &StackObject{
 			Type:        EntersTheBattlefieldEffect,
 			SpellTarget: stackObject.EntersTheBattleFieldSpellTarget,
 			Card:        stackObject.Card,
 			Player:      c.Owner,
-		})
+		}
+		c.game.AddToStack(so)
 	} else if stackObject.Card.EntersTheBattlefieldEffect != nil {
-		c.Owner.game.Stack = append(c.Owner.game.Stack, &StackObject{
+		so := &StackObject{
 			Type:   EntersTheBattlefieldEffect,
 			Card:   stackObject.Card,
 			Player: c.Owner,
-		})
+		}
+		c.game.AddToStack(so)
 	}
 }
 
@@ -284,24 +284,26 @@ func (c *Permanent) HandleEnterTheBattlefield(stackObject *StackObject) {
 	Currently just ones with Lifelink do something extra.
 */
 func (c *Permanent) DidDealDamage(damage int) {
+	owner := c.game.Player(c.Owner)
 	if c.Lifelink && damage > 0 {
-		c.Owner.Life += damage
+		owner.Life += damage
 	}
 	if c.DealsCombatDamageEffect != nil {
-		c.Owner.ResolveEffect(c.DealsCombatDamageEffect, c)
+		owner.ResolveEffect(c.DealsCombatDamageEffect, c)
 	}
 }
 
-func (c *Permanent) PayForActivatedAbility(cost *Cost, target *Permanent) {
+func (c *Permanent) PayForActivatedAbility(cost *Cost, target PermanentId) {
 	if c.ActivatedAbility == nil {
 		panic("tried to activate a permanent without an ability")
 	}
 	c.ActivatedThisTurn = true
-	selectedForCost := cost.Effect.SelectedForCost
+	selectedForCost := c.game.Permanent(cost.Effect.SelectedForCost)
 
 	if c.ActivatedAbility.Cost.Effect.EffectType == ReturnToHand {
-		selectedForCost.Owner.RemoveFromBoard(selectedForCost)
-		selectedForCost.Owner.Hand = append(selectedForCost.Owner.Hand, selectedForCost.Card.Name)
+		owner := c.game.Player(selectedForCost.Owner)
+		owner.RemoveFromBoard(selectedForCost)
+		owner.Hand = append(owner.Hand, selectedForCost.Card.Name)
 	}
 }
 
@@ -310,6 +312,6 @@ func (c *Permanent) ActivateAbility(stackObject *StackObject) {
 		panic("tried to activate a permanent without an ability")
 	}
 	if c.ActivatedAbility.EffectType == Untap {
-		stackObject.Target.Tapped = false
+		c.game.Permanent(stackObject.Target).Tapped = false
 	}
 }

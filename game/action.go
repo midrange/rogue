@@ -12,18 +12,18 @@ type Action struct {
 	AfterEffect *Effect
 	Card        *Card
 	// the spell target Card's coming into play effect
-	EntersTheBattleFieldSpellTarget *StackObject
+	EntersTheBattleFieldSpellTarget StackObjectId
 	Cost                            *Cost
 	// for non-targetted effects, such as in Snap
-	Selected []*Permanent
+	Selected []PermanentId
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool
 	// for targeted effects
-	Source      *Permanent
-	SpellTarget *StackObject
-	Target      *Permanent
+	Source      PermanentId
+	SpellTarget StackObjectId
+	Target      PermanentId
 	// for attacking
-	With          *Permanent
+	With          PermanentId
 	WithAlternate bool
 	WithKicker    bool
 	WithNinjitsu  bool
@@ -49,7 +49,7 @@ const (
 )
 
 func (a *Action) targetPronoun(p *Player) string {
-	if a.Target.Owner == p {
+	if p.game.Permanent(a.Target).Owner == p.Id {
 		return "your"
 	}
 	return "their"
@@ -61,7 +61,7 @@ func (a *Action) ShowTo(p *Player) string {
 	switch a.Type {
 	case PassPriority:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("%s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("%s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
@@ -73,7 +73,7 @@ func (a *Action) ShowTo(p *Player) string {
 		return "Pass priority"
 	case Pass:
 		if len(p.game.Stack) > 0 {
-			return fmt.Sprintf("resolve %s", p.game.Stack[len(p.game.Stack)-1])
+			return fmt.Sprintf("resolve %s", p.game.StackObject(p.game.Stack[len(p.game.Stack)-1]))
 		}
 		if p.game.Phase == Upkeep ||
 			p.game.Phase == Draw ||
@@ -91,30 +91,30 @@ func (a *Action) ShowTo(p *Player) string {
 			return fmt.Sprintf("%s: %s", a.Card.Ninjitsu, a.Card)
 		}
 		if a.WithAlternate {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s", a.Card.AlternateCastingCost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s",
 				a.Card.AlternateCastingCost, a.Card, a.targetPronoun(p), a.Target)
 		}
 		if a.WithPhyrexian {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s", a.Card.PhyrexianCastingCost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s",
-				a.Card.PhyrexianCastingCost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.PhyrexianCastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 		}
 		if a.WithKicker {
-			if a.Target == nil {
+			if a.Target == NoPermanentId {
 				return fmt.Sprintf("%s: %s with kicker", a.Card.Kicker.Cost, a.Card)
 			}
 			return fmt.Sprintf("%s: %s on %s %s with kicker",
-				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), a.Target)
+				a.Card.Kicker.Cost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 		}
 		if a.Card.IsLand() {
 			return fmt.Sprintf("%s", a.Card)
 		}
-		if a.Target == nil {
+		if a.Target == NoPermanentId {
 			if forHuman && (a.Card.AlternateCastingCost != nil || a.Card.PhyrexianCastingCost != nil) {
 				return fmt.Sprintf("%s", a.Card)
 			}
@@ -129,15 +129,15 @@ func (a *Action) ShowTo(p *Player) string {
 				a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target, strings.Join(cardNames, ", "))
 		}
 		return fmt.Sprintf("%s: %s on %s %s",
-			a.Card.CastingCost, a.Card, a.targetPronoun(p), a.Target)
+			a.Card.CastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
 	case Attack:
-		return fmt.Sprintf("Attack with %s", a.With)
+		return fmt.Sprintf("Attack with %s", p.game.Permanent(a.With))
 	case Block:
-		return fmt.Sprintf("%s blocks %s", a.With, a.Target)
+		return fmt.Sprintf("%s blocks %s", a.With, p.game.Permanent(a.Target))
 	case UseForMana:
-		return fmt.Sprintf("Tap %s for mana", a.Source)
+		return fmt.Sprintf("Tap %s for mana", p.game.Permanent(a.Source))
 	case Activate:
-		return fmt.Sprintf("Use %s", a.Source)
+		return fmt.Sprintf("Use %s", p.game.Permanent(a.Source))
 	case MakeChoice:
 		if a.AfterEffect.EffectType == ReturnScryCardsDraw {
 			topStrings := []string{}

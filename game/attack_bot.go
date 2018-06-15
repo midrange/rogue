@@ -22,7 +22,7 @@ func (ab *AttackBot) Action(g *Game) *Action {
 
 	for _, a := range actions {
 		if a.Type == Play {
-			if a.isOpponentBuff() {
+			if a.isOpponentBuff(g) {
 				continue
 			}
 			if bestAction.Type == Play {
@@ -53,23 +53,29 @@ func (ab *AttackBot) Action(g *Game) *Action {
 	}
 
 	for _, a := range actions {
-		if !bestAction.isOpponentBuff() {
+		if !bestAction.isOpponentBuff(g) {
 			break
 		}
 		bestAction = a
 	}
-
-	for _, a := range actions {
-		if bestAction.Source == nil || bestAction.Source.Card.Name != QuirionRanger {
-			break
+	if bestAction.Source != NoPermanentId {
+		perm := g.Permanent(bestAction.Source)
+		for _, a := range actions {
+			if bestAction.Source == NoPermanentId || perm.Card.Name != QuirionRanger {
+				break
+			}
+			bestAction = a
 		}
-		bestAction = a
 	}
 	return bestAction
 }
 
-func (a *Action) isOpponentBuff() bool {
+func (a *Action) isOpponentBuff(g *Game) bool {
 	c := a.Card
-	return a.Target != nil && a.Target.Owner != a.Target.Owner.game.Priority() && (c.Name == Rancor || c.Name == VinesOfVastwood ||
+	if a.Target == NoPermanentId {
+		return false
+	}
+	target := g.Permanent(a.Target)
+	return target.Owner != g.PriorityId && (c.Name == Rancor || c.Name == VinesOfVastwood ||
 		c.Name == MutagenicGrowth || c.Name == HungerOfTheHowlpack)
 }

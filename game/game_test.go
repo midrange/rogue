@@ -63,8 +63,8 @@ func TestTwoBearsFighting(t *testing.T) {
 	}
 	g.TakeAction(&Action{
 		Type:   Block,
-		With:   defendingBear,
-		Target: attackingBear,
+		With:   defendingBear.Id,
+		Target: attackingBear.Id,
 	})
 	g.passUntilPhase(Main2)
 

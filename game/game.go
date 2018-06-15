@@ -9,7 +9,8 @@ const GAME_WIDTH = 100
 type PlayerId int
 
 const (
-	OnThePlay PlayerId = iota
+	NoPlayerId PlayerId = iota - 1
+	OnThePlay
 	OnTheDraw
 )
 
@@ -54,7 +55,13 @@ type Game struct {
 		Some actions go on the stack and can be responded to before they resolve
 		https://mtg.gamepedia.com/Stack#Actions
 	*/
-	Stack []*StackObject
+
+	// StackObjects contains all objects on the stack
+	StackObjects map[StackObjectId]*StackObject
+	// The stack holds IDs only to prevent circular refs in serialization.
+	Stack []StackObjectId
+	// The StackObjectId that will be assigned to the next object that gets put on the stack.
+	NextStackObjectId StackObjectId
 
 	// True if the acting player passed priority after outting a spell or ability on the stack.
 	actorPassedOnStack bool
@@ -85,13 +92,15 @@ func NewGame(deckToPlay *Deck, deckToDraw *Deck) *Game {
 		NewPlayer(deckToDraw, OnTheDraw),
 	}
 	g := &Game{
-		Players:         players,
-		Phase:           Main1,
-		Turn:            0,
-		PriorityId:      OnThePlay,
-		NextPermanentId: PermanentId(1),
-		Permanents:      make(map[PermanentId]*Permanent),
-		Stack:           []*StackObject{},
+		Players:           players,
+		Phase:             Main1,
+		Turn:              0,
+		PriorityId:        OnThePlay,
+		NextPermanentId:   PermanentId(1),
+		NextStackObjectId: StackObjectId(1),
+		Permanents:        make(map[PermanentId]*Permanent),
+		Stack:             []StackObjectId{},
+		StackObjects:      make(map[StackObjectId]*StackObject),
 	}
 
 	players[0].game = g
@@ -123,8 +132,10 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		actions = append(actions, &Action{
 			Type: PassPriority,
 		})
-		stackObject := g.Stack[len(g.Stack)-1]
-		if g.PriorityId == stackObject.Player.Id && g.actorPassedOnStack {
+		stackObjectId := g.Stack[len(g.Stack)-1]
+		stackObject := g.StackObject(stackObjectId)
+
+		if g.PriorityId == stackObject.Player && g.actorPassedOnStack {
 			return actions
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -181,7 +192,7 @@ func appendPassAction(g *Game, actions []*Action) []*Action {
 }
 
 func (g *Game) AttackerId() PlayerId {
-	return PlayerId(g.Turn % 2)
+	return PlayerId((g.Turn) % 2)
 }
 
 func (g *Game) Attacker() *Player {
@@ -315,14 +326,14 @@ func (g *Game) TakeAction(action *Action) {
 		g.actorPassedOnStack = true
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
-			stackObject := g.Stack[len(g.Stack)-1]
-			if g.PriorityId == stackObject.Player.Id {
+			stackObject := g.StackObject(g.Stack[len(g.Stack)-1])
+			if g.PriorityId == stackObject.Player {
 				g.actorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
 				if stackObject.Type == Play {
-					stackObject.Player.ResolveSpell(stackObject)
+					g.Player(stackObject.Player).ResolveSpell(stackObject)
 				} else if stackObject.Type == Activate {
-					stackObject.Player.ResolveActivatedAbility(stackObject)
+					g.Player(stackObject.Player).ResolveActivatedAbility(stackObject)
 				} else if stackObject.Type == EntersTheBattlefieldEffect {
 					for _, perm := range g.Priority().GetBoard() {
 						if perm.Card == stackObject.Card {
@@ -332,7 +343,7 @@ func (g *Game) TakeAction(action *Action) {
 						}
 					}
 				}
-
+				delete(g.StackObjects, stackObject.Id)
 			}
 		}
 		return
@@ -345,7 +356,7 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == UseForMana {
-		action.Source.UseForMana()
+		g.Permanent(action.Source).UseForMana()
 		return
 	}
 
@@ -374,15 +385,18 @@ func (g *Game) TakeAction(action *Action) {
 		if action.Type != Attack {
 			panic("expected an attack or a pass during DeclareAttackers")
 		}
-		action.With.Attacking = true
-		action.With.Tapped = true
+		creature := g.Permanent(action.With)
+		creature.Attacking = true
+		creature.Tapped = true
 
 	case DeclareBlockers:
 		if action.Type != Block {
 			panic("expected a block or a pass during DeclareBlockers")
 		}
-		action.With.Blocking = action.Target.Id
-		action.Target.DamageOrder = append(action.Target.DamageOrder, action.With.Id)
+		creature := g.Permanent(action.With)
+		creature.Blocking = action.Target
+		perm := g.Permanent(action.Target)
+		perm.DamageOrder = append(perm.DamageOrder, creature.Id)
 
 	case CombatDamage:
 		if action.Type == Play {
@@ -399,8 +413,8 @@ func (g *Game) TakeAction(action *Action) {
 }
 
 // Removes targetSpell from the stack, as in when Counterspelled.
-func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
-	newStack := []*StackObject{}
+func (g *Game) RemoveSpellFromStack(targetSpell StackObjectId) {
+	newStack := []StackObjectId{}
 	for _, spellAction := range g.Stack {
 		if spellAction != targetSpell {
 			newStack = append(newStack, spellAction)
@@ -410,6 +424,7 @@ func (g *Game) RemoveSpellFromStack(targetSpell *StackObject) {
 		// fmt.Println("This should be fine, it means a Counterspell's target was countered.")
 	}
 	g.Stack = newStack
+	delete(g.StackObjects, targetSpell)
 }
 
 func (g *Game) IsOver() bool {
@@ -419,18 +434,21 @@ func (g *Game) IsOver() bool {
 // All permanents added to the game should be created via newPermanent.
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
-func (g *Game) newPermanent(card *Card, owner *Player, stackObject *StackObject) *Permanent {
+func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId, addToBoard bool) *Permanent {
 	perm := &Permanent{
 		Card:       card,
-		Owner:      owner,
+		Owner:      ownerId,
 		TurnPlayed: g.Turn,
 		Id:         g.NextPermanentId,
 		game:       g,
 	}
-	g.Permanents[g.NextPermanentId] = perm
-	g.NextPermanentId++
-	owner.Board = append(owner.Board, perm.Id)
-	perm.HandleEnterTheBattlefield(stackObject)
+	owner := g.Player(ownerId)
+	if addToBoard {
+		g.Permanents[g.NextPermanentId] = perm
+		g.NextPermanentId++
+		owner.Board = append(owner.Board, perm.Id)
+		perm.HandleEnterTheBattlefield(stackObjectId)
+	}
 	return perm
 }
 
@@ -450,6 +468,33 @@ func (g *Game) GetPermanents(ids []PermanentId) []*Permanent {
 	answer := []*Permanent{}
 	for _, id := range ids {
 		answer = append(answer, g.Permanent(id))
+	}
+	return answer
+}
+
+// All objects must be put on the Stack via this method to get a unique ID.
+func (g *Game) AddToStack(stackObject *StackObject) {
+	stackObject.Id = g.NextStackObjectId
+	g.StackObjects[stackObject.Id] = stackObject
+	g.NextStackObjectId++
+	g.Stack = append(g.Stack, stackObject.Id)
+}
+
+func (g *Game) StackObject(id StackObjectId) *StackObject {
+	if id == NoStackObjectId {
+		panic("NoStackObjectId is not a valid StackObjectId")
+	}
+	obj, ok := g.StackObjects[id]
+	if !ok {
+		// it's OK, spell must have been otherwise countered
+	}
+	return obj
+}
+
+func (g *Game) GetStack() []*StackObject {
+	answer := []*StackObject{}
+	for _, id := range g.Stack {
+		answer = append(answer, g.StackObject(id))
 	}
 	return answer
 }
@@ -565,7 +610,7 @@ func (g *Game) TakeActionAndResolve(action *Action) {
 // playAura plays the first aura it sees in the hand on its own creature
 func (g *Game) playAura() {
 	for _, a := range g.Priority().PlayActions(true, false) {
-		if a.Card != nil && a.Card.IsEnchantCreature() && a.Target.Owner == g.Priority() {
+		if a.Card != nil && a.Card.IsEnchantCreature() && g.Permanent(a.Target).Owner == g.PriorityId {
 			g.TakeActionAndResolve(a)
 			return
 		}

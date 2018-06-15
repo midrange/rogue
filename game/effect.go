@@ -44,18 +44,18 @@ type Effect struct {
 	Summon CardName
 
 	// Source is the source of activated abilities, nil for other effects.
-	Source *Permanent
+	Source PermanentId
 
-	SelectedForCost *Permanent
-	SpellTarget     *StackObject
-	Target          *Permanent
+	SelectedForCost PermanentId
+	SpellTarget     StackObjectId
+	Target          PermanentId
 
 	// for effects from targeted spells
 	EffectType EffectType
 	Selector   *Selector
 
 	// for non-targeted effects of spells, such as Snap
-	Selected []*Permanent
+	Selected []PermanentId
 }
 
 //go:generate stringer -type=EffectType
