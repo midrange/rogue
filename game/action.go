@@ -14,7 +14,7 @@ type Action struct {
 	// the spell target Card's coming into play effect
 	EntersTheBattleFieldSpellTarget StackObjectId
 	Cost                            *Cost
-	// for non-targetted effects, such as in Snap
+	// for non-targeted effects, such as in Snap
 	Selected []PermanentId
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool

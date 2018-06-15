@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -707,4 +708,17 @@ func (g *Game) playActivatedAbility() {
 	}
 	g.Print()
 	panic("playActivatedAbility failed")
+}
+
+func (g *Game) serialized() []byte {
+	gameJson, _ := json.Marshal(g)
+	return gameJson
+}
+
+func deserializeGameState(jsonBytes []byte) *Game {
+	game := &Game{}
+	json.Unmarshal(jsonBytes, game)
+	game.Players[0].game = game
+	game.Players[1].game = game
+	return game
 }
