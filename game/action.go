@@ -14,7 +14,7 @@ type Action struct {
 	// the spell target Card's coming into play effect
 	EntersTheBattleFieldSpellTarget StackObjectId
 	Cost                            *Cost
-	// for non-targetted effects, such as in Snap
+	// for non-targeted effects, such as in Snap
 	Selected []PermanentId
 	// whether to switch priority after the action
 	ShouldSwitchPriority bool
@@ -119,6 +119,14 @@ func (a *Action) ShowTo(p *Player) string {
 				return fmt.Sprintf("%s", a.Card)
 			}
 			return fmt.Sprintf("%s: %s", a.Card.CastingCost, a.Card)
+		}
+		if len(a.Selected) > 0 {
+			cardNames := []string{}
+			for _, perm := range a.Selected {
+				cardNames = append(cardNames, fmt.Sprintf("%s", p.game.Permanent(perm).Card.Name))
+			}
+			return fmt.Sprintf("%s: %s on %s %s (%s)",
+				a.Card.CastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target), strings.Join(cardNames, ", "))
 		}
 		return fmt.Sprintf("%s: %s on %s %s",
 			a.Card.CastingCost, a.Card, a.targetPronoun(p), p.game.Permanent(a.Target))
