@@ -30,8 +30,8 @@ type McstBot struct {
 func NewMcstBot() *McstBot {
 	mcst := &McstBot{
 		C:               1.4,
-		calculationTime: 3.0,
-		maxMoves:        1000,
+		calculationTime: 10.0,
+		maxMoves:        10000,
 		plays:           map[string]int{},
 		wins:            map[string]int{},
 	}
@@ -88,7 +88,8 @@ func (mb *McstBot) doPlayOut(g *Game) {
 	expand := true
 
 	cloneGame := DeserializeGameState(g.Serialized())
-	for t := 0; t < mb.maxMoves; t++ {
+	t := 0
+	for t = 0; t < mb.maxMoves; t++ {
 		actionStates := cloneGame.ActionStates()
 		statsForAllPlays := true
 		for _, actionState := range actionStates {
@@ -118,30 +119,26 @@ func (mb *McstBot) doPlayOut(g *Game) {
 					bestActionState = as
 				}
 			}
-			cloneGame.TakeAction(bestActionState.Action)
 		} else {
 			// otherwise play randomly
-			action := actionStates[rand.Intn(len(actionStates))].Action
-			cloneGame.TakeAction(action)
-			bestActionState = &ActionState{
-				EndState: fmt.Sprintf("%s", cloneGame.Serialized()),
-				Action:   action,
-			}
+			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
+
+		cloneGame.TakeAction(bestActionState.Action)
 
 		// update stats
 		if expand && mb.plays[bestActionState.EndState] == 0 {
 			expand = false
 		}
-		visitedStates = append(visitedStates, bestActionState.EndState)
 		if cloneGame.IsOver() {
 			break
 		}
+		visitedStates = append(visitedStates, bestActionState.EndState)
 	}
 
 	for _, es := range visitedStates {
 		mb.plays[es] += 1
-		if g.Defender().Lost() {
+		if cloneGame.Defender().Lost() && cloneGame.DefenderId() == g.PriorityId {
 			mb.wins[es] += 1
 		}
 	}
