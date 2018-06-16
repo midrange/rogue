@@ -38,6 +38,7 @@ func NewPlayer(deck *Deck, id PlayerId) *Player {
 func (p *Player) Draw() {
 	card := p.Deck.Draw()
 	if card == NoCard {
+		// fmt.Println("drew no card")
 		return
 	}
 	p.Hand = append(p.Hand, card)
@@ -319,10 +320,10 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 									Target:   targetCreature.Id,
 								}
 
-								gJson := p.game.serialized()
-								cloneGame := deserializeGameState(gJson)
+								gJson := p.game.Serialized()
+								cloneGame := DeserializeGameState(gJson)
 								cloneGame.TakeActionAndResolve(action)
-								gJson = cloneGame.serialized()
+								gJson = cloneGame.Serialized()
 
 								gameStateString := fmt.Sprintf("%s", gJson)
 								if gameStates[gameStateString] != true {
@@ -1214,6 +1215,19 @@ func (p *Player) waysToScry(effect *Effect) []*Action {
 func (p *Player) waysToDelverScry(effect *Effect) []*Action {
 
 	card := p.Deck.Draw().Card()
+
+	if card == nil {
+		return []*Action{
+			&Action{
+				Type: MakeChoice,
+				AfterEffect: &Effect{
+					EffectType: DelverScryNoReveal,
+					Cards:      []CardName{NoCard},
+					Selected:   effect.Selected,
+				},
+			},
+		}
+	}
 
 	if !(card.IsSpell()) {
 		p.Deck.AddToTop(1, card.Name)

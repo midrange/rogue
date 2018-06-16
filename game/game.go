@@ -711,16 +711,35 @@ func (g *Game) playActivatedAbility() {
 }
 
 // Returns a binary representation of the game, json for now
-func (g *Game) serialized() []byte {
+func (g *Game) Serialized() []byte {
 	gameJson, _ := json.Marshal(g)
 	return gameJson
 }
 
 // Reset the game pointer for game.players, and return a deserialized game
-func deserializeGameState(jsonBytes []byte) *Game {
+func DeserializeGameState(jsonBytes []byte) *Game {
 	game := &Game{}
 	json.Unmarshal(jsonBytes, game)
 	game.Players[0].game = game
 	game.Players[1].game = game
+	for _, perm := range game.Permanents {
+		perm.game = game
+	}
 	return game
+}
+
+func (g *Game) ActionStates() []*ActionState {
+	legal := g.Actions(false)
+	actionStates := []*ActionState{}
+	gameState := g.Serialized()
+	for _, action := range legal {
+		asGame := DeserializeGameState(gameState)
+		asGame.TakeAction(action)
+		actionState := &ActionState{
+			EndState: fmt.Sprintf("%s", asGame.Serialized()),
+			Action:   action,
+		}
+		actionStates = append(actionStates, actionState)
+	}
+	return actionStates
 }
