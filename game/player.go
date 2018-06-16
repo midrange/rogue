@@ -321,7 +321,7 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 
 								gJson := p.game.serialized()
 								cloneGame := deserializeGameState(gJson)
-								cloneGame.TakeAction(action)
+								cloneGame.TakeActionAndResolve(action)
 								gJson = cloneGame.serialized()
 
 								gameStateString := fmt.Sprintf("%s", gJson)
