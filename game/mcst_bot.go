@@ -56,9 +56,10 @@ func (mb *McstBot) Action(g *Game) *Action {
 	}
 	games := 0
 	start := time.Now()
+	gameState := g.Serialized()
 	for {
 		// print a spinner
-		mb.doPlayOut(g)
+		mb.doPlayOut(gameState, g)
 		games += 1
 		if time.Since(start).Seconds() > mb.calculationTime {
 			break
@@ -83,11 +84,11 @@ func (mb *McstBot) Action(g *Game) *Action {
 	return bestActionState.Action
 }
 
-func (mb *McstBot) doPlayOut(g *Game) {
+func (mb *McstBot) doPlayOut(gameState []byte, g *Game) {
 	visitedStates := []string{}
 	expand := true
 
-	cloneGame := DeserializeGameState(g.Serialized())
+	cloneGame := DeserializeGameState(gameState)
 	t := 0
 	for t = 0; t < mb.maxMoves; t++ {
 		actionStates := cloneGame.ActionStates()
