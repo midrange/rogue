@@ -307,8 +307,8 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 					if selectableLandCount > 0 { // snap
 						for i := 1; i <= len(p.game.Lands())-1; i++ {
 							comb := combinations(makeRange(0, i), selectableLandCount)
-							selected := []PermanentId{}
 							for _, c := range comb {
+								selected := []PermanentId{}
 								for _, index := range c {
 									selected = append(selected, p.game.Lands()[index].Id)
 								}
