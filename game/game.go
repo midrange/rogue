@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jinzhu/copier"
 )
 
 const GAME_WIDTH = 100
@@ -727,10 +728,35 @@ func DeserializeGameState(jsonBytes []byte) *Game {
 	return game
 }
 
-func (g *Game) ActionStates(gameState []byte) []*ActionState {
+func CopyGame(g *Game) *Game {
+	newGame := &Game{}
+	copier.Copy(&newGame, &g)
+	newGame.Players[0].game = newGame
+	newGame.Players[1].game = newGame
+	for _, perm := range newGame.Permanents {
+		perm.game = newGame
+	}
+	return newGame
+}
+
+func (g *Game) ActionStates() []*ActionState {
 	actionStates := []*ActionState{}
 	for _, action := range g.Actions(false) {
-		asGame := DeserializeGameState(gameState)
+
+		asGame := &Game{}
+		copier.Copy(&asGame, &g)
+		asGame.Players[0].game = asGame
+		asGame.Players[1].game = asGame
+		for _, perm := range asGame.Permanents {
+			perm.game = asGame
+		}
+
+		if string(g.Serialized()) != string(asGame.Serialized()) {
+			fmt.Println(g)
+			fmt.Println(asGame)
+			panic("the games are not the same after copy")
+		}
+
 		asGame.TakeAction(action)
 		actionState := &ActionState{
 			EndState: asGame.Serialized(),

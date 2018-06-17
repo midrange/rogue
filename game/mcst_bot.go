@@ -56,11 +56,10 @@ func (mb *McstBot) Action(g *Game) *Action {
 	}
 	games := 0
 	start := time.Now()
-	gameState := g.Serialized()
-	actionStates := g.ActionStates(gameState)
 	for {
 		// print a spinner
-		mb.doPlayOut(gameState, g, actionStates)
+		fmt.Println("doing playout ", games)
+		mb.doPlayOut(g)
 		games++
 		if time.Since(start).Seconds() > mb.calculationTime {
 			break
@@ -68,6 +67,7 @@ func (mb *McstBot) Action(g *Game) *Action {
 	}
 	fmt.Println("Simulated ", games, " games.")
 
+	actionStates := g.ActionStates()
 	bestActionState := actionStates[0]
 	bestScore := 0
 	for _, as := range actionStates {
@@ -84,17 +84,21 @@ func (mb *McstBot) Action(g *Game) *Action {
 	return bestActionState.Action
 }
 
-func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionState) {
+func (mb *McstBot) doPlayOut(g *Game) {
 	visitedStates := [][]byte{}
-	expand := true
 
-	cloneGame := DeserializeGameState(gameState)
+	cloneGame := CopyGame(g)
+	if string(g.Serialized()) != string(cloneGame.Serialized()) {
+		fmt.Println(g)
+		fmt.Println(cloneGame)
+		panic("the initial games are not the same after copy")
+	}
+
 	t := 0
 	bestActionState := &ActionState{}
 	for t = 0; t < mb.maxMoves; t++ {
-		if t != 0 {
-			actionStates = cloneGame.ActionStates(gameState)
-		}
+		fmt.Println(t)
+		actionStates := cloneGame.ActionStates()
 		statsForAllPlays := true
 		for _, actionState := range actionStates {
 			endStateStr := string(actionState.EndState[:])
@@ -130,18 +134,13 @@ func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionSt
 			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
 
+		fmt.Println(bestActionState.Action)
 		cloneGame.TakeAction(bestActionState.Action)
-		gameState = bestActionState.EndState
 
-		// update stats
-		endStateStr := string(gameState[:])
-		if expand && mb.plays[endStateStr] == 0 {
-			expand = false
-		}
 		if cloneGame.IsOver() {
 			break
 		}
-		visitedStates = append(visitedStates, gameState)
+		visitedStates = append(visitedStates, bestActionState.EndState)
 	}
 
 	for _, es := range visitedStates {
