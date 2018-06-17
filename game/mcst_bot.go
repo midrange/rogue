@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 )
 
 /*
@@ -54,17 +55,14 @@ func (mb *McstBot) Action(g *Game) *Action {
 		return legal[0]
 	}
 	games := 0
-	// start := time.Now()
+	start := time.Now()
 	gameState := g.Serialized()
 	actionStates := g.ActionStates(gameState)
 	for {
 		// print a spinner
 		mb.doPlayOut(gameState, g, actionStates)
-		games += 1
-		//if time.Since(start).Seconds() > mb.calculationTime {
-		//	break
-		///}
-		if games > 10 {
+		games++
+		if time.Since(start).Seconds() > mb.calculationTime {
 			break
 		}
 	}
@@ -94,7 +92,6 @@ func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionSt
 	t := 0
 	bestActionState := &ActionState{}
 	for t = 0; t < mb.maxMoves; t++ {
-		fmt.Println(t)
 		if t != 0 {
 			actionStates = cloneGame.ActionStates(gameState)
 		}
@@ -123,7 +120,7 @@ func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionSt
 				winRatio := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
 				logPlayRatio := float64(logTotalPlays) / float64(mb.plays[endStateStr])
 				score := winRatio + mb.C*math.Sqrt(logPlayRatio)
-				if score > bestScore {
+				if score >= bestScore {
 					bestScore = score
 					bestActionState = as
 				}
@@ -132,24 +129,9 @@ func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionSt
 			// otherwise play randomly
 			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
-		fmt.Printf("Priority pre action %d taking action %s\n", cloneGame.PriorityId, bestActionState.Action.ShowTo(cloneGame.Priority()))
-		cloneGame.TakeAction(bestActionState.Action)
-		fmt.Printf("Priority post action %d\n", cloneGame.PriorityId)
-		gameState = bestActionState.EndState
 
-		if fmt.Sprintf("%s", cloneGame.Serialized()) != fmt.Sprintf("%s", gameState) {
-			fmt.Printf("%s\n", cloneGame.Stack)
-			fmt.Printf("%s\n", bestActionState.Action)
-			fmt.Printf("%s\n", cloneGame.Serialized())
-			fmt.Printf("%s\n", gameState)
-			for x := 0; x < len(gameState); x++ {
-				if cloneGame.Serialized()[x] != gameState[x] {
-					fmt.Printf("%d %v", x, gameState[x])
-					break
-				}
-			}
-			panic("these should be same")
-		}
+		cloneGame.TakeAction(bestActionState.Action)
+		gameState = bestActionState.EndState
 
 		// update stats
 		endStateStr := string(gameState[:])

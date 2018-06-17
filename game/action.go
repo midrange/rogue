@@ -133,7 +133,7 @@ func (a *Action) ShowTo(p *Player) string {
 	case Attack:
 		return fmt.Sprintf("Attack with %s", p.game.Permanent(a.With))
 	case Block:
-		return fmt.Sprintf("%s blocks %s", a.With, p.game.Permanent(a.Target))
+		return fmt.Sprintf("%s blocks %s", p.game.Permanent(a.With), p.game.Permanent(a.Target))
 	case UseForMana:
 		return fmt.Sprintf("Tap %s for mana", p.game.Permanent(a.Source))
 	case Activate:
