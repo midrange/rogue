@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"time"
 )
 
 /*
@@ -30,7 +29,7 @@ type McstBot struct {
 func NewMcstBot() *McstBot {
 	mcst := &McstBot{
 		C:               1.4,
-		calculationTime: 10.0,
+		calculationTime: 1.0,
 		maxMoves:        10000,
 		plays:           map[string]int{},
 		wins:            map[string]int{},
@@ -40,7 +39,7 @@ func NewMcstBot() *McstBot {
 
 // An Action, plus the EndState it reaches upon being played.
 type ActionState struct {
-	EndState string
+	EndState []byte
 	Action   *Action
 }
 
@@ -55,65 +54,74 @@ func (mb *McstBot) Action(g *Game) *Action {
 		return legal[0]
 	}
 	games := 0
-	start := time.Now()
+	// start := time.Now()
 	gameState := g.Serialized()
+	actionStates := g.ActionStates(gameState)
 	for {
 		// print a spinner
-		mb.doPlayOut(gameState, g)
+		mb.doPlayOut(gameState, g, actionStates)
 		games += 1
-		if time.Since(start).Seconds() > mb.calculationTime {
+		//if time.Since(start).Seconds() > mb.calculationTime {
+		//	break
+		///}
+		if games > 10 {
 			break
 		}
 	}
 	fmt.Println("Simulated ", games, " games.")
 
-	actionStates := g.ActionStates()
-
 	bestActionState := actionStates[0]
 	bestScore := 0
 	for _, as := range actionStates {
-		if mb.plays[as.EndState] > 0 {
-			score := mb.wins[as.EndState] / mb.plays[as.EndState]
+		endStateStr := string(as.EndState[:])
+		if mb.plays[endStateStr] > 0 {
+			score := mb.wins[endStateStr] / mb.plays[endStateStr]
 			if score > bestScore {
 				bestScore = score
 				bestActionState = as
 			}
 		}
-		fmt.Printf("%s: %.2f (%d / %d)\n", as.Action.ShowTo(g.Priority()), float64(mb.wins[as.EndState])/float64(mb.plays[as.EndState]), mb.wins[as.EndState], mb.plays[as.EndState])
+		fmt.Printf("%s: %.2f (%d / %d)\n", as.Action.ShowTo(g.Priority()), float64(mb.wins[endStateStr])/float64(mb.plays[endStateStr]), mb.wins[endStateStr], mb.plays[endStateStr])
 	}
 	return bestActionState.Action
 }
 
-func (mb *McstBot) doPlayOut(gameState []byte, g *Game) {
-	visitedStates := []string{}
+func (mb *McstBot) doPlayOut(gameState []byte, g *Game, actionStates []*ActionState) {
+	visitedStates := [][]byte{}
 	expand := true
 
 	cloneGame := DeserializeGameState(gameState)
 	t := 0
+	bestActionState := &ActionState{}
 	for t = 0; t < mb.maxMoves; t++ {
-		actionStates := cloneGame.ActionStates()
+		fmt.Println(t)
+		if t != 0 {
+			actionStates = cloneGame.ActionStates(gameState)
+		}
 		statsForAllPlays := true
 		for _, actionState := range actionStates {
-			if mb.plays[actionState.EndState] == 0 {
+			endStateStr := string(actionState.EndState[:])
+			if mb.plays[endStateStr] == 0 {
 				statsForAllPlays = false
 				break
 			}
 
 		}
 
-		bestActionState := actionStates[0]
 		if statsForAllPlays {
 			// decide best play based on prior simulatons
 			logTotalPlays := 0.0
 			for _, as := range actionStates {
-				logTotalPlays += float64(mb.plays[as.EndState])
+				endStateStr := string(as.EndState[:])
+				logTotalPlays += float64(mb.plays[endStateStr])
 			}
 			logTotalPlays = math.Log(float64(logTotalPlays))
 
 			bestScore := 0.0
 			for _, as := range actionStates {
-				winRatio := float64(mb.wins[as.EndState]) / float64(mb.plays[as.EndState])
-				logPlayRatio := float64(logTotalPlays) / float64(mb.plays[as.EndState])
+				endStateStr := string(as.EndState[:])
+				winRatio := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
+				logPlayRatio := float64(logTotalPlays) / float64(mb.plays[endStateStr])
 				score := winRatio + mb.C*math.Sqrt(logPlayRatio)
 				if score > bestScore {
 					bestScore = score
@@ -124,23 +132,41 @@ func (mb *McstBot) doPlayOut(gameState []byte, g *Game) {
 			// otherwise play randomly
 			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
-
+		fmt.Printf("Priority pre action %d taking action %s\n", cloneGame.PriorityId, bestActionState.Action.ShowTo(cloneGame.Priority()))
 		cloneGame.TakeAction(bestActionState.Action)
+		fmt.Printf("Priority post action %d\n", cloneGame.PriorityId)
+		gameState = bestActionState.EndState
+
+		if fmt.Sprintf("%s", cloneGame.Serialized()) != fmt.Sprintf("%s", gameState) {
+			fmt.Printf("%s\n", cloneGame.Stack)
+			fmt.Printf("%s\n", bestActionState.Action)
+			fmt.Printf("%s\n", cloneGame.Serialized())
+			fmt.Printf("%s\n", gameState)
+			for x := 0; x < len(gameState); x++ {
+				if cloneGame.Serialized()[x] != gameState[x] {
+					fmt.Printf("%d %v", x, gameState[x])
+					break
+				}
+			}
+			panic("these should be same")
+		}
 
 		// update stats
-		if expand && mb.plays[bestActionState.EndState] == 0 {
+		endStateStr := string(gameState[:])
+		if expand && mb.plays[endStateStr] == 0 {
 			expand = false
 		}
 		if cloneGame.IsOver() {
 			break
 		}
-		visitedStates = append(visitedStates, bestActionState.EndState)
+		visitedStates = append(visitedStates, gameState)
 	}
 
 	for _, es := range visitedStates {
-		mb.plays[es] += 1
+		endStateStr := string(es[:])
+		mb.plays[endStateStr] += 1
 		if cloneGame.Defender().Lost() && cloneGame.DefenderId() == g.PriorityId {
-			mb.wins[es] += 1
+			mb.wins[endStateStr] += 1
 		}
 	}
 }

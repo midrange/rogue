@@ -64,8 +64,8 @@ type Game struct {
 	// The StackObjectId that will be assigned to the next object that gets put on the stack.
 	NextStackObjectId StackObjectId
 
-	// True if the acting player passed priority after outting a spell or ability on the stack.
-	actorPassedOnStack bool
+	// True if the acting player passed priority after putting a spell or ability on the stack.
+	ActorPassedOnStack bool
 }
 
 //go:generate stringer -type=Phase
@@ -136,7 +136,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		stackObjectId := g.Stack[len(g.Stack)-1]
 		stackObject := g.StackObject(stackObjectId)
 
-		if g.PriorityId == stackObject.Player && g.actorPassedOnStack {
+		if g.PriorityId == stackObject.Player && g.ActorPassedOnStack {
 			return actions
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -324,12 +324,12 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == PassPriority {
-		g.actorPassedOnStack = true
+		g.ActorPassedOnStack = true
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
 			stackObject := g.StackObject(g.Stack[len(g.Stack)-1])
 			if g.PriorityId == stackObject.Player {
-				g.actorPassedOnStack = false
+				g.ActorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
 				if stackObject.Type == Play {
 					g.Player(stackObject.Player).ResolveSpell(stackObject)
@@ -350,9 +350,8 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 	if action.Type == Pass {
-		g.nextPhase()
-
 		g.PriorityId = g.AttackerId()
+		g.nextPhase()
 		return
 	}
 
@@ -728,15 +727,13 @@ func DeserializeGameState(jsonBytes []byte) *Game {
 	return game
 }
 
-func (g *Game) ActionStates() []*ActionState {
-	legal := g.Actions(false)
+func (g *Game) ActionStates(gameState []byte) []*ActionState {
 	actionStates := []*ActionState{}
-	gameState := g.Serialized()
-	for _, action := range legal {
+	for _, action := range g.Actions(false) {
 		asGame := DeserializeGameState(gameState)
 		asGame.TakeAction(action)
 		actionState := &ActionState{
-			EndState: fmt.Sprintf("%s", asGame.Serialized()),
+			EndState: asGame.Serialized(),
 			Action:   action,
 		}
 		actionStates = append(actionStates, actionState)
