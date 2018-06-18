@@ -271,6 +271,7 @@ func (g *Game) nextPhase() {
 		p.EndPhase()
 	}
 
+	g.ActorPassedOnStack = false
 	switch g.Phase {
 	case UntapStep:
 		g.Attacker().Untap()
@@ -306,7 +307,6 @@ func (g *Game) nextPhase() {
 		g.Phase = UntapStep
 		g.Turn++
 		g.PriorityId = g.PriorityId.OpponentId()
-
 	}
 }
 
@@ -370,6 +370,7 @@ func (g *Game) TakeAction(action *Action) {
 	case Main1:
 		fallthrough
 	case Main2:
+		fmt.Println("perm id in main2 beg is ", g.NextPermanentId)
 		if action.Type == Play {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
@@ -381,6 +382,7 @@ func (g *Game) TakeAction(action *Action) {
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
+		fmt.Println("perm id in main2 end is ", g.NextPermanentId)
 
 	case DeclareAttackers:
 		if action.Type != Attack {
@@ -436,6 +438,7 @@ func (g *Game) IsOver() bool {
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
 func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId, addToBoard bool) *Permanent {
+	fmt.Println("New perm id is: ", g.NextPermanentId)
 	perm := &Permanent{
 		Card:       card,
 		Owner:      ownerId,
@@ -446,10 +449,11 @@ func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObj
 	owner := g.Player(ownerId)
 	if addToBoard {
 		g.Permanents[g.NextPermanentId] = perm
-		g.NextPermanentId++
 		owner.Board = append(owner.Board, perm.Id)
+		g.NextPermanentId++
 		perm.HandleEnterTheBattlefield(stackObjectId)
 	}
+	fmt.Println("now perm id is: ", g.NextPermanentId)
 	return perm
 }
 
@@ -741,22 +745,11 @@ func CopyGame(g *Game) *Game {
 
 func (g *Game) ActionStates() []*ActionState {
 	actionStates := []*ActionState{}
-	for _, action := range g.Actions(false) {
-
-		asGame := &Game{}
-		copier.Copy(&asGame, &g)
-		asGame.Players[0].game = asGame
-		asGame.Players[1].game = asGame
-		for _, perm := range asGame.Permanents {
-			perm.game = asGame
+	asGame := CopyGame(g)
+	for index, action := range asGame.Actions(false) {
+		if index != 0 {
+			asGame = CopyGame(g)
 		}
-
-		if string(g.Serialized()) != string(asGame.Serialized()) {
-			fmt.Println(g)
-			fmt.Println(asGame)
-			panic("the games are not the same after copy")
-		}
-
 		asGame.TakeAction(action)
 		actionState := &ActionState{
 			EndState: asGame.Serialized(),

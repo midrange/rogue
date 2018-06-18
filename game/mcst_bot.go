@@ -74,7 +74,7 @@ func (mb *McstBot) Action(g *Game) *Action {
 		endStateStr := string(as.EndState[:])
 		if mb.plays[endStateStr] > 0 {
 			score := mb.wins[endStateStr] / mb.plays[endStateStr]
-			if score > bestScore {
+			if score >= bestScore {
 				bestScore = score
 				bestActionState = as
 			}
@@ -91,13 +91,13 @@ func (mb *McstBot) doPlayOut(g *Game) {
 	if string(g.Serialized()) != string(cloneGame.Serialized()) {
 		fmt.Println(g)
 		fmt.Println(cloneGame)
-		panic("the initial games are not the same after copy")
+		// panic("the initial games are not the same after copy")
 	}
 
 	t := 0
 	bestActionState := &ActionState{}
 	for t = 0; t < mb.maxMoves; t++ {
-		fmt.Println(t)
+		fmt.Println(t, " ", cloneGame.NextPermanentId)
 		actionStates := cloneGame.ActionStates()
 		statsForAllPlays := true
 		for _, actionState := range actionStates {
@@ -135,7 +135,10 @@ func (mb *McstBot) doPlayOut(g *Game) {
 		}
 
 		fmt.Println(bestActionState.Action)
+		fmt.Println("before cloneGame action ", cloneGame.NextPermanentId)
 		cloneGame.TakeAction(bestActionState.Action)
+		fmt.Println("after cloneGame action ")
+		fmt.Println("NextPermanentId now ", cloneGame.NextPermanentId)
 
 		if cloneGame.IsOver() {
 			break
