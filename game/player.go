@@ -301,7 +301,6 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 			}
 		} else {
 
-			gameStates := make(map[string]bool)
 			for _, targetCreature := range p.game.Creatures() {
 				if p.IsLegalTarget(card, targetCreature) {
 					selectableLandCount := selectableLandCount(card)
@@ -313,23 +312,12 @@ func (p *Player) appendActionsForInstant(answer []*Action, card *Card) []*Action
 								for _, index := range c {
 									selected = append(selected, p.game.Lands()[index].Id)
 								}
-								action := &Action{
+								answer = append(answer, &Action{
 									Type:     Play,
 									Card:     card,
 									Selected: selected,
 									Target:   targetCreature.Id,
-								}
-
-								gJson := p.game.Serialized()
-								cloneGame := DeserializeGameState(gJson)
-								cloneGame.TakeActionAndResolve(action)
-								gJson = cloneGame.Serialized()
-
-								gameStateString := fmt.Sprintf("%s", gJson)
-								if gameStates[gameStateString] != true {
-									gameStates[gameStateString] = true
-									answer = append(answer, action)
-								}
+								})
 							}
 						}
 					} else {

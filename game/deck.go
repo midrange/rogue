@@ -27,43 +27,35 @@ func NewDeck(decklist map[CardName]int) *Deck {
 
 func Stompy() *Deck {
 	return NewDeck(map[CardName]int{
-		Forest:         20,
-		NettleSentinel: 40,
-		/*
-			BurningTreeEmissary: 4,
-			ElephantGuide:       4,
-			Forest:              17,
-			HungerOfTheHowlpack: 4,
-			NestInvader:         4,
-			NettleSentinel:      4,
-			QuirionRanger:       4,
-			Rancor:              4,
-			SkarrganPitskulk:    4,
-			SilhanaLedgewalker:  3,
-			VaultSkirge:         4,
-			VinesOfVastwood:     4,
-		*/
+		BurningTreeEmissary: 4,
+		ElephantGuide:       4,
+		Forest:              17,
+		HungerOfTheHowlpack: 4,
+		NestInvader:         4,
+		NettleSentinel:      4,
+		QuirionRanger:       4,
+		Rancor:              4,
+		SkarrganPitskulk:    4,
+		SilhanaLedgewalker:  3,
+		VaultSkirge:         4,
+		VinesOfVastwood:     4,
 	})
 }
 
 func MonoBlueDelver() *Deck {
 	return NewDeck(map[CardName]int{
-		Forest:         20,
-		NettleSentinel: 40,
-		/*
-			DelverOfSecrets:     4,
-			FaerieMiscreant:     4,
-			SpellstutterSprite:  4,
-			Island:              18,
-			NinjaOfTheDeepHours: 4,
-			MutagenicGrowth:     4,
-			Ponder:              4,
-			Preordain:           4,
-			Counterspell:        4,
-			Daze:                4,
-			Snap:                4,
-			Gush:                2,
-		*/
+		DelverOfSecrets:     4,
+		FaerieMiscreant:     4,
+		SpellstutterSprite:  4,
+		Island:              18,
+		NinjaOfTheDeepHours: 4,
+		MutagenicGrowth:     4,
+		Ponder:              4,
+		Preordain:           4,
+		Counterspell:        4,
+		Daze:                4,
+		Snap:                4,
+		Gush:                2,
 	})
 }
 

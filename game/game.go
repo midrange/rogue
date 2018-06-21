@@ -3,7 +3,6 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/copier"
 )
 
 const GAME_WIDTH = 100
@@ -370,7 +369,6 @@ func (g *Game) TakeAction(action *Action) {
 	case Main1:
 		fallthrough
 	case Main2:
-		fmt.Println("perm id in main2 beg is ", g.NextPermanentId)
 		if action.Type == Play {
 			if action.Card.IsLand() {
 				g.Priority().PlayLand(action)
@@ -382,7 +380,6 @@ func (g *Game) TakeAction(action *Action) {
 		} else {
 			panic("expected a play, activate, declare attack, or pass during main phase")
 		}
-		fmt.Println("perm id in main2 end is ", g.NextPermanentId)
 
 	case DeclareAttackers:
 		if action.Type != Attack {
@@ -438,7 +435,6 @@ func (g *Game) IsOver() bool {
 // This assigns a unique id to the permanent and activates any coming-into-play
 // effects.
 func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObjectId, addToBoard bool) *Permanent {
-	fmt.Println("New perm id is: ", g.NextPermanentId)
 	perm := &Permanent{
 		Card:       card,
 		Owner:      ownerId,
@@ -453,7 +449,6 @@ func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObj
 		g.NextPermanentId++
 		perm.HandleEnterTheBattlefield(stackObjectId)
 	}
-	fmt.Println("now perm id is: ", g.NextPermanentId)
 	return perm
 }
 
@@ -733,14 +728,8 @@ func DeserializeGameState(jsonBytes []byte) *Game {
 }
 
 func CopyGame(g *Game) *Game {
-	newGame := &Game{}
-	copier.Copy(&newGame, &g)
-	newGame.Players[0].game = newGame
-	newGame.Players[1].game = newGame
-	for _, perm := range newGame.Permanents {
-		perm.game = newGame
-	}
-	return newGame
+	gameJson := g.Serialized()
+	return DeserializeGameState(gameJson)
 }
 
 func (g *Game) ActionStates() []*ActionState {

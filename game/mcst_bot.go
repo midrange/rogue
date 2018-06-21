@@ -30,7 +30,7 @@ type McstBot struct {
 func NewMcstBot() *McstBot {
 	mcst := &McstBot{
 		C:               1.4,
-		calculationTime: 1.0,
+		calculationTime: 10.0,
 		maxMoves:        10000,
 		plays:           map[string]int{},
 		wins:            map[string]int{},
@@ -58,7 +58,6 @@ func (mb *McstBot) Action(g *Game) *Action {
 	start := time.Now()
 	for {
 		// print a spinner
-		fmt.Println("doing playout ", games)
 		mb.doPlayOut(g)
 		games++
 		if time.Since(start).Seconds() > mb.calculationTime {
@@ -69,11 +68,11 @@ func (mb *McstBot) Action(g *Game) *Action {
 
 	actionStates := g.ActionStates()
 	bestActionState := actionStates[0]
-	bestScore := 0
+	bestScore := 0.0
 	for _, as := range actionStates {
 		endStateStr := string(as.EndState[:])
 		if mb.plays[endStateStr] > 0 {
-			score := mb.wins[endStateStr] / mb.plays[endStateStr]
+			score := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
 			if score >= bestScore {
 				bestScore = score
 				bestActionState = as
@@ -81,6 +80,7 @@ func (mb *McstBot) Action(g *Game) *Action {
 		}
 		fmt.Printf("%s: %.2f (%d / %d)\n", as.Action.ShowTo(g.Priority()), float64(mb.wins[endStateStr])/float64(mb.plays[endStateStr]), mb.wins[endStateStr], mb.plays[endStateStr])
 	}
+
 	return bestActionState.Action
 }
 
@@ -88,16 +88,10 @@ func (mb *McstBot) doPlayOut(g *Game) {
 	visitedStates := [][]byte{}
 
 	cloneGame := CopyGame(g)
-	if string(g.Serialized()) != string(cloneGame.Serialized()) {
-		fmt.Println(g)
-		fmt.Println(cloneGame)
-		// panic("the initial games are not the same after copy")
-	}
 
 	t := 0
 	bestActionState := &ActionState{}
 	for t = 0; t < mb.maxMoves; t++ {
-		fmt.Println(t, " ", cloneGame.NextPermanentId)
 		actionStates := cloneGame.ActionStates()
 		statsForAllPlays := true
 		for _, actionState := range actionStates {
@@ -134,11 +128,7 @@ func (mb *McstBot) doPlayOut(g *Game) {
 			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
 
-		fmt.Println(bestActionState.Action)
-		fmt.Println("before cloneGame action ", cloneGame.NextPermanentId)
 		cloneGame.TakeAction(bestActionState.Action)
-		fmt.Println("after cloneGame action ")
-		fmt.Println("NextPermanentId now ", cloneGame.NextPermanentId)
 
 		if cloneGame.IsOver() {
 			break
@@ -149,7 +139,7 @@ func (mb *McstBot) doPlayOut(g *Game) {
 	for _, es := range visitedStates {
 		endStateStr := string(es[:])
 		mb.plays[endStateStr] += 1
-		if cloneGame.Defender().Lost() && cloneGame.DefenderId() == g.PriorityId {
+		if cloneGame.Players[g.DefenderId()].Lost() {
 			mb.wins[endStateStr] += 1
 		}
 	}
