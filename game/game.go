@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -63,8 +64,8 @@ type Game struct {
 	// The StackObjectId that will be assigned to the next object that gets put on the stack.
 	NextStackObjectId StackObjectId
 
-	// True if the acting player passed priority after outting a spell or ability on the stack.
-	actorPassedOnStack bool
+	// True if the acting player passed priority after putting a spell or ability on the stack.
+	ActorPassedOnStack bool
 }
 
 //go:generate stringer -type=Phase
@@ -135,7 +136,7 @@ func (g *Game) Actions(forHuman bool) []*Action {
 		stackObjectId := g.Stack[len(g.Stack)-1]
 		stackObject := g.StackObject(stackObjectId)
 
-		if g.PriorityId == stackObject.Player && g.actorPassedOnStack {
+		if g.PriorityId == stackObject.Player && g.ActorPassedOnStack {
 			return actions
 		}
 		actions = append(actions, g.Priority().PlayActions(false, forHuman)...)
@@ -269,6 +270,7 @@ func (g *Game) nextPhase() {
 		p.EndPhase()
 	}
 
+	g.ActorPassedOnStack = false
 	switch g.Phase {
 	case UntapStep:
 		g.Attacker().Untap()
@@ -304,7 +306,6 @@ func (g *Game) nextPhase() {
 		g.Phase = UntapStep
 		g.Turn++
 		g.PriorityId = g.PriorityId.OpponentId()
-
 	}
 }
 
@@ -323,12 +324,12 @@ func (g *Game) TakeAction(action *Action) {
 	}
 
 	if action.Type == PassPriority {
-		g.actorPassedOnStack = true
+		g.ActorPassedOnStack = true
 		g.PriorityId = g.PriorityId.OpponentId()
 		if len(g.Stack) > 0 {
 			stackObject := g.StackObject(g.Stack[len(g.Stack)-1])
 			if g.PriorityId == stackObject.Player {
-				g.actorPassedOnStack = false
+				g.ActorPassedOnStack = false
 				g.Stack = g.Stack[:len(g.Stack)-1]
 				if stackObject.Type == Play {
 					g.Player(stackObject.Player).ResolveSpell(stackObject)
@@ -349,9 +350,8 @@ func (g *Game) TakeAction(action *Action) {
 		return
 	}
 	if action.Type == Pass {
-		g.nextPhase()
-
 		g.PriorityId = g.AttackerId()
+		g.nextPhase()
 		return
 	}
 
@@ -445,8 +445,8 @@ func (g *Game) newPermanent(card *Card, ownerId PlayerId, stackObjectId StackObj
 	owner := g.Player(ownerId)
 	if addToBoard {
 		g.Permanents[g.NextPermanentId] = perm
-		g.NextPermanentId++
 		owner.Board = append(owner.Board, perm.Id)
+		g.NextPermanentId++
 		perm.HandleEnterTheBattlefield(stackObjectId)
 	}
 	return perm
@@ -707,4 +707,44 @@ func (g *Game) playActivatedAbility() {
 	}
 	g.Print()
 	panic("playActivatedAbility failed")
+}
+
+// Returns a binary representation of the game, json for now
+func (g *Game) Serialized() []byte {
+	gameJson, _ := json.Marshal(g)
+	return gameJson
+}
+
+// Reset the game pointer for game.players, and return a deserialized game
+func DeserializeGameState(jsonBytes []byte) *Game {
+	game := &Game{}
+	json.Unmarshal(jsonBytes, game)
+	game.Players[0].game = game
+	game.Players[1].game = game
+	for _, perm := range game.Permanents {
+		perm.game = game
+	}
+	return game
+}
+
+func CopyGame(g *Game) *Game {
+	gameJson := g.Serialized()
+	return DeserializeGameState(gameJson)
+}
+
+func (g *Game) ActionStates() []*ActionState {
+	actionStates := []*ActionState{}
+	asGame := CopyGame(g)
+	for index, action := range asGame.Actions(false) {
+		if index != 0 {
+			asGame = CopyGame(g)
+		}
+		asGame.TakeAction(action)
+		actionState := &ActionState{
+			EndState: asGame.Serialized(),
+			Action:   action,
+		}
+		actionStates = append(actionStates, actionState)
+	}
+	return actionStates
 }

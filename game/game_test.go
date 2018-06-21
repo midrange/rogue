@@ -819,3 +819,87 @@ func TestDelverFlips(t *testing.T) {
 	}
 
 }
+
+func TestSerializationDuringSpellstutterSpriteFails(t *testing.T) {
+	sprite := NewEmptyDeck()
+	sprite.Add(1, VaultSkirge)
+	sprite.Add(1, SpellstutterSprite)
+	sprite.Add(58, Island)
+
+	allForests := NewEmptyDeck()
+	allForests.Add(60, Forest)
+
+	g := NewGame(sprite, allForests)
+
+	g.playLand()
+	g.passTurn()
+
+	gJson := g.Serialized()
+	g = DeserializeGameState(gJson)
+
+	g.passTurn()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+
+	g.playLand()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.passTurn()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.passTurn()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.playLand()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.passTurn()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.passTurn()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.playLand()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	for _, a := range g.Priority().PlayActions(true, false) {
+		if a.Card != nil && a.Card.Name == VaultSkirge {
+			g.TakeAction(a)
+			break
+		}
+	}
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.putCreatureOnStackAndPass()
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	if len(g.Stack) != 2 {
+		t.Fatal("expected two creatures on the stack")
+	}
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	g.TakeAction(&Action{Type: PassPriority})
+
+	if len(g.Stack) != 2 {
+		t.Fatal("expected creature and spellstutter on stack")
+	}
+
+	g.TakeAction(&Action{Type: PassPriority})
+	g.TakeAction(&Action{Type: PassPriority})
+
+	gJson = g.Serialized()
+	g = DeserializeGameState(gJson)
+	if len(g.Stack) != 1 {
+		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
+	}
+}
