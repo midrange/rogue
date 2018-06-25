@@ -910,3 +910,14 @@ func BenchmarkPlayout(b *testing.B) {
 		PlayGame(game, &RandomBot{}, &RandomBot{}, false)
 	}
 }
+
+func BenchmarkGameSerialization(b *testing.B) {
+	game := NewGame(Stompy(), Stompy())
+	PlayGame(game, &RandomBot{}, &RandomBot{}, false)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		s := string(game.Serialize())
+		DeserializeGame([]byte(s))
+	}
+}
