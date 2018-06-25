@@ -16,6 +16,8 @@ type McstBot struct {
 	plays map[string]int
 	// count times states that have been reached in playouts led to a win
 	wins map[string]int
+	// cache availble actions for states
+	stateToActions map[string][]*ActionState
 	// the amount of time to call run_simulation as much as possible
 	calculationTime float64
 	// the max_moves for any play out
@@ -29,19 +31,20 @@ type McstBot struct {
 
 func NewMcstBot() *McstBot {
 	mcst := &McstBot{
-		C:               1.4,
-		calculationTime: 10.0,
+		C:               3,
+		calculationTime: 3.0,
 		maxMoves:        10000,
 		plays:           map[string]int{},
 		wins:            map[string]int{},
+		stateToActions:  map[string][]*ActionState{},
 	}
 	return mcst
 }
 
 // An Action, plus the EndState it reaches upon being played.
 type ActionState struct {
-	EndState []byte
-	Action   *Action
+	Game   *Game
+	Action *Action
 }
 
 func (mb *McstBot) String() string {
@@ -69,8 +72,8 @@ func (mb *McstBot) Action(g *Game) *Action {
 	actionStates := g.ActionStates()
 	bestActionState := actionStates[0]
 	bestScore := 0.0
-	for _, as := range actionStates {
-		endStateStr := string(as.EndState[:])
+	for index, as := range actionStates {
+		endStateStr := fmt.Sprintf("%s%d", string(as.Game.Serialized()), index)
 		if mb.plays[endStateStr] > 0 {
 			score := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
 			if score >= bestScore {
@@ -85,47 +88,53 @@ func (mb *McstBot) Action(g *Game) *Action {
 }
 
 func (mb *McstBot) doPlayOut(g *Game) {
-	visitedStates := [][]byte{}
+	visitedStates := []string{}
 
 	cloneGame := CopyGame(g)
 
 	t := 0
 	bestActionState := &ActionState{}
+	unreachedState := false
 	for t = 0; t < mb.maxMoves; t++ {
-		actionStates := cloneGame.ActionStates()
-		statsForAllPlays := true
-		for _, actionState := range actionStates {
-			endStateStr := string(actionState.EndState[:])
-			if mb.plays[endStateStr] == 0 {
-				statsForAllPlays = false
-				break
-			}
-
+		currentStateStr := string(cloneGame.Serialized())
+		firstActionStr := fmt.Sprintf("%s%d", currentStateStr, 0)
+		actionStates := []*ActionState{}
+		actionIndex := 0
+		if mb.plays[firstActionStr] == 0 {
+			actionStates = cloneGame.ActionStates()
+			mb.stateToActions[currentStateStr] = actionStates
+			unreachedState = true
+		} else {
+			actionStates = mb.stateToActions[currentStateStr]
 		}
 
-		if statsForAllPlays {
-			// decide best play based on prior simulatons
+		if unreachedState {
+			actionIndex = rand.Intn(len(actionStates))
+			bestActionState = actionStates[actionIndex]
+		} else {
+			// decide best play based on prior simulations
 			logTotalPlays := 0.0
-			for _, as := range actionStates {
-				endStateStr := string(as.EndState[:])
+			endStates := []string{}
+			for index, _ := range actionStates {
+				endStateStr := fmt.Sprintf("%s%d", currentStateStr, index)
 				logTotalPlays += float64(mb.plays[endStateStr])
+				endStates = append(endStates, endStateStr)
 			}
 			logTotalPlays = math.Log(float64(logTotalPlays))
 
 			bestScore := 0.0
-			for _, as := range actionStates {
-				endStateStr := string(as.EndState[:])
+			bestActionState = actionStates[0]
+			for index, as := range actionStates {
+				endStateStr := endStates[index]
 				winRatio := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
 				logPlayRatio := float64(logTotalPlays) / float64(mb.plays[endStateStr])
 				score := winRatio + mb.C*math.Sqrt(logPlayRatio)
 				if score >= bestScore {
 					bestScore = score
 					bestActionState = as
+					actionIndex = index
 				}
 			}
-		} else {
-			// otherwise play randomly
-			bestActionState = actionStates[rand.Intn(len(actionStates))]
 		}
 
 		cloneGame.TakeAction(bestActionState.Action)
@@ -133,14 +142,13 @@ func (mb *McstBot) doPlayOut(g *Game) {
 		if cloneGame.IsOver() {
 			break
 		}
-		visitedStates = append(visitedStates, bestActionState.EndState)
+		visitedStates = append(visitedStates, fmt.Sprintf("%s%d", currentStateStr, actionIndex))
 	}
 
 	for _, es := range visitedStates {
-		endStateStr := string(es[:])
-		mb.plays[endStateStr] += 1
+		mb.plays[es] += 1
 		if cloneGame.Players[g.DefenderId()].Lost() {
-			mb.wins[endStateStr] += 1
+			mb.wins[es] += 1
 		}
 	}
 }

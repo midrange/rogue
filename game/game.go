@@ -313,7 +313,6 @@ func (g *Game) TakeAction(action *Action) {
 	if g.IsOver() {
 		panic("cannot take action when the game is over")
 	}
-
 	if action.Type == MakeChoice {
 		if action.ShouldSwitchPriority {
 			g.PriorityId = g.PriorityId.OpponentId()
@@ -734,15 +733,10 @@ func CopyGame(g *Game) *Game {
 
 func (g *Game) ActionStates() []*ActionState {
 	actionStates := []*ActionState{}
-	asGame := CopyGame(g)
-	for index, action := range asGame.Actions(false) {
-		if index != 0 {
-			asGame = CopyGame(g)
-		}
-		asGame.TakeAction(action)
+	for _, action := range g.Actions(false) {
 		actionState := &ActionState{
-			EndState: asGame.Serialized(),
-			Action:   action,
+			Game:   g,
+			Action: action,
 		}
 		actionStates = append(actionStates, actionState)
 	}
