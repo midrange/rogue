@@ -36,7 +36,7 @@ func (ab *AttackBot) Action(g *Game) *Action {
 	}
 	for _, a := range actions {
 		if a.Type == Play && a.Card.IsCreature() {
-			if a.Card.CastingCost != nil && a.Card.CastingCost.Colorless > bestAction.Card.CastingCost.Colorless {
+			if a.Card.CastingCost != nil && bestAction.Card.CastingCost != nil && a.Card.CastingCost.Colorless > bestAction.Card.CastingCost.Colorless {
 				bestAction = a
 			}
 		}
