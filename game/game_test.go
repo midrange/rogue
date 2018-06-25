@@ -903,3 +903,10 @@ func TestSerializationDuringSpellstutterSpriteFails(t *testing.T) {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
 	}
 }
+
+func BenchmarkPlayout(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		game := NewGame(Stompy(), Stompy())
+		PlayGame(game, &RandomBot{}, &RandomBot{}, false)
+	}
+}

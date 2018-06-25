@@ -40,17 +40,17 @@ func showWelcomePrompt() string {
 
 func playHumanVsMcstBot() {
 	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
-	game.PlayGame(g, &game.Human{}, game.NewMcstBot())
+	game.PlayGame(g, &game.Human{}, game.NewMcstBot(), true)
 }
 
 func playHumanVsAttackBot() {
 	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
-	game.PlayGame(g, &game.Human{}, &game.AttackBot{})
+	game.PlayGame(g, &game.Human{}, &game.AttackBot{}, true)
 }
 
 func playHumanVsRandom() {
 	g := game.NewGame(game.MonoBlueDelver(), game.Stompy())
-	game.PlayGame(g, &game.Human{}, &game.RandomBot{})
+	game.PlayGame(g, &game.Human{}, &game.RandomBot{}, true)
 }
 
 func playComputerVsComputer() {
