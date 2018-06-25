@@ -819,3 +819,10 @@ func TestDelverFlips(t *testing.T) {
 	}
 
 }
+
+func BenchmarkPlayout(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		game := NewGame(Stompy(), Stompy())
+		PlayGame(game, &RandomBot{}, &RandomBot{}, false)
+	}
+}

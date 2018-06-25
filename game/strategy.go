@@ -27,7 +27,7 @@ func (b *RandomBot) Action(g *Game) *Action {
 	return actions[rand.Int()%len(actions)]
 }
 
-func PlayGame(g *Game, strategy0 Strategy, strategy1 Strategy) PlayerId {
+func PlayGame(g *Game, strategy0 Strategy, strategy1 Strategy, printResult bool) PlayerId {
 	for !g.IsOver() {
 		strategy := []Strategy{strategy0, strategy1}[g.PriorityIndex()]
 		action := strategy.Action(g)
@@ -36,13 +36,19 @@ func PlayGame(g *Game, strategy0 Strategy, strategy1 Strategy) PlayerId {
 
 	if g.Players[0].Lost() {
 		if g.Players[1].Lost() {
-			fmt.Println("The game is a draw.")
+			if printResult {
+				fmt.Println("The game is a draw.")
+			}
 		} else {
-			fmt.Printf("%s wins.\n", strategy1)
+			if printResult {
+				fmt.Printf("%s wins.\n", strategy1)
+			}
 		}
 		return g.DefenderId()
 	} else {
-		fmt.Printf("%s wins.\n", strategy0)
+		if printResult {
+			fmt.Printf("%s wins.\n", strategy0)
+		}
 		return g.AttackerId()
 	}
 }
@@ -85,7 +91,7 @@ func (b *SimpleMonteCarloBot) calcWinRate(g *Game, moveIndex int, iterations int
 
 		move := cloneGame.Actions(false)[moveIndex]
 		cloneGame.TakeAction(move)
-		winner := PlayGame(&cloneGame, &RandomBot{}, &RandomBot{})
+		winner := PlayGame(&cloneGame, &RandomBot{}, &RandomBot{}, false)
 		if winner == g.PriorityId {
 			wins += 1
 		} else {
