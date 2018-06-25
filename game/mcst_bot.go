@@ -73,7 +73,7 @@ func (mb *McstBot) Action(g *Game) *Action {
 	bestActionState := actionStates[0]
 	bestScore := 0.0
 	for index, as := range actionStates {
-		endStateStr := fmt.Sprintf("%s%d", string(as.Game.Serialized()), index)
+		endStateStr := fmt.Sprintf("%s%d", string(as.Game.Serialize()), index)
 		if mb.plays[endStateStr] > 0 {
 			score := float64(mb.wins[endStateStr]) / float64(mb.plays[endStateStr])
 			if score >= bestScore {
@@ -96,7 +96,7 @@ func (mb *McstBot) doPlayOut(g *Game) {
 	bestActionState := &ActionState{}
 	unreachedState := false
 	for t = 0; t < mb.maxMoves; t++ {
-		currentStateStr := string(cloneGame.Serialized())
+		currentStateStr := string(cloneGame.Serialize())
 		firstActionStr := fmt.Sprintf("%s%d", currentStateStr, 0)
 		actionStates := []*ActionState{}
 		actionIndex := 0

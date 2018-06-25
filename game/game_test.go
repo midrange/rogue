@@ -834,60 +834,60 @@ func TestSerializationDuringSpellstutterSpriteFails(t *testing.T) {
 	g.playLand()
 	g.passTurn()
 
-	gJson := g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson := g.Serialize()
+	g = DeserializeGame(gJson)
 
 	g.passTurn()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 
 	g.playLand()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.passTurn()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.passTurn()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.playLand()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.passTurn()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.passTurn()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.playLand()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	for _, a := range g.Priority().PlayActions(true, false) {
 		if a.Card != nil && a.Card.Name == VaultSkirge {
 			g.TakeAction(a)
 			break
 		}
 	}
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.putCreatureOnStackAndPass()
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	if len(g.Stack) != 2 {
 		t.Fatal("expected two creatures on the stack")
 	}
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	g.TakeAction(&Action{Type: PassPriority})
 
 	if len(g.Stack) != 2 {
@@ -897,8 +897,8 @@ func TestSerializationDuringSpellstutterSpriteFails(t *testing.T) {
 	g.TakeAction(&Action{Type: PassPriority})
 	g.TakeAction(&Action{Type: PassPriority})
 
-	gJson = g.Serialized()
-	g = DeserializeGameState(gJson)
+	gJson = g.Serialize()
+	g = DeserializeGame(gJson)
 	if len(g.Stack) != 1 {
 		t.Fatal("expected vault skirge still to be on the stack, not enough faeries ", g.Stack)
 	}

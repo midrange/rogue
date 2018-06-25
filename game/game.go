@@ -708,16 +708,16 @@ func (g *Game) playActivatedAbility() {
 	panic("playActivatedAbility failed")
 }
 
-// Returns a binary representation of the game, json for now
-func (g *Game) Serialized() []byte {
+// Returns a binary representation of the game
+func (g *Game) Serialize() []byte {
 	gameJson, _ := json.Marshal(g)
 	return gameJson
 }
 
-// Reset the game pointer for game.players, and return a deserialized game
-func DeserializeGameState(jsonBytes []byte) *Game {
+// Make a new game based on a serialized game
+func DeserializeGame(bytes []byte) *Game {
 	game := &Game{}
-	json.Unmarshal(jsonBytes, game)
+	json.Unmarshal(bytes, game)
 	game.Players[0].game = game
 	game.Players[1].game = game
 	for _, perm := range game.Permanents {
@@ -727,8 +727,7 @@ func DeserializeGameState(jsonBytes []byte) *Game {
 }
 
 func CopyGame(g *Game) *Game {
-	gameJson := g.Serialized()
-	return DeserializeGameState(gameJson)
+	return DeserializeGame(g.Serialize())
 }
 
 func (g *Game) ActionStates() []*ActionState {
