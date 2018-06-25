@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 )
 
 const GAME_WIDTH = 100
@@ -711,19 +712,30 @@ func (g *Game) playActivatedAbility() {
 
 // Returns a binary representation of the game, json for now
 func (g *Game) Serialized() []byte {
-	gameJson, _ := json.Marshal(g)
-	return gameJson
+	data, err := proto.Marshal(g)
+	if err != nil {
+		log.Fatal("marshaling error: ", err)
+	}
+	return data
+	// gameJson, _ := json.Marshal(g)
+	// return gameJson
 }
 
 // Reset the game pointer for game.players, and return a deserialized game
 func DeserializeGameState(jsonBytes []byte) *Game {
 	game := &Game{}
-	json.Unmarshal(jsonBytes, game)
-	game.Players[0].game = game
-	game.Players[1].game = game
-	for _, perm := range game.Permanents {
-		perm.game = game
+	err = proto.Unmarshal(jsonBytes, game)
+	if err != nil {
+		log.Fatal("unmarshaling error: ", err)
 	}
+
+	/*
+		json.Unmarshal(jsonBytes, game)
+		game.Players[0].game = game
+		game.Players[1].game = game
+		for _, perm := range game.Permanents {
+			perm.game = game
+		}*/
 	return game
 }
 
@@ -734,15 +746,10 @@ func CopyGame(g *Game) *Game {
 
 func (g *Game) ActionStates() []*ActionState {
 	actionStates := []*ActionState{}
-	asGame := CopyGame(g)
 	for index, action := range asGame.Actions(false) {
-		if index != 0 {
-			asGame = CopyGame(g)
-		}
-		asGame.TakeAction(action)
 		actionState := &ActionState{
-			EndState: asGame.Serialized(),
-			Action:   action,
+			Game:   g,
+			Action: action,
 		}
 		actionStates = append(actionStates, actionState)
 	}
