@@ -33,18 +33,18 @@ func Stompy() *Deck {
 		HungerOfTheHowlpack: 4,
 		NestInvader:         4,
 		NettleSentinel:      4,
-		QuirionRanger:       4,
-		Rancor:              4,
-		SkarrganPitskulk:    4,
-		SilhanaLedgewalker:  3,
-		VaultSkirge:         4,
-		VinesOfVastwood:     4,
+		// QuirionRanger:       4,
+		Rancor:             4,
+		SkarrganPitskulk:   4,
+		SilhanaLedgewalker: 3,
+		VaultSkirge:        4,
+		VinesOfVastwood:    4,
 	})
 }
 
 func MonoBlueDelver() *Deck {
 	return NewDeck(map[CardName]int{
-		DelverOfSecrets:     4,
+		// DelverOfSecrets:     4,
 		FaerieMiscreant:     4,
 		SpellstutterSprite:  4,
 		Island:              18,

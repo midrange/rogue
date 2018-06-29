@@ -904,15 +904,33 @@ func TestSerializationDuringSpellstutterSpriteFails(t *testing.T) {
 	}
 }
 
-func BenchmarkPlayout(b *testing.B) {
+func BenchmarkStompyPlayout(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		game := NewGame(Stompy(), Stompy())
 		PlayGame(game, &RandomBot{}, &RandomBot{}, false)
 	}
 }
 
-func BenchmarkGameSerialization(b *testing.B) {
+func BenchmarkDelverPlayout(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		game := NewGame(MonoBlueDelver(), MonoBlueDelver())
+		PlayGame(game, &RandomBot{}, &RandomBot{}, false)
+	}
+}
+
+func BenchmarkStompyGameSerialization(b *testing.B) {
 	game := NewGame(Stompy(), Stompy())
+	PlayGame(game, &RandomBot{}, &RandomBot{}, false)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		s := string(game.Serialize())
+		DeserializeGame([]byte(s))
+	}
+}
+
+func BenchmarkDelverGameSerialization(b *testing.B) {
+	game := NewGame(MonoBlueDelver(), MonoBlueDelver())
 	PlayGame(game, &RandomBot{}, &RandomBot{}, false)
 	b.ResetTimer()
 
